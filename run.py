@@ -14,16 +14,16 @@ import pandas as pd
 from collect_results import parse_enc_log, parse_dec_log,seq_information,PSNR_columns,Bitstream_columns
 
 
-# Codecs to be tested; 
+# Path to the PCRM folder; 
 #0:anchor;  1:test
 tmc3_selected = {0:"/data/lym/3dgs_pcrm/submodules/avs-pcc-pcrm",
                  1:"/data/lym/3dgs_pcrm/submodules/avs-pcc-pcrm"
                  }
 
-#Path to the tool for converting point clouds to camera-view PLY files
+#Path to the executable file for converting point clouds to camera-view PLY files
 cameraPosition="./cameraPosition"
 
-#Path to the mpeg-gsc-metrics tool for point cloud rendering and objective quality metric calculation
+#Path to the executable file for point cloud rendering and objective quality metric calculation
 mpeg_gsc_metrics = "./mpeg-gsc-metrics"
 
 # Excel template

@@ -22,7 +22,7 @@ The project's root directory contains the following key files and folders:
 Core configuration parameters can be adjusted in run.py.
 | Parameter Name|Description  |
 |--|--|
-|tmc3_selected | Path to the AVS-PCC codecs to be tested |
+|tmc3_selected | Path to the PCRM folder |
 | cameraPosition|Path to the tool for converting point clouds to camera-view PLY files  |
 |mpeg_gsc_metrics | Path to the mpeg-gsc-metrics tool for point cloud rendering and objective quality metric calculation |
 | template_excel| Path to the macro-enabled Excel template for result output  |
