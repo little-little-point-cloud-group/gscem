@@ -1,0 +1,21 @@
+.DS_Store
+# Cmake
+build/
+Debug
+Release
+# Xcode
+*.pbxuser
+*.a
+xcuserdata
+# User data
+data/
+CMakeFiles
+CMakeScripts
+CMakeCache.txt
+*.cmake
+.idea
+DerivedData
+.vscode
+*.patch
+*.cfg
+output/

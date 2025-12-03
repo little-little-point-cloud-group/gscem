@@ -1,0 +1,99 @@
+# 
+---
+C1-limitlossyG-lossyA-ai:
+  encoder:
+    ascii_write_flag        : 1
+    slice_flag              : 1
+    slice_division_mode     : '{}'
+    slice_num               : 1
+    slice_point_max_numlg2  : 20
+    geom_lcu_nzlg2          : '{}'
+    geom_lcu_node_depth     : '{}'
+    geom_tree_type          : '{}'
+    geom_tree_sort_mode     : '{}'
+    geom_tree_density_low   : '{}'
+    geom_tree_density_high  : '{}'
+    log2_geom_tree_max_size_minus8: '{}'
+    geom_remove_dup_flag    : 1
+    geom_quant_step         : '{}'
+    geom_im_qtbt_k          : '{}'
+    geom_im_qtbt_m          : '{}'
+    geom_ocmap_search_range_edge_log2    : 8
+    geom_planar_eligible    : '{}'
+    metrics_enable          : 1
+    symmetry                : 1
+    cal_color               : 0
+    cal_reflectance         : 0
+    duplicate_mode          : 1
+    multineighbour_mode     : 1
+    show_hausdorff          : 1
+    peakvalue               : '{}'
+    deadZone_Len            : '{}'
+    ref_init_Pred_Trans_Ratio   : '{}'
+    log2_golomb_group_size  : 4
+    log2_pred_dist_weight_group_size: '{}'
+  
+  decoder:
+    ascii_write_flag        : 1
+    color_transform_flag    : 1
+
+  pcerror:
+    symmetry                : 1
+    cal_color               : 0
+    cal_reflectance         : 0
+    duplicate_mode          : 1
+    multineighbour_mode     : 1
+    show_hausdorff          : 1
+    peakvalue               : '{}'
+    refl_output_depth       : '{}'
+
+
+C4-losslessG-losslessA-ai:
+  encoder:
+    ascii_write_flag        : 1
+    color_transform_flag    : 0
+    slice_flag              : 1
+    slice_division_mode     : '{}'
+    slice_num               : 1
+    slice_point_max_numlg2  : 20
+    geom_lcu_nzlg2          : '{}'
+    geom_lcu_node_depth     : '{}'
+    geom_tree_type          : '{}'
+    geom_tree_sort_mode     : '{}'
+    geom_tree_density_low   : '{}'
+    geom_tree_density_high  : '{}'
+    log2_geom_tree_max_size_minus8: '{}'
+    geom_remove_dup_flag    : 0
+    geom_quant_step         : '{}'
+    geom_im_qtbt_k          : '{}'
+    geom_im_qtbt_m          : '{}'
+    geom_ocmap_search_range_edge_log2    : 8
+    geom_planar_eligible          : '{}'
+    metrics_enable          : 1
+    symmetry                : 1
+    cal_color               : 0
+    cal_reflectance         : 0
+    cal_lossless            : 1
+    duplicate_mode          : 1
+    multineighbour_mode     : 1
+    show_hausdorff          : 1
+    peakvalue               : '{}'
+    deadZone_Len            : '{}'
+    ref_init_Pred_Trans_Ratio   : '{}' 
+    log2_golomb_group_size  : 4
+    log2_pred_dist_weight_group_size: '{}'
+    
+  decoder:
+    ascii_write_flag        : 1
+    color_transform_flag    : 0
+
+  pcerror:
+    symmetry                : 1
+    cal_color               : 0
+    cal_reflectance         : 0
+    cal_lossless            : 1
+    duplicate_mode          : 1
+    multineighbour_mode     : 1
+    show_hausdorff          : 1
+    peakvalue               : '{}'
+    refl_output_depth       : '{}'

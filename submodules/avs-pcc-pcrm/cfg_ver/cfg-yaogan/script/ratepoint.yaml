@@ -1,0 +1,69 @@
+# 
+---
+limitlossyG:
+  cat1-A:
+    r1:
+      geom_quant_step: 512
+    r2:
+      geom_quant_step: 256
+    r3:
+      geom_quant_step: 64
+    r4:
+      geom_quant_step: 32
+    r5:
+      geom_quant_step: 8
+    r6:
+      geom_quant_step: 4
+
+
+losslessG:
+  cat1-A:
+    '':
+      geom_quant_step: 1
+
+limitlossyA:
+  cat1-A:
+    r1:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r2:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r3:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r4:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r5:
+      color_quant_param: 8
+      refl_quant_param: 16
+
+lossyA:
+  cat1-A:
+    r1:
+      color_quant_param: 48
+      refl_quant_param: 56
+    r2:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r3:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r4:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r5:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r6:
+      color_quant_param: 8
+      refl_quant_param: 16
+
+losslessA:
+  cat1-A:
+    '':
+      color_quant_param: 0
+      refl_quant_param: 0
+ 
+...

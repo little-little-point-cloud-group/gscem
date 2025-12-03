@@ -1,0 +1,512 @@
+# 
+---
+limitlossyG:
+  cat1-vox15plus:
+    r1:
+      geom_quant_step: 512
+    r2:
+      geom_quant_step: 256
+    r3:
+      geom_quant_step: 64
+    r4:
+      geom_quant_step: 32
+    r5:
+      geom_quant_step: 8
+    r6:
+      geom_quant_step: 4
+  cat1-vox14:
+    r1:
+      geom_quant_step: 256
+    r2:
+      geom_quant_step: 128
+    r3:
+      geom_quant_step: 64
+    r4:
+      geom_quant_step: 16
+    r5:
+      geom_quant_step: 8
+    r6:
+      geom_quant_step: 4
+  cat1-vox13:
+    r1:
+      geom_quant_step: 64
+    r2:
+      geom_quant_step: 32
+    r3:
+      geom_quant_step: 16
+    r4:
+      geom_quant_step: 8
+    r5:
+      geom_quant_step: 4
+    r6:
+      geom_quant_step: 2
+  cat1-vox12:
+    r1:
+      geom_quant_step: 32
+    r2:
+      geom_quant_step: 16
+    r3:
+      geom_quant_step: 8
+    r4:
+      geom_quant_step: 4
+    r5:
+      geom_quant_step: 2
+    r6:
+      geom_quant_step: 1.33333
+  cat1-vox11:
+    r1:
+      geom_quant_step: 16
+    r2:
+      geom_quant_step: 8
+    r3:
+      geom_quant_step: 4
+    r4:
+      geom_quant_step: 2
+    r5:
+      geom_quant_step: 1.33333
+    r6:
+      geom_quant_step: 1.14286
+  cat1-vox10:
+    r1:
+      geom_quant_step: 8
+    r2:
+      geom_quant_step: 4
+    r3:
+      geom_quant_step: 2
+    r4:
+      geom_quant_step: 1.33333
+    r5:
+      geom_quant_step: 1.14286
+    r6:
+      geom_quant_step: 1.06667
+  cat3:
+    r1:
+      geom_quant_step: 16
+    r2:
+      geom_quant_step: 8
+    r3:
+      geom_quant_step: 4
+    r4:
+      geom_quant_step: 2
+    r5:
+      geom_quant_step: 1.33333
+    r6:
+      geom_quant_step: 1.14286
+  cat2-frame:
+    r1:
+      geom_quant_step: 512
+    r2:
+      geom_quant_step: 256
+    r3:
+      geom_quant_step: 64
+    r4:
+      geom_quant_step: 32
+    r5:
+      geom_quant_step: 8
+    r6:
+      geom_quant_step: 4
+  cat1-A:
+    r1:
+      geom_quant_step: 512
+    r2:
+      geom_quant_step: 256
+    r3:
+      geom_quant_step: 64
+    r4:
+      geom_quant_step: 32
+    r5:
+      geom_quant_step: 8
+    r6:
+      geom_quant_step: 4
+
+
+losslessG:
+  cat3:
+    '':
+      geom_quant_step: 1
+  cat2-frame:
+    '':
+      geom_quant_step: 1
+  cat1-A:
+    '':
+      geom_quant_step: 1
+  cat1-vox10:
+    '':
+      geom_quant_step: 1
+  cat1-vox11:
+    '':
+      geom_quant_step: 1
+  cat1-vox12:
+    '':
+      geom_quant_step: 1
+  cat1-vox13:
+    '':
+      geom_quant_step: 1
+  cat1-vox14:
+    '':
+      geom_quant_step: 1
+  cat1-vox15plus:
+    '':
+      geom_quant_step: 1
+
+
+limitlossyA:
+  cat1-A:
+    r1:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r2:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r3:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r4:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r5:
+      color_quant_param: 8
+      refl_quant_param: 16
+  cat2-frame:
+    r1:
+      color_quant_param: 40
+      refl_quant_param: 40
+    r2:
+      color_quant_param: 32
+      refl_quant_param: 32
+    r3:
+      color_quant_param: 24
+      refl_quant_param: 24
+    r4:
+      color_quant_param: 16
+      refl_quant_param: 16
+    r5:
+      color_quant_param: 8
+      refl_quant_param: 8
+  cat3:
+    r1:
+      color_quant_param: 40
+      refl_quant_param: 40
+    r2:
+      color_quant_param: 32
+      refl_quant_param: 32
+    r3:
+      color_quant_param: 24
+      refl_quant_param: 24
+    r4:
+      color_quant_param: 16
+      refl_quant_param: 16
+    r5:
+      color_quant_param: 8
+      refl_quant_param: 8
+  cat1-vox10:
+    r1:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r2:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r3:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r4:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r5:
+      color_quant_param: 8
+      refl_quant_param: 16
+  cat1-vox11:
+    r1:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r2:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r3:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r4:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r5:
+      color_quant_param: 8
+      refl_quant_param: 16
+  cat1-vox12:
+    r1:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r2:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r3:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r4:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r5:
+      color_quant_param: 8
+      refl_quant_param: 16
+  cat1-vox13:
+    r1:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r2:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r3:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r4:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r5:
+      color_quant_param: 8
+      refl_quant_param: 16
+  cat1-vox14:
+    r1:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r2:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r3:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r4:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r5:
+      color_quant_param: 8
+      refl_quant_param: 16
+  cat1-vox15plus:
+    r1:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r2:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r3:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r4:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r5:
+      color_quant_param: 8
+      refl_quant_param: 16
+      
+   
+lossyA:
+  cat1-A:
+    r1:
+      color_quant_param: 48
+      refl_quant_param: 56
+    r2:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r3:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r4:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r5:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r6:
+      color_quant_param: 8
+      refl_quant_param: 16
+  cat2-frame:
+    r1:
+      color_quant_param: 48
+      refl_quant_param: 48
+    r2:
+      color_quant_param: 40
+      refl_quant_param: 40
+    r3:
+      color_quant_param: 32
+      refl_quant_param: 32
+    r4:
+      color_quant_param: 24
+      refl_quant_param: 24
+    r5:
+      color_quant_param: 16
+      refl_quant_param: 16
+    r6:
+      color_quant_param: 8
+      refl_quant_param: 8
+  cat3:
+    r1:
+      color_quant_param: 48
+      refl_quant_param: 48
+    r2:
+      color_quant_param: 40
+      refl_quant_param: 40
+    r3:
+      color_quant_param: 32
+      refl_quant_param: 32
+    r4:
+      color_quant_param: 24
+      refl_quant_param: 24
+    r5:
+      color_quant_param: 16
+      refl_quant_param: 16
+    r6:
+      color_quant_param: 8
+      refl_quant_param: 8
+  cat1-vox10:
+    r1:
+      color_quant_param: 48
+      refl_quant_param: 56
+    r2:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r3:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r4:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r5:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r6:
+      color_quant_param: 8
+      refl_quant_param: 16
+  cat1-vox11:
+    r1:
+      color_quant_param: 48
+      refl_quant_param: 56
+    r2:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r3:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r4:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r5:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r6:
+      color_quant_param: 8
+      refl_quant_param: 16
+  cat1-vox12:
+    r1:
+      color_quant_param: 48
+      refl_quant_param: 56
+    r2:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r3:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r4:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r5:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r6:
+      color_quant_param: 8
+      refl_quant_param: 16
+  cat1-vox13:
+    r1:
+      color_quant_param: 48
+      refl_quant_param: 56
+    r2:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r3:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r4:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r5:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r6:
+      color_quant_param: 8
+      refl_quant_param: 16
+  cat1-vox14:
+    r1:
+      color_quant_param: 48
+      refl_quant_param: 56
+    r2:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r3:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r4:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r5:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r6:
+      color_quant_param: 8
+      refl_quant_param: 16
+  cat1-vox15plus:
+    r1:
+      color_quant_param: 48
+      refl_quant_param: 56
+    r2:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r3:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r4:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r5:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r6:
+      color_quant_param: 8
+      refl_quant_param: 16
+
+
+
+losslessA:
+  cat1-A:
+    '':
+      color_quant_param: 0
+      refl_quant_param: 0
+  cat2-frame:
+    '':
+      color_quant_param: 0
+      refl_quant_param: 0
+  cat3:
+    '':
+      color_quant_param: 0
+      refl_quant_param: 0
+  cat1-vox10:
+    '':
+      color_quant_param: 0
+      refl_quant_param: 0
+  cat1-vox11:
+    '':
+      color_quant_param: 0
+      refl_quant_param: 0
+  cat1-vox12:
+    '':
+      color_quant_param: 0
+      refl_quant_param: 0
+  cat1-vox13:
+    '':
+      color_quant_param: 0
+      refl_quant_param: 0
+  cat1-vox14:
+    '':
+      color_quant_param: 0
+      refl_quant_param: 0
+  cat1-vox15plus:
+    '':
+      color_quant_param: 0
+      refl_quant_param: 0
+...

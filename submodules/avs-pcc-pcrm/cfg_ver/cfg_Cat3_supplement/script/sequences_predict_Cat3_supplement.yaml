@@ -1,0 +1,209 @@
+# 
+---
+carousel_vox11:
+  peakvalue: 2047
+  category: cat3
+  slice_division_mode: 2
+  geom_im_qtbt_k: 0
+  geom_im_qtbt_m: 0
+  geom_planar_eligible: 0
+  geom_lcu_nzlg2: 0
+  geom_lcu_node_depth: 0
+  geom_tree_type: 0
+  geom_tree_sort_mode: 1
+  geom_tree_density_low: 0
+  geom_tree_density_high: 0
+  log2_geom_tree_max_size_minus8: 0
+  attr_adapt_pred: 0
+  color_output_depth: 8
+  color_init_golomb_offset: 0
+  max_num_of_predict_neighbours: 3
+  transform: 0
+  log2_max_number_coefficients_minus8 : 0
+  log2_coeff_length_control_minus8: 9
+  nearest_pred_param1: 0
+  nearest_pred_param2: 0
+  axis_bias: 1
+  color_reorder_mode: 1
+
+helicopter_vox10:
+  peakvalue: 1023
+  category: cat3
+  slice_division_mode: 2
+  geom_im_qtbt_k: 0
+  geom_im_qtbt_m: 0
+  geom_planar_eligible: 0
+  geom_lcu_nzlg2: 0
+  geom_lcu_node_depth: 0
+  geom_tree_type: 0
+  geom_tree_sort_mode: 1
+  geom_tree_density_low: 0
+  geom_tree_density_high: 0
+  log2_geom_tree_max_size_minus8: 0
+  attr_adapt_pred: 0
+  color_output_depth: 8
+  color_init_golomb_offset: 0
+  max_num_of_predict_neighbours: 3
+  transform: 0
+  log2_max_number_coefficients_minus8 : 0
+  log2_coeff_length_control_minus8: 9
+  nearest_pred_param1: 0
+  nearest_pred_param2: 0
+  axis_bias: 1
+  color_reorder_mode: 1
+
+house_vox10:
+  peakvalue: 1023
+  category: cat3
+  slice_division_mode: 2
+  geom_im_qtbt_k: 0
+  geom_im_qtbt_m: 0
+  geom_planar_eligible: 0
+  geom_lcu_nzlg2: 0
+  geom_lcu_node_depth: 0
+  geom_tree_type: 0
+  geom_tree_sort_mode: 1
+  geom_tree_density_low: 0
+  geom_tree_density_high: 0
+  log2_geom_tree_max_size_minus8: 0
+  attr_adapt_pred: 0
+  color_output_depth: 8
+  color_init_golomb_offset: 0
+  max_num_of_predict_neighbours: 3
+  transform: 0
+  log2_max_number_coefficients_minus8 : 0
+  log2_coeff_length_control_minus8: 9
+  nearest_pred_param1: 0
+  nearest_pred_param2: 0
+  axis_bias: 1
+  color_reorder_mode: 1
+
+tiger_vox10:
+  peakvalue: 1023
+  category: cat3
+  slice_division_mode: 2
+  geom_im_qtbt_k: 0
+  geom_im_qtbt_m: 0
+  geom_planar_eligible: 0
+  geom_lcu_nzlg2: 0
+  geom_lcu_node_depth: 0
+  geom_tree_type: 0
+  geom_tree_sort_mode: 1
+  geom_tree_density_low: 0
+  geom_tree_density_high: 0
+  log2_geom_tree_max_size_minus8: 0
+  attr_adapt_pred: 0
+  color_output_depth: 8
+  color_init_golomb_offset: 0
+  max_num_of_predict_neighbours: 3
+  transform: 0
+  log2_max_number_coefficients_minus8 : 0
+  log2_coeff_length_control_minus8: 9
+  nearest_pred_param1: 0
+  nearest_pred_param2: 0
+  axis_bias: 1
+  color_reorder_mode: 1
+
+wardrobe_vox11:
+  peakvalue: 2047
+  category: cat3
+  slice_division_mode: 2
+  geom_im_qtbt_k: 0
+  geom_im_qtbt_m: 0
+  geom_planar_eligible: 0
+  geom_lcu_nzlg2: 0
+  geom_lcu_node_depth: 0
+  geom_tree_type: 0
+  geom_tree_sort_mode: 1
+  geom_tree_density_low: 0
+  geom_tree_density_high: 0
+  log2_geom_tree_max_size_minus8: 0
+  attr_adapt_pred: 0
+  color_output_depth: 8
+  color_init_golomb_offset: 0
+  max_num_of_predict_neighbours: 3
+  transform: 0
+  log2_max_number_coefficients_minus8 : 0
+  log2_coeff_length_control_minus8: 9
+  nearest_pred_param1: 0
+  nearest_pred_param2: 0
+  axis_bias: 1
+  color_reorder_mode: 1
+
+windmill_vox12:
+  peakvalue: 4095
+  category: cat3
+  slice_division_mode: 2
+  geom_im_qtbt_k: 0
+  geom_im_qtbt_m: 0
+  geom_planar_eligible: 0
+  geom_lcu_nzlg2: 0
+  geom_lcu_node_depth: 0
+  geom_tree_type: 0
+  geom_tree_sort_mode: 1
+  geom_tree_density_low: 0
+  geom_tree_density_high: 0
+  log2_geom_tree_max_size_minus8: 0
+  attr_adapt_pred: 0
+  color_output_depth: 8
+  color_init_golomb_offset: 0
+  max_num_of_predict_neighbours: 3
+  transform: 0
+  log2_max_number_coefficients_minus8 : 0
+  log2_coeff_length_control_minus8: 9
+  nearest_pred_param1: 0
+  nearest_pred_param2: 0
+  axis_bias: 1
+  color_reorder_mode: 1
+
+woman_vox12:
+  peakvalue: 4095
+  category: cat3
+  slice_division_mode: 2
+  geom_im_qtbt_k: 0
+  geom_im_qtbt_m: 0
+  geom_planar_eligible: 0
+  geom_lcu_nzlg2: 0
+  geom_lcu_node_depth: 0
+  geom_tree_type: 0
+  geom_tree_sort_mode: 1
+  geom_tree_density_low: 0
+  geom_tree_density_high: 0
+  log2_geom_tree_max_size_minus8: 0
+  attr_adapt_pred: 0
+  color_output_depth: 8
+  color_init_golomb_offset: 0
+  max_num_of_predict_neighbours: 3
+  transform: 0
+  log2_max_number_coefficients_minus8 : 0
+  log2_coeff_length_control_minus8: 9
+  nearest_pred_param1: 0
+  nearest_pred_param2: 0
+  axis_bias: 1
+  color_reorder_mode: 1
+
+wooden_boat_vox12:
+  peakvalue: 4095
+  category: cat3
+  slice_division_mode: 2
+  geom_im_qtbt_k: 0
+  geom_im_qtbt_m: 0
+  geom_planar_eligible: 0
+  geom_lcu_nzlg2: 0
+  geom_lcu_node_depth: 0
+  geom_tree_type: 0
+  geom_tree_sort_mode: 1
+  geom_tree_density_low: 0
+  geom_tree_density_high: 0
+  log2_geom_tree_max_size_minus8: 0
+  attr_adapt_pred: 0
+  color_output_depth: 8
+  color_init_golomb_offset: 0
+  max_num_of_predict_neighbours: 3
+  transform: 0
+  log2_max_number_coefficients_minus8 : 0
+  log2_coeff_length_control_minus8: 9
+  nearest_pred_param1: 0
+  nearest_pred_param2: 0
+  axis_bias: 1
+  color_reorder_mode: 1

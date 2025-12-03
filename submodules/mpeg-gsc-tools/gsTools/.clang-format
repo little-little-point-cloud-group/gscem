@@ -1,0 +1,28 @@
+#
+# .clang-format
+#
+BasedOnStyle: Google   
+---
+Language: Cpp
+ColumnLimit: 120   
+DerivePointerAlignment: false   
+PointerAlignment: Right  
+SortIncludes: false   
+AlignConsecutiveDeclarations: true
+AlignConsecutiveAssignments: true
+AlignOperands: true
+AlignTrailingComments: true
+AllowShortBlocksOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: true
+SpacesInParentheses: true
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+DerivePointerAlignment: false
+PointerAlignment: Left
+IndentFunctionDeclarationAfterType: true
+BreakConstructorInitializers: AfterColon
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+BinPackParameters: false
+ExperimentalAutoDetectBinPacking: false
+AllowAllParametersOfDeclarationOnNextLine: false
+...

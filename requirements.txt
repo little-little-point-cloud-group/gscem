@@ -1,0 +1,6 @@
+pyyaml
+numpy
+plyfile
+icecream
+pandas
+openpyxl
