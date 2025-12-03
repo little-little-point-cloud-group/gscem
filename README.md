@@ -1,6 +1,6 @@
 ﻿# 3dgs_pcrm
-This script is a high-performance testing tool designed for 3D Gaussian Splatting (3DGS) Point Cloud Compression (PCC). It automates the end-to-end workflow of 3D point cloud quantization, encoding, decoding, rendering, and objective metric evaluation, with support for parallel processing to improve testing efficiency. Test results (e.g., PSNR, SSIM, bitrate, memory usage) are automatically summarized into an Excel file for easy comparison and analysis.
-
+This script is a testing tool designed for PCRM. It automates the end-to-end workflow of 3D point cloud quantization, encoding, decoding, rendering, and objective metric evaluation, with support for parallel processing to improve testing efficiency. Test results (e.g., PSNR, SSIM, bitrate, time) are automatically summarized into an Excel file for easy comparison and analysis.
+Core configuration parameters can be adjusted in run.py.
 ## Core Configuration Parameters
 | Parameter Name|Description  |
 |--|--|
@@ -9,7 +9,7 @@ This script is a high-performance testing tool designed for 3D Gaussian Splattin
 |mpeg_gsc_metrics | Path to the mpeg-gsc-metrics tool for point cloud rendering and objective quality metric calculation |
 | template_excel| Path to the macro-enabled Excel template for result output  |
 |output_excel |Name of the final Excel file for storing aggregated test results  |
-|thread_num_limit | Parallel process count configuration:<br>- Index 0: Number of processes for encoding/decoding (recommended ≤ 30 to avoid resource congestion)<br>- Index 1: Number of processes for rendering/metric calculation |
+|thread_num_limit | Parallel process count configuration:<br>- Index 0: Number of processes for encoding/decoding <br>- Index 1: Number of processes for metric executables. NB: Each executable renders 20 images in parallel, so the total number of processes is 20 times the number of executables.  |
 |save_iamge | Toggle for saving rendered images during metric calculation:<br>- 1 = Save<br>- 0 = Do not save (save disk space) |
 |save_pointCloud | Toggle for saving intermediate point cloud files (quantized/reconstructed PLY):<br>- 1 = Save<br>- 0 = Delete after test (save disk space) |
 | computeSsim| Toggle for SSIM calculation:<br>- 1 = Enable<br>- 0 = Disable |

@@ -28,7 +28,7 @@ mpeg_gsc_metrics = "./mpeg-gsc-metrics"
 
 template_excel = f"template/template.xlsm"  # Excel template with macros
 output_excel="PCRM-transform__vs__PCRM-transform.xlsm"
-thread_num_limit=[40,5]                     # Number of processes (recommended around 30, as too many may cause congestion or errors)
+thread_num_limit=[40,5]                     # Number of processes 
 
 computeMetrics=1
 save_iamge=0
@@ -54,13 +54,13 @@ condition_selected = {
 # Point cloud categories
 
 class_selected =(
-        # "alley",
-        # "bartender",
-        # "bicycle",
-        # "cinema",
-        # "garden",
-        # "photo",
-        # "rocket",
+        "alley",
+        "bartender",
+        "bicycle",
+        "cinema",
+        "garden",
+        "photo",
+        "rocket",
         "toy",
 )
 
