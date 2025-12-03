@@ -272,8 +272,8 @@ class Gaussian:
         self.wb =openpyxl.load_workbook(template_excel, keep_vba=True,read_only=False)
         self.branch=branch_selected
         def set_name():
-            self.wb["Summary"].cell(row=3, column=3).value = self.anchor_name
-            self.wb["Summary"].cell(row=4, column=3).value = self.test_name
+            self.wb["Summary"].cell(row=1, column=3).value = self.anchor_name
+            self.wb["Summary"].cell(row=2, column=3).value = self.test_name
 
         self.set_name=set_name
 
