@@ -1,7 +1,25 @@
 ﻿# 3dgs_pcrm
 This script is a testing tool designed for PCRM. It automates the end-to-end workflow of 3D point cloud quantization, encoding, decoding, rendering, and objective metric evaluation, with support for parallel processing to improve testing efficiency. Test results (e.g., PSNR, SSIM, bitrate, time) are automatically summarized into an Excel file for easy comparison and analysis.
-Core configuration parameters can be adjusted in run.py.
+Project File Structure
+The project's root directory contains the following key files and folders:
+
+# Project File Structure
+```
+The project's root directory contains the following key files and folders:
+├── cfg0/                     # **Anchor (baseline) test configuration directory**
+├── cfg1/                     # **Test (target) configuration directory**
+├── submodules/               # Project-dependent submodules
+├── template/                 # Template file directory
+├── collect_results.py        # Script for collecting and summarizing results
+├── my_tools.py               # Custom utility function
+├── processing.py             # Main processing workflow script
+├── README.md                 # This documentation
+├── requirements.txt          # Python dependency list
+└── run.py                    # **Main execution script containing all core configuration parameters**
+```
+
 ## Core Configuration Parameters
+Core configuration parameters can be adjusted in run.py.
 | Parameter Name|Description  |
 |--|--|
 |tmc3_selected | Path to the AVS-PCC codecs to be tested |

@@ -15,20 +15,27 @@ from collect_results import parse_enc_log, parse_dec_log,seq_information,PSNR_co
 
 
 # Codecs to be tested; 
-# str(tmc3_selected) + '_tmc3' corresponds to the executable file path
+#0:anchor;  1:test
 tmc3_selected = {0:"/data/lym/3dgs_pcrm/submodules/avs-pcc-pcrm",
-                 #1:"/data/lym/3dgs_pcrm/submodules/avs-pcc-pcrm"
+                 1:"/data/lym/3dgs_pcrm/submodules/avs-pcc-pcrm"
                  }
 
+#Path to the tool for converting point clouds to camera-view PLY files
 cameraPosition="./cameraPosition"
+
+#Path to the mpeg-gsc-metrics tool for point cloud rendering and objective quality metric calculation
 mpeg_gsc_metrics = "./mpeg-gsc-metrics"
 
+# Excel template
+template_excel = f"template/template.xlsm"  
 
-# Input file paths
-
-template_excel = f"template/template.xlsm"  # Excel template with macros
+#Name of the final Excel file for storing aggregated test results
 output_excel="PCRM-transform__vs__PCRM-transform.xlsm"
-thread_num_limit=[40,5]                     # Number of processes 
+
+# thread_num_limit[0]: Number of processes for encoding/decoding,
+# thread_num_limit[1]:  Number of processes for rendering is 20*thread_num_limit[1]
+thread_num_limit= [40,5]                    
+
 
 computeMetrics=1
 save_iamge=0
@@ -52,7 +59,6 @@ condition_selected = {
 }
 
 # Point cloud categories
-
 class_selected =(
         "alley",
         "bartender",
@@ -64,6 +70,7 @@ class_selected =(
         "toy",
 )
 
+#Path of input point cloud data
 PCC_sequence="/data/Sequence/AVS_data/src"
 
 file_lock=multiprocessing.Lock()
