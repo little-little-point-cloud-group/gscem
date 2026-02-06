@@ -73,23 +73,11 @@ public:
   UInt childIdxEnd;       ///< end pointIndex of current node
   UInt8 parentOccupancy;  ///< occupancy code of parent node.
   Bool parentNodeIDCMEligible;
-};                        ///< END CLASS TComOctreeNode
+};  ///< END CLASS TComOctreeNode
 
 //////////////////////////////////////////////////////////////////////////
 // Inline functions
 //////////////////////////////////////////////////////////////////////////
-
-static inline Bool judgeSingleMode(const V3<UInt>& nodeSizeLog2) {
-  Int zeroCnt = 0;
-  Int nZeroSum = 0;
-  for (Int i = 0; i < 3; ++i) {
-    if (nodeSizeLog2[i] != 0) {
-      ++zeroCnt;
-      nZeroSum += nodeSizeLog2[i];
-    }
-  }
-  return (nZeroSum > zeroCnt * 2);
-}
 
 static inline Void updateImQtBtParams(UInt& maxNumImQtbtBeforeOT, UInt& minSizeImQtbt,
                                       const V3<UInt>& nodeSizeLog2) {
@@ -165,10 +153,8 @@ static inline Void initOctreePartitionParams(const HighLevelSyntax& hls,
   partitionParams.maxDepth = nodeSizeLog2.max();
   partitionParams.depth = 0;
 
-  //UInt maxNumImQtbtBeforeOT = hls.gps.im_qtbt_num_before_ot;
-  //UInt minSizeImQtbt = hls.gps.im_qtbt_min_size;
-  UInt maxNumImQtbtBeforeOT = hls.gbh.im_qtbt_num_before_ot;
-  UInt minSizeImQtbt = hls.gbh.im_qtbt_min_size;
+  UInt maxNumImQtbtBeforeOT = hls.gbh.imQtbtNumBeforeOt;
+  UInt minSizeImQtbt = hls.gbh.imQtbtMinSize;
   updateImQtBtParams(maxNumImQtbtBeforeOT, minSizeImQtbt, nodeSizeLog2);
 
   V3<UInt> childSizeLog2 = nodeSizeLog2;
@@ -188,9 +174,7 @@ static inline Void initOctreePartitionParams(const HighLevelSyntax& hls,
   partitionParams.occupancySkipParent = occupancySkip;
   partitionParams.numNodesInCurrentDepth = 1;
   partitionParams.numNodesInNextDepth = 0;
-
   partitionParams.singleModeFlag = false;
-  partitionParams.singleModeFlagParent = false;
 }
 
 static inline Void updateOctreePartitionParams(TComOctreePartitionParams& partitionParams) {
@@ -217,9 +201,6 @@ static inline Void updateOctreePartitionParams(TComOctreePartitionParams& partit
   prepareImQtBtIndicator(partitionParams.occupancySkip, partitionParams.nodeSizeLog2,
                          partitionParams.childSizeLog2);
   xir_skipOccupancy(partitionParams.occupancySkip, partitionParams.bitSkip);
-
-  partitionParams.singleModeFlagParent = partitionParams.singleModeFlag;
-  partitionParams.singleModeFlag = judgeSingleMode(partitionParams.nodeSizeLog2);
 }
 
 ///< \}

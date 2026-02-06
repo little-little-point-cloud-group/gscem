@@ -15,7 +15,6 @@ public:
                  TComOctreePartitionParams& partitionParams);
   Int getNumBits(UInt num);
 
-
 private:
   HighLevelSyntax* m_hls;  ///< pointer to high-level syntax parameters
   TEncBacTop* m_encBac;    ///< pointer to bac

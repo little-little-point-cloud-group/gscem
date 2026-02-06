@@ -3,6 +3,8 @@
 #include "common/Transform.h"
 #include "common/transform_core.h"
 #include <queue>
+#include <stack>
+#include <tuple>
 #include <utility>
 using namespace std;
 //============================================================================
@@ -11,8 +13,7 @@ template<typename T>
 void WaveletCoreTransform(FXPoint* attributes, const int attribCount, const int voxelCount,
                           T* integerizedAttributes, const SequenceParameterSet& sps,
                           const AttributeParameterSet& aps, const AttributeBrickHeader& abh,
-                          int* positions, int* RecAttributes,
-                          const int disThInit) {
+                          int* positions, int* RecAttributes, const int disThInit) {
   size_t M, N;
   size_t d, j, i, S;
 
@@ -24,18 +25,17 @@ void WaveletCoreTransform(FXPoint* attributes, const int attribCount, const int 
 
   if (attribCount == 3) {  // color default setting
     offsetShift = 0.2 * (1 << encoderShiftBit);
-    transQuantParam = sps.colorQuantParam;
+    transQuantParam = aps.colorQuantParam;
     if (aps.transResLayer)
-      transQuantParam += aps.attrTransformQpDelta;
+      transQuantParam += aps.attrTransQpDelta;
     countTLow = std::min(32, 1 << (transQuantParam / 8));
     countTLow = 2 * std::max(8, countTLow);
-  }
-  else {
-    transQuantParam = sps.reflQuantParam + abh.reflQPoffset;
+  } else {
+    transQuantParam = aps.reflQuantParam + abh.QpOffset;
     if (aps.transResLayer)
-      transQuantParam += aps.attrTransformQpDelta;
+      transQuantParam += aps.attrTransQpDelta;
     countTLow = std::min(32, 1 << (transQuantParam / 8));
-    if (aps.refInitPredTransRatio >= 8) {  // cat1A
+    if (abh.reflInitPredTransRatio >= 8) {  // cat1A
       countTLow = 64 * std::max((int)8, countTLow);
     } else {  // cat2 cat1C
       countTLow = 1 * std::max((int)8, countTLow);
@@ -66,7 +66,8 @@ void WaveletCoreTransform(FXPoint* attributes, const int attribCount, const int 
   int64_t DistanceTH[32] = {0};
   DistanceTH[0] = disThInit;
   FXPoint* attributeCoeff = new FXPoint[voxelCount * attribCount * 2]();  // transform coefficients
-  FXPoint* recAttributesCoeff = new FXPoint[voxelCount * attribCount * 2]();           // reconstructed attributes
+  FXPoint* recAttributesCoeff =
+    new FXPoint[voxelCount * attribCount * 2]();           // reconstructed attributes
   bool* nodeModeFlag = new bool[voxelCount * 2]();         // transform/predict node flag
   int* positionsAllNodes = new int[2 * voxelCount * 3]();  // position coordinates
   size_t S_buffer[32] = {};
@@ -152,12 +153,16 @@ void WaveletCoreTransform(FXPoint* attributes, const int attribCount, const int 
     }
     N = M;
 
-    if (M < S_buffer[d] / 2 && M > 128)  // M: 当前层父层的节点数（d+1 层）；如果M大于128或者当前层具有预测节点，则进行距离阈值的更新
-      DistanceTH[d] = std::max({(int64_t)1, (int64_t)((double)DistanceTH[d - 1] * S_buffer[d] / M)});
+    if (
+      M < S_buffer[d] / 2 &&
+      M >
+        128)  // M: 当前层父层的节点数（d+1 层）；如果M大于128或者当前层具有预测节点，则进行距离阈值的更新
+      DistanceTH[d] =
+        std::max({(int64_t)1, (int64_t)((double)DistanceTH[d - 1] * S_buffer[d] / M)});
     else
       predictFlag = false;  // 当前层父层（d+1 层），不进行距离阈值判断，全部为变换节点
   }
-  FXPoint attributesDC[3] = {}; 
+  FXPoint attributesDC[3] = {};
   for (size_t k = 0; k < attribCount; k++) {
     attributesDC[k] = attributeCoeff[(S_buffer[d] - 1) * attribCount + k];
   }
@@ -171,15 +176,15 @@ void WaveletCoreTransform(FXPoint* attributes, const int attribCount, const int 
     FXPoint div_ac, div_dc, div_ac_neg;
     if (d & 1) {
       div_ac = 1 << (d - 1) / 2;
-      div_ac *= FXPoint(1.41421356);
+      div_ac *= KfraIndex[FXPoint::kFracBits - 1];
       div_ac_neg = 1 << (d - 1) / 2;
-      div_ac_neg *= FXPoint(-1.41421356);
+      div_ac_neg *= -KfraIndex[FXPoint::kFracBits - 1];
       div_dc = 1 << (d - 1) / 2;
     } else {
       div_ac = 1 << d / 2;
       div_ac_neg = -(1 << d / 2);
       div_dc = (1 << (d - 2) / 2);
-      div_dc *= FXPoint(1.41421356);
+      div_dc *= KfraIndex[FXPoint::kFracBits - 1];
     }
     d--;
     S_top = S_buffer[d + 1];
@@ -225,9 +230,9 @@ void WaveletCoreTransform(FXPoint* attributes, const int attribCount, const int 
           }
         }
         for (int kk = 0; kk < attribCount; kk++) {
-          attributes222[kk][1] =
-            invQuantValue(integerizedAttributes[N_top * attribCount + kk], transQuantParam, offsetShift);
-          attributes222[kk][1] *= div_ac;	
+          attributes222[kk][1] = invQuantValue(integerizedAttributes[N_top * attribCount + kk],
+                                               transQuantParam, offsetShift);
+          attributes222[kk][1] *= div_ac;
         }
 
         invTransform2Node(attribCount, attributes222);
@@ -251,11 +256,12 @@ void WaveletCoreTransform(FXPoint* attributes, const int attribCount, const int 
           attributesPred[kk] = attributeCoeff[N_bottom * attribCount + kk];
         }
         if (attribCount == 1) {
-          pred[0] = getReflectanceDCPredictor(N_bottom, recAttributesCoeff, positionsAllNodes,
-                                              nodeModeFlag, S_bottom - 1, S_top, axisBias, aps.predFixedPointFracBit);
+          pred[0] =
+            getReflectanceDCPredictor(N_bottom, recAttributesCoeff, positionsAllNodes, nodeModeFlag,
+                                      S_bottom - 1, S_top, axisBias, aps.predFixedPointFracBit);
         } else {
           pred = getColorDCPredictor(N_bottom, recAttributesCoeff, positionsAllNodes, nodeModeFlag,
-                                     S_bottom - 1, S_top, sps);
+                                     S_bottom - 1, S_top, aps.colorQuantParam);
         }
 
         for (int kk = 0; kk < attribCount; kk++) {
@@ -266,7 +272,7 @@ void WaveletCoreTransform(FXPoint* attributes, const int attribCount, const int 
             integerizedAttributes[N_top * attribCount + kk], transQuantParam, offsetShift);
           recAttributesCoeff[N_bottom * attribCount + kk] = invQuantValue(
             integerizedAttributes[N_top * attribCount + kk], transQuantParam, offsetShift);
-          recAttributesCoeff[N_bottom * attribCount + kk] *= div_dc;         
+          recAttributesCoeff[N_bottom * attribCount + kk] *= div_dc;
           recAttributesCoeff[N_bottom * attribCount + kk] += pred[kk];
         }
       } else {
@@ -292,8 +298,7 @@ template<typename T>
 void WaveletCoreInverseTransform(FXPoint* attributes, const int attribCount, const int voxelCount,
                                  T* integerizedAttributes, const SequenceParameterSet& sps,
                                  const AttributeParameterSet& aps, const AttributeBrickHeader& abh,
-                                 int* positions,
-                                 const int disThInit) {
+                                 int* positions, const int disThInit) {
   size_t M, N;
   size_t d, j, i, S;
 
@@ -304,17 +309,17 @@ void WaveletCoreInverseTransform(FXPoint* attributes, const int attribCount, con
   int countT = 0, countP = 0;
 
   if (attribCount == 3) {  // color default setting
-    transQuantParam = sps.colorQuantParam;
+    transQuantParam = aps.colorQuantParam;
     if (aps.transResLayer)
-      transQuantParam += aps.attrTransformQpDelta;
+      transQuantParam += aps.attrTransQpDelta;
     countTLow = std::min(32, 1 << (transQuantParam / 8));
     countTLow = 2 * std::max(8, countTLow);
   } else {
-    transQuantParam = sps.reflQuantParam + abh.reflQPoffset;
+    transQuantParam = aps.reflQuantParam + abh.QpOffset;
     if (aps.transResLayer)
-      transQuantParam += aps.attrTransformQpDelta;
+      transQuantParam += aps.attrTransQpDelta;
     countTLow = std::min(32, 1 << (transQuantParam / 8));
-    if (aps.refInitPredTransRatio >= 8) {  // cat1A
+    if (abh.reflInitPredTransRatio >= 8) {  // cat1A
       countTLow = 64 * std::max((int)8, countTLow);
     } else {  // cat2 cat1C
       countTLow = 1 * std::max((int)8, countTLow);
@@ -423,19 +428,19 @@ void WaveletCoreInverseTransform(FXPoint* attributes, const int attribCount, con
 
   for (int kk = 0; kk < attribCount; kk++)
     recAttributesCoeff[attribCount * (S_buffer[d] - 1) + kk] = integerizedAttributes[kk];
-  S_buffer[d + 1] = M;  
+  S_buffer[d + 1] = M;
   int MAXd = d;
   V3<FXPoint> pred;
   while (d > 0) {
     FXPoint div_ac, div_dc;
     if (d & 1) {
       div_ac = (1 << (d - 1) / 2);
-      div_ac *= FXPoint(1.41421356);
+      div_ac *= KfraIndex[FXPoint::kFracBits - 1];
       div_dc = 1 << (d - 1) / 2;
     } else {
       div_ac = 1 << d / 2;
       div_dc = (1 << (d - 2) / 2);
-      div_dc *= FXPoint(1.41421356);
+      div_dc *= KfraIndex[FXPoint::kFracBits - 1];
     }
     d--;
     S_top = S_buffer[d + 1];
@@ -460,11 +465,11 @@ void WaveletCoreInverseTransform(FXPoint* attributes, const int attribCount, con
           attributes222[kk][1] *= div_ac;
         }
 
-		if (d == (MAXd - 1)) {
+        if (d == (MAXd - 1)) {
           for (int kk = 0; kk < attribCount; kk++) {
             attributes222[kk][0] *= div_ac;
-	      }
-		}
+          }
+        }
 
         invTransform2Node(attribCount, attributes222);
         for (int kk = 0; kk < attribCount; kk++) {
@@ -484,11 +489,12 @@ void WaveletCoreInverseTransform(FXPoint* attributes, const int attribCount, con
         N_bottom--;
 
         if (attribCount == 1) {
-          pred[0] = getReflectanceDCPredictor(N_bottom, recAttributesCoeff, positionsAllNodes,
-                                              nodeModeFlag, S_bottom - 1, S_top, axisBias, aps.predFixedPointFracBit);
+          pred[0] =
+            getReflectanceDCPredictor(N_bottom, recAttributesCoeff, positionsAllNodes, nodeModeFlag,
+                                      S_bottom - 1, S_top, axisBias, aps.predFixedPointFracBit);
         } else {
           pred = getColorDCPredictor(N_bottom, recAttributesCoeff, positionsAllNodes, nodeModeFlag,
-                                     S_bottom - 1, S_top, sps);
+                                     S_bottom - 1, S_top, aps.colorQuantParam);
         }
 
         for (int kk = 0; kk < attribCount; kk++) {
@@ -519,771 +525,769 @@ void WaveletCoreInverseTransform(FXPoint* attributes, const int attribCount, con
 
 template<typename T>
 void WaveletCoreTransform(FXPoint* attributes, const int attribCount, const int voxelCount,
-    T* integerizedAttributes, const SequenceParameterSet& sps,
+                          T* integerizedAttributes, const SequenceParameterSet& sps,
                           const AttributeParameterSet& aps, const AttributeBrickHeader& abh,
-                          int* positions, int* RecAttributes,
-    const int disThInit, int* refAttributes, const int refAttribCount) {
-    size_t M, N;
-    size_t d, j, i, S;
+                          int* positions, int* RecAttributes, const int disThInit,
+                          int* refAttributes, const int refAttribCount) {
+  size_t M, N;
+  size_t d, j, i, S;
 
-    int offsetShift = aps.deadZoneLen == 0 ? 1 : aps.deadZoneLen * 0.1 * (1 << encoderShiftBit);
-    int axisBias = aps.axisBias;
-    int transQuantParam;
+  int offsetShift = aps.deadZoneLen == 0 ? 1 : aps.deadZoneLen * 0.1 * (1 << encoderShiftBit);
+  int axisBias = aps.axisBias;
+  int transQuantParam;
 
-    int countPLow = 6, countTLow = 0;
-    int countT = 0, countP = 0;
+  int countPLow = 6, countTLow = 0;
+  int countT = 0, countP = 0;
 
-    if (attribCount == 3) {  // color default setting
-      offsetShift = 0.2 * (1 << encoderShiftBit);
-      transQuantParam = sps.colorQuantParam;
-      if (aps.transResLayer)
-        transQuantParam += aps.attrTransformQpDelta;
-      countTLow = std::min(32, 1 << (transQuantParam / 8));
-      countTLow = 2 * std::max(8, countTLow);
-    } else {
-      transQuantParam = sps.reflQuantParam + abh.reflQPoffset;
-      if (aps.transResLayer)
-        transQuantParam += aps.attrTransformQpDelta;
-      countTLow = std::min(32, 1 << (transQuantParam / 8));
-      if (aps.refInitPredTransRatio >= 8) {  // cat1A
-        countTLow = 64 * std::max((int)8, countTLow);
-      } else {  // cat2 cat1C
-        countTLow = 1 * std::max((int)8, countTLow);
-      }
+  if (attribCount == 3) {  // color default setting
+    offsetShift = 0.2 * (1 << encoderShiftBit);
+    transQuantParam = aps.colorQuantParam;
+    if (aps.transResLayer)
+      transQuantParam += aps.attrTransQpDelta;
+    countTLow = std::min(32, 1 << (transQuantParam / 8));
+    countTLow = 2 * std::max(8, countTLow);
+  } else {
+    transQuantParam = aps.reflQuantParam + abh.QpOffset;
+    if (aps.transResLayer)
+      transQuantParam += aps.attrTransQpDelta;
+    countTLow = std::min(32, 1 << (transQuantParam / 8));
+    if (abh.reflInitPredTransRatio >= 8) {  // cat1A
+      countTLow = 64 * std::max((int)8, countTLow);
+    } else {  // cat2 cat1C
+      countTLow = 1 * std::max((int)8, countTLow);
     }
+  }
 
-    // processing single pts
-    if (voxelCount == 1) {
-      int predValue = 0;
-      if (attribCount == 3) {
-        predValue = 128;
-      }
-      for (size_t k = 0; k < attribCount; k++) {
-        int64_t delta = attributes[k].round() - predValue;
-        int residualSign = delta < 0 ? -1 : 1;
-        uint64_t absResidual = std::abs(delta);
-        uint64_t residualQuant;
-        residualQuant = QuantizaResidual(absResidual, transQuantParam, offsetShift);
-        int64_t signResidualQuant = residualSign * (int64_t)residualQuant;
-        integerizedAttributes[k] = signResidualQuant;
-        uint64_t inverseResidualQuant = InverseQuantizeResidual(residualQuant, transQuantParam);
-        int64_t recResidual = inverseResidualQuant * residualSign;
-        RecAttributes[k] = recResidual + predValue;
-      }
-      return;
+  // processing single pts
+  if (voxelCount == 1) {
+    int predValue = 0;
+    if (attribCount == 3) {
+      predValue = 128;
     }
-
-    int64_t DistanceTH[32] = { 0 };
-    DistanceTH[0] = disThInit;
-    FXPoint* attributeCoeff = new FXPoint[voxelCount * attribCount * 2]();  // transform coefficients
-    FXPoint* recAttributesCoeff = new FXPoint[voxelCount * attribCount * 2]();           // reconstructed attributes
-    bool* nodeModeFlag = new bool[voxelCount * 2]();         // transform/predict node flag
-    int* positionsAllNodes = new int[2 * voxelCount * 3]();  // position coordinates
-    size_t S_buffer[32] = {};
-    int* refAttributesAllNodes = new int[2 * voxelCount * refAttribCount]();
-
-    int ii = 2 * voxelCount, lowBound = voxelCount, jj = 0;
-    while (ii > lowBound) {
-        ii--;
-        for (int kk = 0; kk < attribCount; kk++)
-            attributeCoeff[ii * attribCount + kk] = attributes[jj * attribCount + kk];
-        for (int kk = 0; kk < 3; kk++)
-            positionsAllNodes[ii * 3 + kk] = positions[jj * 3 + kk];
-        for (int kk = 0; kk < refAttribCount; kk++)
-            refAttributesAllNodes[ii * refAttribCount + kk] = refAttributes[jj * refAttribCount + kk];
-        jj++;
-    }
-
-    d = 0;  // 层数
-    int distanceNodes = 0, distanceNodes_prev = 0, distanceNodes_prev_prev = 0, pairMode = 0;
-    bool predictFlag = true;
-    int idxNodeFlag, idxDCT;
-    M = N = voxelCount;
-    S_buffer[0] = 2 * N;
-    //************************************* compute DC and pred flag bottom->top **************************
-    while (N > 1) {
-        S_buffer[d + 1] = M;
-        idxNodeFlag = S_buffer[d];
-        d++;    //当前层序号
-        S = N;  //当前层节点数
-        i = 0;  //attributes 当前节点
-        M = 0;  //attributesTransformed 当前节点
-        countP = 0, countT = 0;
-        while (i < S) {
-            idxDCT = S_buffer[d - 1] - i - 1;
-            if (predictFlag) {
-                distanceNodes = 0;
-                for (int kk = 0; kk < refAttribCount; kk++) {
-                    int64_t tmp =
-                        abs(refAttributesAllNodes[idxDCT * refAttribCount + kk] - refAttributesAllNodes[(idxDCT - 1) * refAttribCount + kk]) >> 10;
-                    distanceNodes += tmp * tmp;
-                }
-                for (int kk = 0; kk < 3; kk++) {
-                    int64_t tmp =
-                        (positionsAllNodes[idxDCT * 3 + kk] - positionsAllNodes[(idxDCT - 1) * 3 + kk]);
-                    distanceNodes += tmp * tmp;
-                }
-                if (countT > countTLow && DistanceTH[d - 1] != 1) {
-                  DistanceTH[d - 1] = std::max(1, (int)(DistanceTH[d - 1] / 2));
-                  countT = 0;
-                } else if (countP > countPLow) {
-                  DistanceTH[d - 1] = DistanceTH[d - 1] * 2;
-                  countP = 0;
-                }
-            }
-            if ((distanceNodes > DistanceTH[d - 1]) && predictFlag) {  // pred node
-                idxNodeFlag--;
-                nodeModeFlag[idxNodeFlag] = true;
-                i++;
-                countP++;
-                countT = 0;
-            }
-            else {  // if distanceNodes <= th
-              if (distanceNodes > 0) {
-                countT = countT + 2;
-                countP = 0;
-              }
-                FXPoint attributes222[3][2] = {};
-                for (int k = 0; k < attribCount; k++) {
-                    attributes222[k][0] = attributeCoeff[idxDCT * attribCount + k];
-                    attributes222[k][1] = attributeCoeff[(idxDCT - 1) * attribCount + k];
-                }
-                for (int k = 0; k < attribCount; k++) {  // compute DC coefficient
-                    attributes222[k][0] += attributes222[k][1];
-                }
-                N--;
-                for (int kk = 0; kk < attribCount; kk++) {
-                    attributeCoeff[N * attribCount + kk] = attributes222[kk][0];
-                }
-                for (int kk = 0; kk < 3; kk++) {  // compute parent node coordinates
-                    positionsAllNodes[N * 3 + kk] =
-                        (positionsAllNodes[idxDCT * 3 + kk] + positionsAllNodes[(idxDCT - 1) * 3 + kk] + 1) / 2;
-                }
-                for (int kk = 0; kk < refAttribCount; kk++) {  // compute parent node reference attributes
-                    refAttributesAllNodes[N * refAttribCount + kk] =
-                        (refAttributesAllNodes[idxDCT * refAttribCount + kk] + refAttributesAllNodes[(idxDCT - 1) * refAttribCount + kk] + 1) / 2;
-                }
-                M++;
-                idxNodeFlag -= 2;
-                i += 2;
-            }
-            if (i == S - 1) {
-                idxNodeFlag--;
-                nodeModeFlag[idxNodeFlag] = true;
-                i++;
-            }
-        }
-        N = M;
-
-        if (M < S_buffer[d] / 2 && M > 128)  // M: 当前层父层的节点数（d+1 层）；如果M大于128或者当前层具有预测节点，则进行距离阈值的更新
-            DistanceTH[d] = std::max({ (int64_t)1, (int64_t)((double)DistanceTH[d - 1] * S_buffer[d] / M) });
-        else
-            predictFlag = false;  // 当前层父层（d+1 层），不进行距离阈值判断，全部为变换节点
-    }
-    FXPoint attributesDC[3] = {}; 
     for (size_t k = 0; k < attribCount; k++) {
-        attributesDC[k] = attributeCoeff[(S_buffer[d] - 1) * attribCount + k];
+      int64_t delta = attributes[k].round() - predValue;
+      int residualSign = delta < 0 ? -1 : 1;
+      uint64_t absResidual = std::abs(delta);
+      uint64_t residualQuant;
+      residualQuant = QuantizaResidual(absResidual, transQuantParam, offsetShift);
+      int64_t signResidualQuant = residualSign * (int64_t)residualQuant;
+      integerizedAttributes[k] = signResidualQuant;
+      uint64_t inverseResidualQuant = InverseQuantizeResidual(residualQuant, transQuantParam);
+      int64_t recResidual = inverseResidualQuant * residualSign;
+      RecAttributes[k] = recResidual + predValue;
     }
-    //************************************* compute AC and residue top->bottom **************************
-    int S_top, S_bottom, N_top, N_bottom, N_parent;
+    return;
+  }
 
+  int64_t DistanceTH[32] = {0};
+  DistanceTH[0] = disThInit;
+  FXPoint* attributeCoeff = new FXPoint[voxelCount * attribCount * 2]();  // transform coefficients
+  FXPoint* recAttributesCoeff =
+    new FXPoint[voxelCount * attribCount * 2]();           // reconstructed attributes
+  bool* nodeModeFlag = new bool[voxelCount * 2]();         // transform/predict node flag
+  int* positionsAllNodes = new int[2 * voxelCount * 3]();  // position coordinates
+  size_t S_buffer[32] = {};
+  int* refAttributesAllNodes = new int[2 * voxelCount * refAttribCount]();
+
+  int ii = 2 * voxelCount, lowBound = voxelCount, jj = 0;
+  while (ii > lowBound) {
+    ii--;
+    for (int kk = 0; kk < attribCount; kk++)
+      attributeCoeff[ii * attribCount + kk] = attributes[jj * attribCount + kk];
+    for (int kk = 0; kk < 3; kk++)
+      positionsAllNodes[ii * 3 + kk] = positions[jj * 3 + kk];
+    for (int kk = 0; kk < refAttribCount; kk++)
+      refAttributesAllNodes[ii * refAttribCount + kk] = refAttributes[jj * refAttribCount + kk];
+    jj++;
+  }
+
+  d = 0;  // 层数
+  int distanceNodes = 0, distanceNodes_prev = 0, distanceNodes_prev_prev = 0, pairMode = 0;
+  bool predictFlag = true;
+  int idxNodeFlag, idxDCT;
+  M = N = voxelCount;
+  S_buffer[0] = 2 * N;
+  //************************************* compute DC and pred flag bottom->top **************************
+  while (N > 1) {
     S_buffer[d + 1] = M;
-    int MAXd = d;
-    V3<FXPoint> pred;
-    while (d > 0) {
-        FXPoint div_ac, div_dc, div_ac_neg;
-        if (d & 1) {
-            div_ac = 1 << (d - 1) / 2;
-            div_ac *= FXPoint(1.41421356);
-            div_ac_neg = 1 << (d - 1) / 2;
-            div_ac_neg *= FXPoint(-1.41421356);
-            div_dc = 1 << (d - 1) / 2;
+    idxNodeFlag = S_buffer[d];
+    d++;    //当前层序号
+    S = N;  //当前层节点数
+    i = 0;  //attributes 当前节点
+    M = 0;  //attributesTransformed 当前节点
+    countP = 0, countT = 0;
+    while (i < S) {
+      idxDCT = S_buffer[d - 1] - i - 1;
+      if (predictFlag) {
+        distanceNodes = 0;
+        for (int kk = 0; kk < refAttribCount; kk++) {
+          int64_t tmp = abs(refAttributesAllNodes[idxDCT * refAttribCount + kk] -
+                            refAttributesAllNodes[(idxDCT - 1) * refAttribCount + kk]) >>
+            10;
+          distanceNodes += tmp * tmp;
+        }
+        for (int kk = 0; kk < 3; kk++) {
+          int64_t tmp =
+            (positionsAllNodes[idxDCT * 3 + kk] - positionsAllNodes[(idxDCT - 1) * 3 + kk]);
+          distanceNodes += tmp * tmp;
+        }
+        if (countT > countTLow && DistanceTH[d - 1] != 1) {
+          DistanceTH[d - 1] = std::max(1, (int)(DistanceTH[d - 1] / 2));
+          countT = 0;
+        } else if (countP > countPLow) {
+          DistanceTH[d - 1] = DistanceTH[d - 1] * 2;
+          countP = 0;
+        }
+      }
+      if ((distanceNodes > DistanceTH[d - 1]) && predictFlag) {  // pred node
+        idxNodeFlag--;
+        nodeModeFlag[idxNodeFlag] = true;
+        i++;
+        countP++;
+        countT = 0;
+      } else {  // if distanceNodes <= th
+        if (distanceNodes > 0) {
+          countT = countT + 2;
+          countP = 0;
+        }
+        FXPoint attributes222[3][2] = {};
+        for (int k = 0; k < attribCount; k++) {
+          attributes222[k][0] = attributeCoeff[idxDCT * attribCount + k];
+          attributes222[k][1] = attributeCoeff[(idxDCT - 1) * attribCount + k];
+        }
+        for (int k = 0; k < attribCount; k++) {  // compute DC coefficient
+          attributes222[k][0] += attributes222[k][1];
+        }
+        N--;
+        for (int kk = 0; kk < attribCount; kk++) {
+          attributeCoeff[N * attribCount + kk] = attributes222[kk][0];
+        }
+        for (int kk = 0; kk < 3; kk++) {  // compute parent node coordinates
+          positionsAllNodes[N * 3 + kk] =
+            (positionsAllNodes[idxDCT * 3 + kk] + positionsAllNodes[(idxDCT - 1) * 3 + kk] + 1) / 2;
+        }
+        for (int kk = 0; kk < refAttribCount; kk++) {  // compute parent node reference attributes
+          refAttributesAllNodes[N * refAttribCount + kk] =
+            (refAttributesAllNodes[idxDCT * refAttribCount + kk] +
+             refAttributesAllNodes[(idxDCT - 1) * refAttribCount + kk] + 1) /
+            2;
+        }
+        M++;
+        idxNodeFlag -= 2;
+        i += 2;
+      }
+      if (i == S - 1) {
+        idxNodeFlag--;
+        nodeModeFlag[idxNodeFlag] = true;
+        i++;
+      }
+    }
+    N = M;
+
+    if (
+      M < S_buffer[d] / 2 &&
+      M >
+        128)  // M: 当前层父层的节点数（d+1 层）；如果M大于128或者当前层具有预测节点，则进行距离阈值的更新
+      DistanceTH[d] =
+        std::max({(int64_t)1, (int64_t)((double)DistanceTH[d - 1] * S_buffer[d] / M)});
+    else
+      predictFlag = false;  // 当前层父层（d+1 层），不进行距离阈值判断，全部为变换节点
+  }
+  FXPoint attributesDC[3] = {};
+  for (size_t k = 0; k < attribCount; k++) {
+    attributesDC[k] = attributeCoeff[(S_buffer[d] - 1) * attribCount + k];
+  }
+  //************************************* compute AC and residue top->bottom **************************
+  int S_top, S_bottom, N_top, N_bottom, N_parent;
+
+  S_buffer[d + 1] = M;
+  int MAXd = d;
+  V3<FXPoint> pred;
+  while (d > 0) {
+    FXPoint div_ac, div_dc, div_ac_neg;
+    if (d & 1) {
+      div_ac = 1 << (d - 1) / 2;
+      div_ac *= KfraIndex[FXPoint::kFracBits - 1];
+      div_ac_neg = 1 << (d - 1) / 2;
+      div_ac_neg *= -KfraIndex[FXPoint::kFracBits - 1];
+      div_dc = 1 << (d - 1) / 2;
+    } else {
+      div_ac = 1 << d / 2;
+      div_ac_neg = -(1 << d / 2);
+      div_dc = (1 << (d - 2) / 2);
+      div_dc *= KfraIndex[FXPoint::kFracBits - 1];
+    }
+    d--;
+    S_top = S_buffer[d + 1];
+    S_bottom = S_buffer[d];
+    N_top = S_top;
+    N_bottom = S_bottom;
+    N_parent = S_top;
+    while (N_top > S_buffer[d + 2]) {
+      if (nodeModeFlag[N_bottom - 1]) {
+        N_top--;
+        N_bottom--;
+      } else {  // process all transform nodes in d-level
+        FXPoint attributes222[3][2] = {0};
+        N_bottom -= 2;
+        N_top--;
+        for (int kk = 0; kk < attribCount; kk++) {
+          attributes222[kk][0] = attributeCoeff[(N_bottom + 1) * attribCount + kk];
+          attributes222[kk][1] = attributeCoeff[N_bottom * attribCount + kk];
+        }
+
+        for (int kk = 0; kk < attribCount; kk++) {  // compute AC coefficient
+          attributes222[kk][1] -= attributes222[kk][0];
+          attributes222[kk][1] /= div_ac_neg;
+          integerizedAttributes[N_top * attribCount + kk] =
+            fwdQuantValue(attributes222[kk][1].round(), transQuantParam, offsetShift);
+        }
+
+        if (d == (MAXd - 1)) {
+          for (int kk = 0; kk < attribCount; kk++) {  // process the root node
+            attributesDC[kk] /= div_ac;
+            integerizedAttributes[kk] = attributesDC[kk].round();
+            integerizedAttributes[kk] =
+              fwdQuantValue(integerizedAttributes[kk], transQuantParam, offsetShift);
+            attributes222[kk][0] = invQuantValue(integerizedAttributes[kk], transQuantParam, 0);
+            attributes222[kk][0] *= div_ac;
+          }
         } else {
-            div_ac = 1 << d / 2;
-            div_ac_neg = -(1 << d / 2);
-            div_dc = (1 << (d - 2) / 2);
-            div_dc *= FXPoint(1.41421356);
+          N_parent--;
+          for (int kk = 0; kk < attribCount; kk++) {
+            attributes222[kk][0] = recAttributesCoeff[N_parent * attribCount + kk];
+          }
         }
-        d--;
-        S_top = S_buffer[d + 1];
-        S_bottom = S_buffer[d];
-        N_top = S_top;
-        N_bottom = S_bottom;
-        N_parent = S_top;
-        while (N_top > S_buffer[d + 2]) {
-            if (nodeModeFlag[N_bottom - 1]) {
-                N_top--;
-                N_bottom--;
-            }
-            else {  // process all transform nodes in d-level
-                FXPoint attributes222[3][2] = { 0 };
-                N_bottom -= 2;
-                N_top--;
-                for (int kk = 0; kk < attribCount; kk++) {
-                    attributes222[kk][0] = attributeCoeff[(N_bottom + 1) * attribCount + kk];
-                    attributes222[kk][1] = attributeCoeff[N_bottom * attribCount + kk];
-                }
-
-                for (int kk = 0; kk < attribCount; kk++) {  // compute AC coefficient
-                    attributes222[kk][1] -= attributes222[kk][0];
-                    attributes222[kk][1] /= div_ac_neg;
-                    integerizedAttributes[N_top * attribCount + kk] =
-                        fwdQuantValue(attributes222[kk][1].round(), transQuantParam, offsetShift);
-                }
-
-                if (d == (MAXd - 1)) {
-                    for (int kk = 0; kk < attribCount; kk++) {  // process the root node
-                       attributesDC[kk] /= div_ac;
-                       integerizedAttributes[kk] = attributesDC[kk].round();
-                       integerizedAttributes[kk] =
-                          fwdQuantValue(integerizedAttributes[kk], transQuantParam, offsetShift);
-                       attributes222[kk][0] =
-                          invQuantValue(integerizedAttributes[kk], transQuantParam, 0); 
-                       attributes222[kk][0] *= div_ac;
-                    }
-                }
-                else {
-                    N_parent--;
-                    for (int kk = 0; kk < attribCount; kk++) {
-                        attributes222[kk][0] = recAttributesCoeff[N_parent * attribCount + kk];
-                    }
-                }
-                for (int kk = 0; kk < attribCount; kk++) {
-                    attributes222[kk][1] = invQuantValue(
-                      integerizedAttributes[N_top * attribCount + kk], transQuantParam, offsetShift);
-                    attributes222[kk][1] *= div_ac;	
-                }
-
-                invTransform2Node(attribCount, attributes222);
-
-                for (int kk = 0; kk < attribCount; kk++) {
-                    recAttributesCoeff[(N_bottom + 1) * attribCount + kk] = attributes222[kk][0];
-                    recAttributesCoeff[N_bottom * attribCount + kk] = attributes222[kk][1];
-                }
-            }
+        for (int kk = 0; kk < attribCount; kk++) {
+          attributes222[kk][1] = invQuantValue(integerizedAttributes[N_top * attribCount + kk],
+                                               transQuantParam, offsetShift);
+          attributes222[kk][1] *= div_ac;
         }
-        S_top = S_buffer[d] - S_buffer[d + 1];
-        S_bottom = S_buffer[d];
-        N_top = S_buffer[d + 1];
-        N_bottom = S_bottom;
-        while (N_top > S_buffer[d + 2]) {
-            if (nodeModeFlag[N_bottom - 1]) {  // process all predict nodes in d-level
-                N_top--;
-                N_bottom--;
-                FXPoint attributesPred[3] = {0};
-                for (int kk = 0; kk < attribCount; kk++) {
-                   attributesPred[kk] = attributeCoeff[N_bottom * attribCount + kk];
-                }
-                if (attribCount == 1) {
-                    pred[0] = getReflectanceDCPredictorFromColor(N_bottom, recAttributesCoeff, positionsAllNodes,
-                        refAttributesAllNodes,
-                        nodeModeFlag, S_bottom - 1, S_top, axisBias, aps.predFixedPointFracBit);
 
-                }
-                else {
-                    pred = getColorDCPredictorFromRefl(N_bottom, recAttributesCoeff, positionsAllNodes,
-                        refAttributesAllNodes, nodeModeFlag, S_bottom - 1,
-                        S_top, sps);
-                }
+        invTransform2Node(attribCount, attributes222);
 
-                for (int kk = 0; kk < attribCount; kk++) {
-                  attributesPred[kk] -= pred[kk];
-                  attributesPred[kk] /= div_dc;
-                  integerizedAttributes[N_top * attribCount + kk] = attributesPred[kk].round();                    
-                    integerizedAttributes[N_top * attribCount + kk] = fwdQuantValue(
-                        integerizedAttributes[N_top * attribCount + kk], transQuantParam, offsetShift);
-                    recAttributesCoeff[N_bottom * attribCount + kk] = invQuantValue(
-                        integerizedAttributes[N_top * attribCount + kk], transQuantParam, offsetShift);
-                    recAttributesCoeff[N_bottom * attribCount + kk] *= div_dc;
-                    recAttributesCoeff[N_bottom * attribCount + kk] += pred[kk];
-                }
-            }
-            else {
-                N_bottom -= 2;
-                N_top--;
-            }
+        for (int kk = 0; kk < attribCount; kk++) {
+          recAttributesCoeff[(N_bottom + 1) * attribCount + kk] = attributes222[kk][0];
+          recAttributesCoeff[N_bottom * attribCount + kk] = attributes222[kk][1];
         }
+      }
     }
+    S_top = S_buffer[d] - S_buffer[d + 1];
+    S_bottom = S_buffer[d];
+    N_top = S_buffer[d + 1];
+    N_bottom = S_bottom;
+    while (N_top > S_buffer[d + 2]) {
+      if (nodeModeFlag[N_bottom - 1]) {  // process all predict nodes in d-level
+        N_top--;
+        N_bottom--;
+        FXPoint attributesPred[3] = {0};
+        for (int kk = 0; kk < attribCount; kk++) {
+          attributesPred[kk] = attributeCoeff[N_bottom * attribCount + kk];
+        }
+        if (attribCount == 1) {
+          pred[0] = getReflectanceDCPredictorFromColor(
+            N_bottom, recAttributesCoeff, positionsAllNodes, refAttributesAllNodes, nodeModeFlag,
+            S_bottom - 1, S_top, axisBias, aps.predFixedPointFracBit);
 
+        } else {
+          pred = getColorDCPredictorFromRefl(N_bottom, recAttributesCoeff, positionsAllNodes,
+                                             refAttributesAllNodes, nodeModeFlag, S_bottom - 1,
+                                             S_top, aps.colorQuantParam);
+        }
 
-    for (int i = 0; i < voxelCount; i++) {
-        for (int attri = 0; attri < attribCount; attri++)
-            RecAttributes[i * attribCount + attri] =
-            recAttributesCoeff[(S_bottom - i - 1) * attribCount + attri].round();
+        for (int kk = 0; kk < attribCount; kk++) {
+          attributesPred[kk] -= pred[kk];
+          attributesPred[kk] /= div_dc;
+          integerizedAttributes[N_top * attribCount + kk] = attributesPred[kk].round();
+          integerizedAttributes[N_top * attribCount + kk] = fwdQuantValue(
+            integerizedAttributes[N_top * attribCount + kk], transQuantParam, offsetShift);
+          recAttributesCoeff[N_bottom * attribCount + kk] = invQuantValue(
+            integerizedAttributes[N_top * attribCount + kk], transQuantParam, offsetShift);
+          recAttributesCoeff[N_bottom * attribCount + kk] *= div_dc;
+          recAttributesCoeff[N_bottom * attribCount + kk] += pred[kk];
+        }
+      } else {
+        N_bottom -= 2;
+        N_top--;
+      }
     }
+  }
 
-    delete[] attributeCoeff;
-    delete[] recAttributesCoeff;
-    delete[] positionsAllNodes;
-    delete[] nodeModeFlag;
-    delete[] refAttributesAllNodes;
+  for (int i = 0; i < voxelCount; i++) {
+    for (int attri = 0; attri < attribCount; attri++)
+      RecAttributes[i * attribCount + attri] =
+        recAttributesCoeff[(S_bottom - i - 1) * attribCount + attri].round();
+  }
+
+  delete[] attributeCoeff;
+  delete[] recAttributesCoeff;
+  delete[] positionsAllNodes;
+  delete[] nodeModeFlag;
+  delete[] refAttributesAllNodes;
 }
 
 template<typename T>
 void WaveletCoreInverseTransform(FXPoint* attributes, const int attribCount, const int voxelCount,
-    T* integerizedAttributes, const SequenceParameterSet& sps,
+                                 T* integerizedAttributes, const SequenceParameterSet& sps,
                                  const AttributeParameterSet& aps, const AttributeBrickHeader& abh,
-                                 int* positions,
-    const int disThInit, int* refAttributes, const int refAttribCount) {
-    size_t M, N;
-    size_t d, j, i, S;
+                                 int* positions, const int disThInit, int* refAttributes,
+                                 const int refAttribCount) {
+  size_t M, N;
+  size_t d, j, i, S;
 
-    int axisBias = aps.axisBias;
-    int transQuantParam;
+  int axisBias = aps.axisBias;
+  int transQuantParam;
 
-    int countPLow = 6, countTLow = 0;
-    int countT = 0, countP = 0;
+  int countPLow = 6, countTLow = 0;
+  int countT = 0, countP = 0;
 
-    if (attribCount == 3) {  // color default setting
-      transQuantParam = sps.colorQuantParam;
-      if (aps.transResLayer)
-        transQuantParam += aps.attrTransformQpDelta;
-      countTLow = std::min(32, 1 << (transQuantParam / 8));
-      countTLow = 2 * std::max(8, countTLow);
-    } else {
-      transQuantParam = sps.reflQuantParam + abh.reflQPoffset;
-      if (aps.transResLayer)
-        transQuantParam += aps.attrTransformQpDelta;
-      countTLow = std::min(32, 1 << (transQuantParam / 8));
-      if (aps.refInitPredTransRatio >= 8) {  // cat1A
-        countTLow = 64 * std::max((int)8, countTLow);
-      } else {  // cat2 cat1C
-        countTLow = 1 * std::max((int)8, countTLow);
-      }
+  if (attribCount == 3) {  // color default setting
+    transQuantParam = aps.colorQuantParam;
+    if (aps.transResLayer)
+      transQuantParam += aps.attrTransQpDelta;
+    countTLow = std::min(32, 1 << (transQuantParam / 8));
+    countTLow = 2 * std::max(8, countTLow);
+  } else {
+    transQuantParam = aps.reflQuantParam + abh.QpOffset;
+    if (aps.transResLayer)
+      transQuantParam += aps.attrTransQpDelta;
+    countTLow = std::min(32, 1 << (transQuantParam / 8));
+    if (abh.reflInitPredTransRatio >= 8) {  // cat1A
+      countTLow = 64 * std::max((int)8, countTLow);
+    } else {  // cat2 cat1C
+      countTLow = 1 * std::max((int)8, countTLow);
     }
+  }
 
-    // processing single pts
-    if (voxelCount == 1) {
-      int predValue = 0;
-      ;
-      if (attribCount == 3) {
-        predValue = 128;
-      }
-      for (size_t k = 0; k < attribCount; k++) {
-        attributes[k] = FXPoint(integerizedAttributes[k] + predValue);
-      }
-      return;
+  // processing single pts
+  if (voxelCount == 1) {
+    int predValue = 0;
+    ;
+    if (attribCount == 3) {
+      predValue = 128;
     }
-
-    int64_t DistanceTH[32] = { 0 };
-    DistanceTH[0] = disThInit;
-
-    bool* nodeModeFlag = new bool[voxelCount * 2]();
-    int* positionsAllNodes = new int[2 * voxelCount * 3]();
-    FXPoint* recAttributesCoeff = new FXPoint[voxelCount * attribCount * 2]();
-    int* refAttributesAllNodes = new int[2 * voxelCount * refAttribCount]();
-
-    int ii = 2 * voxelCount, lowBound = voxelCount, jj = 0;
-    while (ii > lowBound) {
-        ii--;
-        for (int kk = 0; kk < 3; kk++)
-            positionsAllNodes[ii * 3 + kk] = positions[jj * 3 + kk];
-        for (int kk = 0; kk < refAttribCount; kk++)
-            refAttributesAllNodes[ii * refAttribCount + kk] = refAttributes[jj * refAttribCount + kk];
-        jj++;
+    for (size_t k = 0; k < attribCount; k++) {
+      attributes[k] = FXPoint(integerizedAttributes[k] + predValue);
     }
+    return;
+  }
 
-    d = 0;  // 层数
-    int distanceNodes = 0, distanceNodes_prev = 0, distanceNodes_prev_prev = 0, pairMode = 0;
-    bool predictFlag = true;
-    int idxNodeFlag, idxDCT;
-    M = N = voxelCount;
-    size_t S_buffer[32] = {};
-    S_buffer[0] = 2 * voxelCount;
-    //************************************* compute DC and pred flag bottom->top **************************
-    while (N > 1) {
-        S_buffer[d + 1] = M;
-        idxNodeFlag = S_buffer[d];
-        d++;    //当前层序号
-        S = N;  //当前层节点数
-        i = 0;  //attributes 当前节点
-        M = 0;  //attributesTransformed 当前节点
-        countP = 0, countT = 0;
-        while (i < S) {
-            idxDCT = S_buffer[d - 1] - i - 1;
-            if (predictFlag) {
-                distanceNodes = 0;
-                for (int kk = 0; kk < refAttribCount; kk++) {
-                    int64_t tmp = abs(refAttributesAllNodes[idxDCT * refAttribCount + kk] -
-                        refAttributesAllNodes[(idxDCT - 1) * refAttribCount + kk]) >>
-                        10;
-                    distanceNodes += tmp * tmp;
-                }
-                for (int kk = 0; kk < 3; kk++) {
-                    int64_t tmp =
-                        (positionsAllNodes[idxDCT * 3 + kk] - positionsAllNodes[(idxDCT - 1) * 3 + kk]);
-                    distanceNodes += tmp * tmp;
-                }
-                if (countT > countTLow && DistanceTH[d - 1] != 1) {
-                  DistanceTH[d - 1] = std::max(1, (int)(DistanceTH[d - 1] / 2));
-                  countT = 0;
-                } else if (countP > countPLow) {
-                  DistanceTH[d - 1] = DistanceTH[d - 1] * 2;
-                  countP = 0;
-                }
-            }
-            if (distanceNodes > DistanceTH[d - 1] && predictFlag) {
-                idxNodeFlag--;
-                nodeModeFlag[idxNodeFlag] = true;
-                i++;
-                countP++;
-                countT = 0;
-            }
-            else {
-              if (distanceNodes > 0) {
-                countT = countT + 2;
-                countP = 0;
-              }
-                N--;
-                for (int kk = 0; kk < 3; kk++) {  // compute parent node coordinates
-                    positionsAllNodes[N * 3 + kk] =
-                        (positionsAllNodes[idxDCT * 3 + kk] + positionsAllNodes[(idxDCT - 1) * 3 + kk] + 1) / 2;
-                }
-                for (int kk = 0; kk < refAttribCount; kk++) {  // compute parent node reference attributes
-                    refAttributesAllNodes[N * refAttribCount + kk] =
-                        (refAttributesAllNodes[idxDCT * refAttribCount + kk] +
-                            refAttributesAllNodes[(idxDCT - 1) * refAttribCount + kk] + 1) /
-                        2;
-                }
-                M++;
-                idxNodeFlag -= 2;
-                i += 2;
-            }
-            if (i == S - 1) {
-                idxNodeFlag--;
-                nodeModeFlag[idxNodeFlag] = true;
-                i++;
-            }
-        }
-        N = M;
+  int64_t DistanceTH[32] = {0};
+  DistanceTH[0] = disThInit;
 
-        if (M < S_buffer[d] / 2 && M > 128)
-            DistanceTH[d] =
-            std::max({ (int64_t)1, (int64_t)((double)DistanceTH[d - 1] * S_buffer[d] / M) });
-        else
-            predictFlag = false;
-    }
+  bool* nodeModeFlag = new bool[voxelCount * 2]();
+  int* positionsAllNodes = new int[2 * voxelCount * 3]();
+  FXPoint* recAttributesCoeff = new FXPoint[voxelCount * attribCount * 2]();
+  int* refAttributesAllNodes = new int[2 * voxelCount * refAttribCount]();
 
-    //************************************* compute AC and residue top->bottom **************************
-    int S_top, S_bottom, N_top_AC, N_bottom, N_top_DC;
+  int ii = 2 * voxelCount, lowBound = voxelCount, jj = 0;
+  while (ii > lowBound) {
+    ii--;
+    for (int kk = 0; kk < 3; kk++)
+      positionsAllNodes[ii * 3 + kk] = positions[jj * 3 + kk];
+    for (int kk = 0; kk < refAttribCount; kk++)
+      refAttributesAllNodes[ii * refAttribCount + kk] = refAttributes[jj * refAttribCount + kk];
+    jj++;
+  }
 
-    for (int kk = 0; kk < attribCount; kk++)
-        recAttributesCoeff[attribCount * (S_buffer[d] - 1) + kk] = integerizedAttributes[kk];
+  d = 0;  // 层数
+  int distanceNodes = 0, distanceNodes_prev = 0, distanceNodes_prev_prev = 0, pairMode = 0;
+  bool predictFlag = true;
+  int idxNodeFlag, idxDCT;
+  M = N = voxelCount;
+  size_t S_buffer[32] = {};
+  S_buffer[0] = 2 * voxelCount;
+  //************************************* compute DC and pred flag bottom->top **************************
+  while (N > 1) {
     S_buffer[d + 1] = M;
-    int MAXd = d;
-    V3<FXPoint> pred;
-    while (d > 0) {
-        FXPoint div_ac, div_dc;
-        if (d & 1) {
-            div_ac = (1 << (d - 1) / 2);
-            div_ac *= FXPoint(1.41421356);
-            div_dc = 1 << (d - 1) / 2;
+    idxNodeFlag = S_buffer[d];
+    d++;    //当前层序号
+    S = N;  //当前层节点数
+    i = 0;  //attributes 当前节点
+    M = 0;  //attributesTransformed 当前节点
+    countP = 0, countT = 0;
+    while (i < S) {
+      idxDCT = S_buffer[d - 1] - i - 1;
+      if (predictFlag) {
+        distanceNodes = 0;
+        for (int kk = 0; kk < refAttribCount; kk++) {
+          int64_t tmp = abs(refAttributesAllNodes[idxDCT * refAttribCount + kk] -
+                            refAttributesAllNodes[(idxDCT - 1) * refAttribCount + kk]) >>
+            10;
+          distanceNodes += tmp * tmp;
+        }
+        for (int kk = 0; kk < 3; kk++) {
+          int64_t tmp =
+            (positionsAllNodes[idxDCT * 3 + kk] - positionsAllNodes[(idxDCT - 1) * 3 + kk]);
+          distanceNodes += tmp * tmp;
+        }
+        if (countT > countTLow && DistanceTH[d - 1] != 1) {
+          DistanceTH[d - 1] = std::max(1, (int)(DistanceTH[d - 1] / 2));
+          countT = 0;
+        } else if (countP > countPLow) {
+          DistanceTH[d - 1] = DistanceTH[d - 1] * 2;
+          countP = 0;
+        }
+      }
+      if (distanceNodes > DistanceTH[d - 1] && predictFlag) {
+        idxNodeFlag--;
+        nodeModeFlag[idxNodeFlag] = true;
+        i++;
+        countP++;
+        countT = 0;
+      } else {
+        if (distanceNodes > 0) {
+          countT = countT + 2;
+          countP = 0;
+        }
+        N--;
+        for (int kk = 0; kk < 3; kk++) {  // compute parent node coordinates
+          positionsAllNodes[N * 3 + kk] =
+            (positionsAllNodes[idxDCT * 3 + kk] + positionsAllNodes[(idxDCT - 1) * 3 + kk] + 1) / 2;
+        }
+        for (int kk = 0; kk < refAttribCount; kk++) {  // compute parent node reference attributes
+          refAttributesAllNodes[N * refAttribCount + kk] =
+            (refAttributesAllNodes[idxDCT * refAttribCount + kk] +
+             refAttributesAllNodes[(idxDCT - 1) * refAttribCount + kk] + 1) /
+            2;
+        }
+        M++;
+        idxNodeFlag -= 2;
+        i += 2;
+      }
+      if (i == S - 1) {
+        idxNodeFlag--;
+        nodeModeFlag[idxNodeFlag] = true;
+        i++;
+      }
+    }
+    N = M;
+
+    if (M < S_buffer[d] / 2 && M > 128)
+      DistanceTH[d] =
+        std::max({(int64_t)1, (int64_t)((double)DistanceTH[d - 1] * S_buffer[d] / M)});
+    else
+      predictFlag = false;
+  }
+
+  //************************************* compute AC and residue top->bottom **************************
+  int S_top, S_bottom, N_top_AC, N_bottom, N_top_DC;
+
+  for (int kk = 0; kk < attribCount; kk++)
+    recAttributesCoeff[attribCount * (S_buffer[d] - 1) + kk] = integerizedAttributes[kk];
+  S_buffer[d + 1] = M;
+  int MAXd = d;
+  V3<FXPoint> pred;
+  while (d > 0) {
+    FXPoint div_ac, div_dc;
+    if (d & 1) {
+      div_ac = (1 << (d - 1) / 2);
+      div_ac *= KfraIndex[FXPoint::kFracBits - 1];
+      div_dc = 1 << (d - 1) / 2;
+    } else {
+      div_ac = 1 << d / 2;
+      div_dc = (1 << (d - 2) / 2);
+      div_dc *= KfraIndex[FXPoint::kFracBits - 1];
+    }
+    d--;
+    S_top = S_buffer[d + 1];
+    S_bottom = S_buffer[d];
+    N_top_AC = S_top;
+    N_bottom = S_bottom;
+    N_top_DC = S_top;
+    //FLAG = (S_bottom - S_top) % 2;
+    while (N_top_AC > S_buffer[d + 2]) {
+      if (nodeModeFlag[N_bottom - 1]) {
+        N_top_AC--;
+        N_bottom--;
+      } else {
+        FXPoint attributes222[3][2] = {0};
+        N_bottom -= 2;
+        N_top_AC--;
+        N_top_DC--;
+
+        for (int kk = 0; kk < attribCount; kk++) {
+          attributes222[kk][0] = recAttributesCoeff[N_top_DC * attribCount + kk];
+          attributes222[kk][1] = integerizedAttributes[N_top_AC * attribCount + kk];
+          attributes222[kk][1] *= div_ac;
+        }
+        if (d == (MAXd - 1)) {
+          for (int kk = 0; kk < attribCount; kk++) {
+            attributes222[kk][0] *= div_ac;
+          }
+        }
+
+        invTransform2Node(attribCount, attributes222);
+        for (int kk = 0; kk < attribCount; kk++) {
+          recAttributesCoeff[(N_bottom + 1) * attribCount + kk] = attributes222[kk][0];
+          recAttributesCoeff[N_bottom * attribCount + kk] = attributes222[kk][1];
+        }
+      }
+    }
+
+    S_top = S_buffer[d] - S_buffer[d + 1];
+    S_bottom = S_buffer[d];
+    N_top_AC = S_buffer[d + 1];
+    N_bottom = S_bottom;
+    while (N_top_AC > S_buffer[d + 2]) {
+      if (nodeModeFlag[N_bottom - 1]) {
+        N_top_AC--;
+        N_bottom--;
+
+        if (attribCount == 1) {
+          pred[0] = getReflectanceDCPredictorFromColor(
+            N_bottom, recAttributesCoeff, positionsAllNodes, refAttributesAllNodes, nodeModeFlag,
+            S_bottom - 1, S_top, axisBias, aps.predFixedPointFracBit);
         } else {
-            div_ac = 1 << d / 2;
-            div_dc = (1 << (d - 2) / 2);
-            div_dc *= FXPoint(1.41421356);
-        }
-        d--;
-        S_top = S_buffer[d + 1];
-        S_bottom = S_buffer[d];
-        N_top_AC = S_top;
-        N_bottom = S_bottom;
-        N_top_DC = S_top;
-        //FLAG = (S_bottom - S_top) % 2;
-        while (N_top_AC > S_buffer[d + 2]) {
-            if (nodeModeFlag[N_bottom - 1]) {
-                N_top_AC--;
-                N_bottom--;
-            }
-            else {
-                FXPoint attributes222[3][2] = { 0 };
-                N_bottom -= 2;
-                N_top_AC--;
-                N_top_DC--;
-
-                for (int kk = 0; kk < attribCount; kk++) {
-                    attributes222[kk][0] = recAttributesCoeff[N_top_DC * attribCount + kk];
-                    attributes222[kk][1] = integerizedAttributes[N_top_AC * attribCount + kk];
-                    attributes222[kk][1] *= div_ac;
-                }
-                if (d == (MAXd - 1)) {
-                  for (int kk = 0; kk < attribCount; kk++) {
-                    attributes222[kk][0] *= div_ac;
-                  }
-				}
-
-                invTransform2Node(attribCount, attributes222);
-                for (int kk = 0; kk < attribCount; kk++) {
-                    recAttributesCoeff[(N_bottom + 1) * attribCount + kk] = attributes222[kk][0];
-                    recAttributesCoeff[N_bottom * attribCount + kk] = attributes222[kk][1];
-                }
-            }
+          pred = getColorDCPredictorFromRefl(N_bottom, recAttributesCoeff, positionsAllNodes,
+                                             refAttributesAllNodes, nodeModeFlag, S_bottom - 1,
+                                             S_top, aps.colorQuantParam);
         }
 
-        S_top = S_buffer[d] - S_buffer[d + 1];
-        S_bottom = S_buffer[d];
-        N_top_AC = S_buffer[d + 1];
-        N_bottom = S_bottom;
-        while (N_top_AC > S_buffer[d + 2]) {
-            if (nodeModeFlag[N_bottom - 1]) {
-                N_top_AC--;
-                N_bottom--;
-
-                if (attribCount == 1) {
-                    pred[0] = getReflectanceDCPredictorFromColor(
-                        N_bottom, recAttributesCoeff, positionsAllNodes, refAttributesAllNodes,
-                        nodeModeFlag, S_bottom - 1, S_top, axisBias, aps.predFixedPointFracBit);
-                }
-                else {
-                    pred = getColorDCPredictorFromRefl(N_bottom, recAttributesCoeff, positionsAllNodes,
-                        refAttributesAllNodes, nodeModeFlag, S_bottom - 1,
-                        S_top, sps);
-                }
-
-                for (int kk = 0; kk < attribCount; kk++) {
-                    recAttributesCoeff[N_bottom * attribCount + kk] =
-                        integerizedAttributes[N_top_AC * attribCount + kk];
-					recAttributesCoeff[N_bottom * attribCount + kk] *= div_dc;
-                    recAttributesCoeff[N_bottom * attribCount + kk] += pred[kk];
-                }
-            }
-            else {
-                N_bottom -= 2;
-                N_top_AC--;
-            }
+        for (int kk = 0; kk < attribCount; kk++) {
+          recAttributesCoeff[N_bottom * attribCount + kk] =
+            integerizedAttributes[N_top_AC * attribCount + kk];
+          recAttributesCoeff[N_bottom * attribCount + kk] *= div_dc;
+          recAttributesCoeff[N_bottom * attribCount + kk] += pred[kk];
         }
+      } else {
+        N_bottom -= 2;
+        N_top_AC--;
+      }
     }
+  }
 
-    ii = 2 * voxelCount, lowBound = voxelCount, jj = 0;
-    while (ii > lowBound) {
-        ii--;
-        for (int kk = 0; kk < attribCount; kk++)
-            attributes[jj * attribCount + kk] = recAttributesCoeff[ii * attribCount + kk];
-        jj++;
-    }
+  ii = 2 * voxelCount, lowBound = voxelCount, jj = 0;
+  while (ii > lowBound) {
+    ii--;
+    for (int kk = 0; kk < attribCount; kk++)
+      attributes[jj * attribCount + kk] = recAttributesCoeff[ii * attribCount + kk];
+    jj++;
+  }
 
-    delete[] nodeModeFlag;
-    delete[] recAttributesCoeff;
-    delete[] positionsAllNodes;
+  delete[] nodeModeFlag;
+  delete[] recAttributesCoeff;
+  delete[] positionsAllNodes;
 }
 //============================================================================================
 Void getLength(std::vector<pointCodeWithIndex>& pointCloudHilbert, vector<int>& length,
-               vector<int>& numofGroupCount, int maxNumofCoeff,
-               int& ShiftBits, UInt MaxNum) {
+               vector<int>& numofGroupCount, int maxNumofCoeff, int& ShiftBits, UInt MaxTransNum) {
   auto voxelCount = pointCloudHilbert.size();
-  int64_t cur_ordercode = 0;
-  int countL = 0;
-  queue<int> numPts;
-  int maxQueue = 3, checkLen = 32;  /// adaptive adjust Pos_Shift
-  int sumNum = 0;
-  int groupIndex = 0;
-  int64_t lastcode;
-  bool isduplicate = false;
-  int totalNum = 0;
+  if (MaxTransNum > 1) {
+    int64_t cur_ordercode = 0;
+    int countL = 0;
+    queue<int> numPts;
+    int maxQueue = 3, checkLen = 32;  /// adaptive adjust Pos_Shift
+    int sumNum = 0;
+    int groupIndex = 0;
+    int64_t lastcode = -1;
+    bool isduplicate = false;
+    int totalNum = 0;
+    for (int curIndex = 0; curIndex < voxelCount;) {
+      if (groupIndex % checkLen == 0 && groupIndex > 0) {
+        auto aveNum = sumNum >> maxQueue;
+        if (aveNum < 2)
+          ShiftBits += 1;
+        else if (aveNum > 8)
+          ShiftBits -= 1;
+      }
+      ShiftBits = std::max(3, ShiftBits);
 
-  for (int curIndex = 0; curIndex < voxelCount;) {
-    if (groupIndex % checkLen == 0 && groupIndex > 0) {
-      auto aveNum = sumNum >> maxQueue;
-      if (aveNum < 2)
-        ShiftBits += 1;
-      else if (aveNum > 8)
-        ShiftBits -= 1;
-    }
-    ShiftBits = std::max(3, ShiftBits);
+      cur_ordercode = pointCloudHilbert[curIndex].code >> ShiftBits;
+      countL = 0;
 
-    cur_ordercode = pointCloudHilbert[curIndex].code >> ShiftBits;
-    lastcode = pointCloudHilbert[curIndex].code;
-    countL = 1;
-
-    while (((curIndex + countL) < (voxelCount) &&
-            cur_ordercode == pointCloudHilbert[curIndex + countL].code >> ShiftBits)) {
-      if (lastcode == pointCloudHilbert[curIndex + countL].code) {
+      //处理重复点
+      if (((curIndex + countL) < (voxelCount)) &&
+          pointCloudHilbert[curIndex + countL].code == lastcode) {
+        lastcode = pointCloudHilbert[curIndex + countL].code;
+        countL++;
         isduplicate = true;
-      }
-      lastcode = pointCloudHilbert[curIndex + countL].code;
-      countL++;
-    }
-    lengthDivide(pointCloudHilbert, length, countL, MaxNum, maxNumofCoeff, numofGroupCount,
-                 totalNum, curIndex, ShiftBits, isduplicate);
-    numPts.push(countL);
-    sumNum += countL;
-    if (numPts.size() > maxQueue) {
-      sumNum -= numPts.front();
-      numPts.pop();
-    }
-    groupIndex++;
-    curIndex += countL;
-  }
-  if (maxNumofCoeff > MaxNum)
-    numofGroupCount.push_back(length.size());
-}
-
-Void lengthDivide(std::vector<pointCodeWithIndex>& pointCloudHilbert, vector<int>& length, int num,
-                  int MaxNum, int maxNumofCoeff, vector<int>& numofGroupCount, int& totalNum,
-                  int curIdx, int shiftBits, bool isduplicate) {
-  int count = 0, countL = 0;
-  int NumOfSubGroup = 0;
-  int shiftBits2 = shiftBits;
-  int64_t cur_ordercode = 0;
-  if (num <= MaxNum) {
-    length.push_back(num);
-    if (maxNumofCoeff > MaxNum) {
-      totalNum += num;
-      if (totalNum > maxNumofCoeff) {
-        numofGroupCount.push_back(length.size() - 1);
-        totalNum = num;
-      }
-    } else {
-      numofGroupCount.push_back(length.size());
-    }
-    return;
-  } else if (num >= MaxNum && !isduplicate) {
-    shiftBits2 = max(1, shiftBits2 - 1);
-    for (int idx = curIdx; idx < curIdx + num;) {
-      cur_ordercode = pointCloudHilbert[idx].code >> shiftBits2;
-      countL = 1;
-
-      while (((idx + countL) < (curIdx + num) &&
-              cur_ordercode == pointCloudHilbert[idx + countL].code >> shiftBits2)) {
-        countL++;
-      }
-      lengthDivide(pointCloudHilbert, length, countL, MaxNum, maxNumofCoeff, numofGroupCount,
-                   totalNum, idx, shiftBits2, isduplicate);
-      count++;
-      idx += countL;
-    }
-  } else {
-    while (num) {
-      auto lengthNum = min(num, MaxNum);
-      length.push_back(lengthNum);
-      if (maxNumofCoeff > MaxNum) {
-        totalNum += lengthNum;
-        if (totalNum > maxNumofCoeff) {
-          numofGroupCount.push_back(length.size() - 1);
-          totalNum = lengthNum;
-        }
-      } else {
-        numofGroupCount.push_back(length.size());
-      }
-      num -= lengthNum;
-    }
-  }
-  return;
-}
-
-Void getLengthRef(const Int& shift, std::vector<pointCodeWithIndex>& pointCloudHilbert,
-                  vector<int>& length, vector<int>& numofGroupCount, int maxNumofCoeff,
-                  int& ShiftBits, const UInt& MaxNum, const bool isMemControl) {
-  auto voxelCount = pointCloudHilbert.size();
-  int64_t cur_ordercode = 0;
-  int countL = 0;
-  queue<int> numPts;
-  int maxQueue = 8, checkLen = 8;  /// adaptive adjust Pos_Shift
-  int sumNum = 0;
-  int groupIndex = 0;
-  int64_t lastcode = -1;
-  bool isduplicate = false;
-  int totalNum = 0;
-  for (int curIndex = 0; curIndex < voxelCount;) {
-    if (MaxNum > 2 && shift > 0 && groupIndex % checkLen == 0 && groupIndex > 0) {
-      auto aveNum = sumNum / maxQueue;
-      if (aveNum < 2)
-        ShiftBits += 1;
-      else if (aveNum > MaxNum)
-        ShiftBits -= 1;
-    }
-    ShiftBits = std::max(1, ShiftBits);
-
-    cur_ordercode = pointCloudHilbert[curIndex].code >> ShiftBits;
-    countL = 0;
-
-    //处理重复点
-    if (((curIndex + countL) < (voxelCount)) &&
-        pointCloudHilbert[curIndex + countL].code == lastcode) {
-      lastcode = pointCloudHilbert[curIndex + countL].code;
-      countL++;
-      isduplicate = true;
-      while (((curIndex + countL) < (voxelCount) &&
-              lastcode == pointCloudHilbert[curIndex + countL].code)) {
-        countL++;
-      }
-    } else {
-      lastcode = pointCloudHilbert[curIndex + countL].code;
-      countL++;
-      while (((curIndex + countL) < (voxelCount) &&
-              cur_ordercode == pointCloudHilbert[curIndex + countL].code >> ShiftBits)) {
-        //重复点
-        isduplicate = false;
-        if (pointCloudHilbert[curIndex + countL].code == lastcode) {
-          break;
-        } else {
-          lastcode = pointCloudHilbert[curIndex + countL].code;
+        while (((curIndex + countL) < (voxelCount) &&
+                lastcode == pointCloudHilbert[curIndex + countL].code)) {
           countL++;
         }
+      } else {
+        lastcode = pointCloudHilbert[curIndex + countL].code;
+        countL++;
+        while (((curIndex + countL) < (voxelCount) &&
+                cur_ordercode == pointCloudHilbert[curIndex + countL].code >> ShiftBits)) {
+          //重复点
+          isduplicate = false;
+          if (pointCloudHilbert[curIndex + countL].code == lastcode) {
+            break;
+          } else {
+            lastcode = pointCloudHilbert[curIndex + countL].code;
+            countL++;
+          }
+        }
       }
-    }
-    lastcode = pointCloudHilbert[curIndex + countL - 1].code;
-    lengthDivideRef(pointCloudHilbert, length, countL, MaxNum, maxNumofCoeff, numofGroupCount,
-                    totalNum, curIndex, ShiftBits, isduplicate, isMemControl);
-    isduplicate = false;
-    if (MaxNum > 2) {
+      lastcode = pointCloudHilbert[curIndex + countL - 1].code;
+      lengthDivide(pointCloudHilbert, length, countL, MaxTransNum, maxNumofCoeff, numofGroupCount,
+                   totalNum, curIndex, ShiftBits, isduplicate);
+      isduplicate = false;
       numPts.push(countL);
       sumNum += countL;
       if (numPts.size() > maxQueue) {
         sumNum -= numPts.front();
         numPts.pop();
       }
+      groupIndex++;
+      curIndex += countL;
     }
-    groupIndex++;
-    curIndex += countL;
+    if (maxNumofCoeff > MaxTransNum)
+      numofGroupCount.push_back(length.size());
+  } else {
+    int num = voxelCount / maxNumofCoeff;
+    length.resize(voxelCount, 1);
+    numofGroupCount.resize(num + 1);
+    if (maxNumofCoeff < voxelCount) {
+      numofGroupCount[0] = maxNumofCoeff;
+      for (int i = 1; i < num; i++) {
+        numofGroupCount[i] = maxNumofCoeff + numofGroupCount[i - 1];
+      }
+      numofGroupCount[num] = voxelCount;
+    } else {
+      numofGroupCount[0] = voxelCount;
+    }
   }
-  if (maxNumofCoeff > MaxNum)
-    numofGroupCount.push_back(length.size());
 }
 
-void lengthDivideRef(std::vector<pointCodeWithIndex>& pointCloudHilbert, vector<int>& length,
-                     int num, int MaxNum, int maxNumofCoeff, vector<int>& numofGroupCount,
-                     int& totalNum, int curIdx, int shiftBits, bool isduplicate,
-                     const bool isMemControl) {
+Void getLengthRef(const Int& shift, std::vector<pointCodeWithIndex>& pointCloudHilbert,
+                  vector<int>& length, vector<int>& numofGroupCount, int maxNumofCoeff,
+                  int& ShiftBits, const UInt& MaxTransNum, const bool isMemControl) {
+  auto voxelCount = pointCloudHilbert.size();
+  if (MaxTransNum > 1) {
+    int64_t cur_ordercode = 0;
+    int countL = 0;
+    queue<int> numPts;
+    int maxQueue = 8, checkLen = 8;  /// adaptive adjust Pos_Shift
+    int sumNum = 0;
+    int groupIndex = 0;
+    int64_t lastcode = -1;
+    bool isduplicate = false;
+    int totalNum = 0;
+    for (int curIndex = 0; curIndex < voxelCount;) {
+      if (MaxTransNum > 2 && shift > 0 && groupIndex % checkLen == 0 && groupIndex > 0) {
+        auto aveNum = sumNum / maxQueue;
+        if (aveNum < 2)
+          ShiftBits += 1;
+        else if (aveNum > MaxTransNum)
+          ShiftBits -= 1;
+      }
+      ShiftBits = std::max(1, ShiftBits);
+
+      cur_ordercode = pointCloudHilbert[curIndex].code >> ShiftBits;
+      countL = 0;
+
+      //处理重复点
+      if (((curIndex + countL) < (voxelCount)) &&
+          pointCloudHilbert[curIndex + countL].code == lastcode) {
+        lastcode = pointCloudHilbert[curIndex + countL].code;
+        countL++;
+        isduplicate = true;
+        while (((curIndex + countL) < (voxelCount) &&
+                lastcode == pointCloudHilbert[curIndex + countL].code)) {
+          countL++;
+        }
+      } else {
+        lastcode = pointCloudHilbert[curIndex + countL].code;
+        countL++;
+        while (((curIndex + countL) < (voxelCount) &&
+                cur_ordercode == pointCloudHilbert[curIndex + countL].code >> ShiftBits)) {
+          //重复点
+          isduplicate = false;
+          if (pointCloudHilbert[curIndex + countL].code == lastcode) {
+            break;
+          } else {
+            lastcode = pointCloudHilbert[curIndex + countL].code;
+            countL++;
+          }
+        }
+      }
+      lastcode = pointCloudHilbert[curIndex + countL - 1].code;
+      lengthDivide(pointCloudHilbert, length, countL, MaxTransNum, maxNumofCoeff, numofGroupCount,
+                   totalNum, curIndex, ShiftBits, isduplicate);
+      isduplicate = false;
+      if (MaxTransNum > 2) {
+        numPts.push(countL);
+        sumNum += countL;
+        if (numPts.size() > maxQueue) {
+          sumNum -= numPts.front();
+          numPts.pop();
+        }
+      }
+      groupIndex++;
+      curIndex += countL;
+    }
+    if (maxNumofCoeff > MaxTransNum)
+      numofGroupCount.push_back(length.size());
+  } else {
+    int num = voxelCount / maxNumofCoeff;
+    length.resize(voxelCount, 1);
+    numofGroupCount.resize(num + 1);
+    if (maxNumofCoeff < voxelCount) {
+      numofGroupCount[0] = maxNumofCoeff;
+      for (int i = 1; i < num; i++) {
+        numofGroupCount[i] = maxNumofCoeff + numofGroupCount[i - 1];
+      }
+      numofGroupCount[num] = voxelCount;
+    } else {
+      numofGroupCount[0] = voxelCount;
+    }
+  }
+}
+
+void lengthDivide(std::vector<pointCodeWithIndex>& pointCloudHilbert, vector<int>& length, int num,
+                  int MaxTransNum, int maxNumofCoeff, vector<int>& numofGroupCount, int& totalNum,
+                  int curIdx, int shiftBits, bool isduplicate) {
   int count = 0, countL = 0;
   int NumOfSubGroup = 0;
   int shiftBits2 = shiftBits;
   int64_t cur_ordercode = 0;
-  if (!isduplicate) {
-    if (num <= MaxNum) {
-      length.push_back(num);
-      if (maxNumofCoeff > MaxNum) {
-        totalNum += num;
-        if (totalNum > maxNumofCoeff) {
-          numofGroupCount.push_back(length.size() - 1);
-          totalNum = num;
-        }
-      } else {
-        numofGroupCount.push_back(length.size());
-      }
-      return;
-    } else if (num >= MaxNum) {
-      shiftBits2 = max(1, shiftBits2 - 1);
-      for (int idx = curIdx; idx < curIdx + num;) {
-        cur_ordercode = pointCloudHilbert[idx].code >> shiftBits2;
-        countL = 1;
+  std::stack<std::tuple<int, int, int>> numLength;
+  numLength.push(std::make_tuple(curIdx, num, shiftBits));
 
-        while (((idx + countL) < (curIdx + num) &&
-                cur_ordercode == pointCloudHilbert[idx + countL].code >> shiftBits2)) {
-          countL++;
+  while (!numLength.empty()) {
+    auto cur_length = numLength.top();
+    int idx = get<0>(cur_length);
+    int len = get<1>(cur_length);
+    int shiftBits2 = get<2>(cur_length);
+
+    numLength.pop();
+
+    if (!isduplicate) {
+      if (len <= MaxTransNum) {
+        length.push_back(len);
+        if (maxNumofCoeff > MaxTransNum) {
+          totalNum += len;
+          if (totalNum > maxNumofCoeff) {
+            numofGroupCount.push_back(length.size() - 1);
+            totalNum = len;
+          }
+        } else {
+          numofGroupCount.push_back(length.size());
         }
-        lengthDivideRef(pointCloudHilbert, length, countL, MaxNum, maxNumofCoeff, numofGroupCount,
-                        totalNum, idx, shiftBits2, isduplicate, isMemControl);
-        count++;
-        idx += countL;
+      } else if (len >= MaxTransNum) {
+        shiftBits2 = max(1, shiftBits2 - 1);
+
+        int idx1 = idx + len;
+        while (len > 0) {
+          cur_ordercode = pointCloudHilbert[idx1 - 1].code >> shiftBits2;
+          countL = 1;
+          while (idx1 - 2 >= curIdx &&
+                 cur_ordercode == pointCloudHilbert[idx1 - 2].code >> shiftBits2) {
+            countL++;
+            idx1--;
+          }
+          numLength.push(std::make_tuple(--idx1, countL, shiftBits2));
+          len -= countL;
+        }
       }
-    }
-  } else {
-    if (isMemControl) {
-      while (num > 0) {
+    } else {
+      while (len > 0) {
         length.push_back(1);
-        num--;
-        if (maxNumofCoeff > MaxNum) {
+        len--;
+        if (maxNumofCoeff > MaxTransNum) {
           totalNum++;
           if (totalNum > maxNumofCoeff) {
             numofGroupCount.push_back(length.size() - 1);

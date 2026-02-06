@@ -49,131 +49,211 @@
 //////////////////////////////////////////////////////////////////////////
 
 Void TDecBacTop::parseSPS(SequenceParameterSet& sps) {
-  Int startCode_upper = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
-  Int startCode_lower = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
-  UInt32 startCode = (startCode_upper << 16) + startCode_lower;
-  if (startCode != pcc_sequence_start_code)
-    std::cout << "ERROR: The start code of lib bistream is not SPS" << std::endl;
-
-  sps.level = m_bac->com_bsr_read(&m_bitStream, 8);
-  m_bac->com_bsr_read1(&m_bitStream);
-
-  Int bb_x_upper = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
-  m_bac->com_bsr_read1(&m_bitStream);
-  Int bb_x_lower = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
-  m_bac->com_bsr_read1(&m_bitStream);
-  sps.geomBoundingBoxOrigin[0] = (bb_x_upper << 16) + bb_x_lower;
-
-  Int bb_y_upper = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
-  m_bac->com_bsr_read1(&m_bitStream);
-  Int bb_y_lower = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
-  m_bac->com_bsr_read1(&m_bitStream);
-  sps.geomBoundingBoxOrigin[1] = (bb_y_upper << 16) + bb_y_lower;
-
-  Int bb_z_upper = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
-  m_bac->com_bsr_read1(&m_bitStream);
-  Int bb_z_lower = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
-  m_bac->com_bsr_read1(&m_bitStream);
-  sps.geomBoundingBoxOrigin[2] = (bb_z_upper << 16) + bb_z_lower;
-
-  UInt bbs_w_upper = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  m_bac->com_bsr_read1(&m_bitStream);
-  UInt bbs_w_lower = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  m_bac->com_bsr_read1(&m_bitStream);
-  sps.geomBoundingBoxSize[0] = (bbs_w_upper << 16) + bbs_w_lower;
-
-  UInt bbs_h_upper = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  m_bac->com_bsr_read1(&m_bitStream);
-  UInt bbs_h_lower = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  m_bac->com_bsr_read1(&m_bitStream);
-  sps.geomBoundingBoxSize[1] = (bbs_h_upper << 16) + bbs_h_lower;
-
-  UInt bbs_d_upper = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  m_bac->com_bsr_read1(&m_bitStream);
-  UInt bbs_d_lower = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  m_bac->com_bsr_read1(&m_bitStream);
-  sps.geomBoundingBoxSize[2] = (bbs_d_upper << 16) + bbs_d_lower;
-
-  UInt32 qs_upper = (UInt32)m_bac->com_bsr_read(&m_bitStream, 16);
-  m_bac->com_bsr_read1(&m_bitStream);
-  UInt32 qs_lower = (UInt32)m_bac->com_bsr_read(&m_bitStream, 16);
-
-  UInt32 qs = (qs_upper << 16) + qs_lower;
-
-  sps.geomQuantStep = *(Float*)(&qs);
-
+  sps.profileId = m_bac->com_bsr_read(&m_bitStream, 4);
+  sps.levelId = m_bac->com_bsr_read(&m_bitStream, 8);
+  sps.frameRateCode = m_bac->com_bsr_read(&m_bitStream, 4);
   sps.geomRemoveDuplicateFlag = m_bac->com_bsr_read1(&m_bitStream);
-  m_bac->com_bsr_read1(&m_bitStream);
-
   sps.attrPresentFlag = m_bac->com_bsr_read1(&m_bitStream);
   if (sps.attrPresentFlag) {
-    sps.colorQuantParam = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-    sps.reflQuantParam = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-    sps.maxNumAttrMinus1 = m_bac->com_bsr_read(&m_bitStream, 7);
-    sps.sps_multi_set_flag = m_bac->com_bsr_read1(&m_bitStream);
+    sps.maxNumAttributesMinus1 = m_bac->com_bsr_read(&m_bitStream, 7);
+    sps.multiAttributesSetFlag = m_bac->com_bsr_read1(&m_bitStream);
   }
   m_bac->com_bsr_read_byte_align(&m_bitStream);
 }
 
 Void TDecBacTop::parseGPS(GeometryParameterSet& gps) {
-  gps.lcuNodeSizeLog2 = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  if (gps.lcuNodeSizeLog2 > 0) {
-    gps.lcuNodeSizeLog2++;
-  }
-  gps.log2geomTreeMaxSizeMinus8 = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  gps.im_qtbt_flag = !!m_bac->com_bsr_read1(&m_bitStream);
+  gps.geomQuantStepSignificand = (UInt32)m_bac->com_bsr_read(&m_bitStream, 21);
+  m_bac->com_bsr_read1(&m_bitStream);
+  gps.geomQuantStepExponent = (UInt32)m_bac->com_bsr_read(&m_bitStream, 5);
+  gps.geomMaxTreeSizeLog2Minus8 = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+  gps.implicitGeomPartitionFlag = !!m_bac->com_bsr_read1(&m_bitStream);
   gps.singleModeFlag = !!m_bac->com_bsr_read1(&m_bitStream);
-  gps.OccupancymapSizelog2 = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+  gps.occupancySearchRangeLog2 = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
   gps.saveStateFlag = !!m_bac->com_bsr_read1(&m_bitStream);
   if (!gps.saveStateFlag)
-    gps.lcu_dependency_flag = !!m_bac->com_bsr_read1(&m_bitStream);
+    gps.lcuDependencyFlag = !!m_bac->com_bsr_read1(&m_bitStream);
   m_bac->com_bsr_read_byte_align(&m_bitStream);
 }
 
-Void TDecBacTop::parseSliceGeomEndCode() {
-  UInt32 endCode = 0;
-  for (int i = 0; i < 32; i++) {
-    endCode += m_bac->biari_decode_symbol_eq_prob(p_aec) << i;
+Void TDecBacTop::parseAPS(AttributeParameterSet& aps, SequenceParameterSet& sps) {
+  for (int attrIdx = 0; attrIdx < (sps.maxNumAttributesMinus1 + 1); attrIdx++) {
+    aps.attributeDataPresentFlag[attrIdx] = !!m_bac->com_bsr_read1(&m_bitStream);
+    if (aps.attributeDataPresentFlag[attrIdx]) {
+      aps.attributeDataNumSetMinus1[attrIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+      if ((attrIdx == 1) && (aps.attributeDataNumSetMinus1[attrIdx] > 0)) {
+        for (int i = 0; i < aps.attributeDataNumSetMinus1[attrIdx] + 1; ++i) {
+          aps.multiAttrGroupID[i] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+        }
+      }
+      if (sps.multiAttributesSetFlag)
+        aps.multiDataSetFlag[attrIdx] = !!m_bac->com_bsr_read1(&m_bitStream);
+      if (aps.multiDataSetFlag[attrIdx])
+        aps.attributeInfoNumSetMinus1[attrIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+      for (int multiIdx = 0; multiIdx < aps.attributeInfoNumSetMinus1[attrIdx] + 1; ++multiIdx) {
+        aps.outputMultiBitDepthMinus1[attrIdx][multiIdx] =
+          (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+        aps.attrMultiQuantParam[attrIdx][multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+        if (attrIdx == 0) {
+          aps.orderMultiSwitch[multiIdx] = !!m_bac->com_bsr_read1(&m_bitStream);
+          aps.colorMultiReordermode[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+          aps.colorMultiGolombNum[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+          aps.golombMultiGroupSizeLog2[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+        }
+        if (attrIdx == 1) {
+          aps.axisMultiBiasMinus1[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+          aps.reflMultiReordermode[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+          aps.reflMultiGolombNum[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+          aps.predMultiFixedPointFracBit[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+        }
+
+        aps.colorMultiOutputDepth[multiIdx] = aps.outputMultiBitDepthMinus1[0][multiIdx] + 1;
+        aps.reflMultiOutputDepth[multiIdx] = aps.outputMultiBitDepthMinus1[1][multiIdx] + 1;
+        aps.colorMultiQuantParam[multiIdx] = aps.attrMultiQuantParam[0][multiIdx];
+        aps.reflMultiQuantParam[multiIdx] = aps.attrMultiQuantParam[1][multiIdx];
+
+        aps.transformMulti[attrIdx][multiIdx] = (UInt)m_bac->com_bsr_read(&m_bitStream, 2);
+        if ((aps.transformMulti[attrIdx][multiIdx] == 0) ||
+            (aps.transformMulti[attrIdx][multiIdx] == 2)) {
+          aps.maxMultiNumOfNeighboursLog2Minus7[attrIdx][multiIdx] =
+            m_bac->com_bsr_read(&m_bitStream, 2);
+          if (attrIdx == 0) {
+            aps.crossMultiComponentPred[multiIdx] = !!m_bac->com_bsr_read1(&m_bitStream);
+            aps.chromaMultiQpOffsetCb[multiIdx] = m_bac->com_bsr_read_se(&m_bitStream);
+            aps.chromaMultiQpOffsetCr[multiIdx] = m_bac->com_bsr_read_se(&m_bitStream);
+          }
+          if (attrIdx == 1) {
+            aps.nearestMultiPredParam1[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+            aps.nearestMultiPredParam2[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+            aps.predDistWeightMultiGroupSizeLog2[multiIdx] =
+              (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+          }
+        }
+        if (aps.transformMulti[attrIdx][multiIdx] == 1) {
+          UInt transformSegmentSize_upper = (UInt)m_bac->com_bsr_read(&m_bitStream, 16);
+          m_bac->com_bsr_read1(&m_bitStream);
+          UInt transformSegmentSize_lower = (UInt)m_bac->com_bsr_read(&m_bitStream, 16);
+          m_bac->com_bsr_read1(&m_bitStream);
+          aps.transformMultiSegmentSize[attrIdx][multiIdx] =
+            (transformSegmentSize_upper << 16) + transformSegmentSize_lower;
+          aps.kMultiFracBits[attrIdx][multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+          aps.attrMultiTransformQpDelta[attrIdx][multiIdx] =
+            (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+          aps.transMultiResLayer[attrIdx][multiIdx] = m_bac->com_bsr_read1(&m_bitStream);
+        }
+
+        if (aps.transformMulti[attrIdx][multiIdx] == 2) {
+          aps.MultimaxNumofCoeffLog2Minus8[attrIdx][multiIdx] =
+            (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+          if (aps.MultimaxNumofCoeffLog2Minus8[attrIdx][multiIdx]) {
+            aps.maxMultiNumofCoeff[attrIdx][multiIdx] = 1
+              << (aps.MultimaxNumofCoeffLog2Minus8[attrIdx][multiIdx] + 8);
+          }
+          aps.QpMultiOffsetDC[attrIdx][multiIdx] = m_bac->com_bsr_read_se(&m_bitStream);
+          aps.QpMultiOffsetAC[attrIdx][multiIdx] = m_bac->com_bsr_read_se(&m_bitStream);
+          if (attrIdx == 0) {
+            aps.colorMaxMultiTransNum[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+            aps.chromaMultiQpOffsetDC[multiIdx] = m_bac->com_bsr_read_se(&m_bitStream);
+            aps.chromaMultiQpOffsetAC[multiIdx] = m_bac->com_bsr_read_se(&m_bitStream);
+            aps.colorMultiQPAdjustFlag[multiIdx] = m_bac->com_bsr_read1(&m_bitStream);
+          }
+          if (attrIdx == 1) {
+            aps.reflMaxMultiTransNum[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+            aps.reflMultiGroupPredict[multiIdx] = m_bac->com_bsr_read1(&m_bitStream);
+          }
+        }
+
+        aps.coeffMultiLengthControlLog2Minus8[attrIdx][multiIdx] =
+          (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+        if (aps.coeffMultiLengthControlLog2Minus8[attrIdx][multiIdx]) {
+          aps.coeffMultiLengthControl[attrIdx][multiIdx] = 1
+            << (aps.coeffMultiLengthControlLog2Minus8[attrIdx][multiIdx] + 8);
+        }
+      }
+    }
   }
-  if (endCode != slice_geometry_end_code)
-    std::cout << "ERROR: The end code of lib bistream is not Fram slice" << std::endl;
-}
-Void TDecBacTop::parseSliceAttrEndCode() {
-  UInt32 endCode = 0;
-  for (int i = 0; i < 32; i++) {
-    endCode += m_bac->biari_decode_symbol_eq_prob(p_aec) << i;
+  if ((aps.attributeDataNumSetMinus1[0] == 0) && (aps.attributeDataNumSetMinus1[1] == 0)) {
+    aps.crossAttrTypePred = !!m_bac->com_bsr_read1(&m_bitStream);
+    if (aps.crossAttrTypePred) {
+      aps.attrEncodeOrder = (UInt)m_bac->com_bsr_read1(&m_bitStream);
+      aps.crossAttrTypePredParam1 = (UInt)m_bac->com_bsr_read(&m_bitStream, 15);
+      m_bac->com_bsr_read1(&m_bitStream);
+      aps.crossAttrTypePredParam2 = (UInt)m_bac->com_bsr_read(&m_bitStream, 21);
+      m_bac->com_bsr_read1(&m_bitStream);
+    }
   }
-  if (endCode != slice_attribute_end_code)
-    std::cout << "ERROR: The start code of lib bistream is not Fram slice" << std::endl;
+  m_bac->com_bsr_read_byte_align(&m_bitStream);
 }
 
-Void TDecBacTop::parseSPSEndCode() {
-  UInt32 endCode = 0;
-  for (int i = 0; i < 32; i++) {
-    endCode += m_bac->biari_decode_symbol_eq_prob(p_aec) << i;
+Void TDecBacTop::parseFrameHeader(FrameHeader& frameheader) {
+  frameheader.frameIndex = m_bac->com_bsr_read_ue(&m_bitStream);
+  m_bac->com_bsr_read1(&m_bitStream);
+  frameheader.frameNumSliceMinus1 = m_bac->com_bsr_read_ue(&m_bitStream);
+
+  frameheader.lcuNodeSizeLog2 = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+  if (frameheader.lcuNodeSizeLog2 > 0) {
+    frameheader.lcuNodeSizeLog2++;
   }
-  if (endCode != pcc_sequence_end_code)
-    std::cout << "ERROR: The start code of lib bistream is not sps" << std::endl;
+
+  UInt np_upper = (UInt)m_bac->com_bsr_read(&m_bitStream, 16);
+  m_bac->com_bsr_read1(&m_bitStream);
+  UInt np_lower = (UInt)m_bac->com_bsr_read(&m_bitStream, 16);
+  m_bac->com_bsr_read1(&m_bitStream);
+  frameheader.geomNumPoints = (np_upper << 16) + np_lower;
+
+  Int bb_x_upper = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
+  m_bac->com_bsr_read1(&m_bitStream);
+  Int bb_x_lower = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
+  m_bac->com_bsr_read1(&m_bitStream);
+  frameheader.geomBoundingBoxOrigin[0] = (bb_x_upper << 16) + bb_x_lower;
+
+  Int bb_y_upper = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
+  m_bac->com_bsr_read1(&m_bitStream);
+  Int bb_y_lower = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
+  m_bac->com_bsr_read1(&m_bitStream);
+  frameheader.geomBoundingBoxOrigin[1] = (bb_y_upper << 16) + bb_y_lower;
+
+  Int bb_z_upper = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
+  m_bac->com_bsr_read1(&m_bitStream);
+  Int bb_z_lower = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
+  m_bac->com_bsr_read1(&m_bitStream);
+  frameheader.geomBoundingBoxOrigin[2] = (bb_z_upper << 16) + bb_z_lower;
+
+  UInt bbs_w_upper = (UInt)m_bac->com_bsr_read(&m_bitStream, 16);
+  m_bac->com_bsr_read1(&m_bitStream);
+  UInt bbs_w_lower = (UInt)m_bac->com_bsr_read(&m_bitStream, 16);
+  m_bac->com_bsr_read1(&m_bitStream);
+  frameheader.geomBoundingBoxSize[0] = (bbs_w_upper << 16) + bbs_w_lower;
+
+  UInt bbs_h_upper = (UInt)m_bac->com_bsr_read(&m_bitStream, 16);
+  m_bac->com_bsr_read1(&m_bitStream);
+  UInt bbs_h_lower = (UInt)m_bac->com_bsr_read(&m_bitStream, 16);
+  m_bac->com_bsr_read1(&m_bitStream);
+  frameheader.geomBoundingBoxSize[1] = (bbs_h_upper << 16) + bbs_h_lower;
+
+  UInt bbs_d_upper = (UInt)m_bac->com_bsr_read(&m_bitStream, 16);
+  m_bac->com_bsr_read1(&m_bitStream);
+  UInt bbs_d_lower = (UInt)m_bac->com_bsr_read(&m_bitStream, 16);
+  m_bac->com_bsr_read1(&m_bitStream);
+  frameheader.geomBoundingBoxSize[2] = (bbs_d_upper << 16) + bbs_d_lower;
+
+  m_bac->com_bsr_read_byte_align(&m_bitStream);
 }
 
-Void TDecBacTop::parseGBH(SequenceParameterSet& sps,GeometryParameterSet& gps,
+Void TDecBacTop::parseGBH(SequenceParameterSet& sps, GeometryParameterSet& gps,
                           GeometryBrickHeader& gbh) {
-  Int startCode_upper = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
-  Int startCode_lower = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
-  UInt32 startCode = (startCode_upper << 16) + startCode_lower;
-  if (startCode < slice_start_code_lower || startCode > slice_start_code_upper)
-    std::cout << "ERROR: The start code of lib bistream is not Fram slice" << std::endl;
   gbh.sliceID = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  gbh.geom_context_mode = !!m_bac->com_bsr_read1(&m_bitStream);
-  if (gps.im_qtbt_flag) {
-    gbh.im_qtbt_num_before_ot = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-    gbh.im_qtbt_min_size = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+  m_bac->com_bsr_read1(&m_bitStream);
+  gbh.contextMode = !!m_bac->com_bsr_read1(&m_bitStream);
+  if (gps.implicitGeomPartitionFlag) {
+    gbh.imQtbtNumBeforeOt = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+    gbh.imQtbtMinSize = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
   }
   if (gps.singleModeFlag) {
     gbh.singleModeFlagInSlice = !!m_bac->com_bsr_read1(&m_bitStream);
   }
   gbh.planarModeEligibleForSlice = !!m_bac->com_bsr_read1(&m_bitStream);
 
+  m_bac->com_bsr_read1(&m_bitStream);
   Int bb_x_upper = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
   m_bac->com_bsr_read1(&m_bitStream);
   Int bb_x_lower = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
@@ -192,184 +272,99 @@ Void TDecBacTop::parseGBH(SequenceParameterSet& sps,GeometryParameterSet& gps,
   m_bac->com_bsr_read1(&m_bitStream);
   gbh.geomBoundingBoxOrigin[2] = (bb_z_upper << 16) + bb_z_lower;
 
-  UInt nsl_x_upper = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+  gbh.nodeSizeLog2[0] = (UInt)m_bac->com_bsr_read(&m_bitStream, 6);
+  gbh.nodeSizeLog2[1] = (UInt)m_bac->com_bsr_read(&m_bitStream, 6);
+  gbh.nodeSizeLog2[2] = (UInt)m_bac->com_bsr_read(&m_bitStream, 6);
   m_bac->com_bsr_read1(&m_bitStream);
-  UInt nsl_x_lower = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  m_bac->com_bsr_read1(&m_bitStream);
-  gbh.nodeSizeLog2[0] = (nsl_x_upper << 16) + nsl_x_lower;
 
-  UInt nsl_y_upper = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+  UInt np_upper = (UInt)m_bac->com_bsr_read(&m_bitStream, 16);
   m_bac->com_bsr_read1(&m_bitStream);
-  UInt nsl_y_lower = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  m_bac->com_bsr_read1(&m_bitStream);
-  gbh.nodeSizeLog2[1] = (nsl_y_upper << 16) + nsl_y_lower;
-
-  UInt nsl_z_upper = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  m_bac->com_bsr_read1(&m_bitStream);
-  UInt nsl_z_lower = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  m_bac->com_bsr_read1(&m_bitStream);
-  gbh.nodeSizeLog2[2] = (nsl_z_upper << 16) + nsl_z_lower;
-
-  UInt np_upper = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  m_bac->com_bsr_read1(&m_bitStream);
-  UInt np_lower = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+  UInt np_lower = (UInt)m_bac->com_bsr_read(&m_bitStream, 16);
   m_bac->com_bsr_read1(&m_bitStream);
   gbh.geomNumPoints = (np_upper << 16) + np_lower;
 
-  if (sps.geomRemoveDuplicateFlag)
-    assert(gbh.geomNumPoints <=
-           (1 << (gbh.nodeSizeLog2[0] + gbh.nodeSizeLog2[1] + gbh.nodeSizeLog2[2])));
-
-  //assert(gps.OccupancymapSizelog2 <= std::min(gbh.nodeSizeLog2[0], std::min(gbh.nodeSizeLog2[1], gbh.nodeSizeLog2[2])));
-
   m_bac->com_bsr_read_byte_align(&m_bitStream);
 }
 
-Void TDecBacTop::parseAPS(AttributeParameterSet& aps, SequenceParameterSet& sps) {
-  for (int attrIdx = 0; attrIdx < (sps.maxNumAttrMinus1 + 1); attrIdx++) {
-    aps.attributePresentFlag[attrIdx] = !!m_bac->com_bsr_read1(&m_bitStream);
-    if (aps.attributePresentFlag[attrIdx]) {
-      aps.attribute_num_data_set_minus1[attrIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-      if (sps.sps_multi_set_flag)
-        aps.multi_data_set_flag[attrIdx] = !!m_bac->com_bsr_read1(&m_bitStream);
-      if (aps.multi_data_set_flag[attrIdx])
-        aps.attribute_num_set_minus1[attrIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-      for (int multiIdx = 0; multiIdx < aps.attribute_num_set_minus1[attrIdx] + 1; ++multiIdx) {
-        aps.outputMultiBitDepthMinus1[attrIdx][multiIdx] =
-          (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-        if (attrIdx == 0) {
-          aps.orderMultiSwitch[multiIdx] = !!m_bac->com_bsr_read1(&m_bitStream);
-          aps.colorMultiReordermode[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-          aps.colorMultiGolombNum[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-          aps.log2golombMultiGroupSize[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-        }
-        if (attrIdx == 1) {
-          aps.axisMultiBias[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-          aps.refMultiReordermode[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-          aps.refMultiGolombNum[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-          aps.predMultiFixedPointFracBit[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-          aps.multiAttriGroupID[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-        }
-
-        aps.colorMultiOutputDepth[multiIdx] = aps.outputMultiBitDepthMinus1[0][multiIdx] + 1;
-        aps.reflMultiOutputDepth[multiIdx] = aps.outputMultiBitDepthMinus1[1][multiIdx] + 1;
-
-        aps.transformMulti[attrIdx][multiIdx] = (UInt)m_bac->com_bsr_read(&m_bitStream, 2);
-        if ((aps.transformMulti[attrIdx][multiIdx] == 0) ||
-            (aps.transformMulti[attrIdx][multiIdx] == 2)) {
-          aps.maxMultiNumOfNeighboursLog2Minus7[attrIdx][multiIdx] =
-            m_bac->com_bsr_read(&m_bitStream, 2);
-          aps.maxMultiNumOfNeighbours[multiIdx] = 1
-            << (aps.maxMultiNumOfNeighboursLog2Minus7[attrIdx][multiIdx] + 7);    
-          if (attrIdx == 0) {
-            aps.crossMultiComponentPred[multiIdx] = !!m_bac->com_bsr_read1(&m_bitStream);
-            aps.chromaMultiQpOffsetCb[multiIdx] = m_bac->com_bsr_read_se(&m_bitStream);
-            aps.chromaMultiQpOffsetCr[multiIdx] = m_bac->com_bsr_read_se(&m_bitStream);
-          }
-          if (attrIdx == 1) {
-            aps.nearestMultiPredParam1[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-            aps.nearestMultiPredParam2[multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-            aps.log2predDistWeightMultiGroupSize[multiIdx] =
-              (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-          }
-        }
-        if (aps.transformMulti[attrIdx][multiIdx] == 1) {
-          aps.kMultiFracBits[attrIdx][multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-          aps.attrMultiTransformQpDelta[attrIdx][multiIdx] =
-            (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-          aps.transformMultiSegmentSize[attrIdx][multiIdx] =
-            (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-          aps.transMultiResLayer[attrIdx][multiIdx] = m_bac->com_bsr_read1(&m_bitStream);
-          if (attrIdx == 0) {
-            aps.colorMultiInitPredTransRatio[multiIdx] = m_bac->com_bsr_read_se(&m_bitStream);
-          }
-          if (attrIdx == 1) {
-            aps.refMultiInitPredTransRatio[multiIdx] = m_bac->com_bsr_read_se(&m_bitStream);
-          }
-        }
-
-        if (aps.transformMulti[attrIdx][multiIdx] == 2) {
-          aps.log2MultimaxNumofCoeffMinus8[attrIdx][multiIdx] =
-            (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-          if (aps.log2MultimaxNumofCoeffMinus8[attrIdx][multiIdx]) {
-            aps.maxMultiNumofCoeff[attrIdx][multiIdx] = 1
-              << (aps.log2MultimaxNumofCoeffMinus8[attrIdx][multiIdx] + 8);
-          }
-          aps.QpMultiOffsetDC[attrIdx][multiIdx] = m_bac->com_bsr_read_se(&m_bitStream);
-          aps.QpMultiOffsetAC[attrIdx][multiIdx] = m_bac->com_bsr_read_se(&m_bitStream);
-          if (attrIdx == 0) {
-            aps.colorMaxMultiTransNum[attrIdx][multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-            aps.chromaMultiQpOffsetDC[multiIdx] = m_bac->com_bsr_read_se(&m_bitStream);
-            aps.chromaMultiQpOffsetAC[multiIdx] = m_bac->com_bsr_read_se(&m_bitStream);
-            aps.colorMultiQPAdjustFlag[multiIdx] = m_bac->com_bsr_read1(&m_bitStream);
-            if (aps.colorMultiQPAdjustFlag[multiIdx]) {
-              aps.colorMultiQPAdjustScalar[multiIdx] = m_bac->com_bsr_read_se(&m_bitStream);
-            }
-          }
-          if (attrIdx == 1) {
-            aps.reflMaxMultiTransNum[attrIdx][multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-            aps.refMultiGroupPredict[multiIdx] = m_bac->com_bsr_read1(&m_bitStream);
-          }
-        }
-
-        aps.log2coeffMultiLengthControlMinus8[attrIdx][multiIdx] =
-          (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-        if (aps.log2coeffMultiLengthControlMinus8[attrIdx][multiIdx]) {
-          aps.coeffMultiLengthControl[attrIdx][multiIdx] = 1
-            << (aps.log2coeffMultiLengthControlMinus8[attrIdx][multiIdx] + 8);
-        }
-      }
-    }
-  }
-  if (aps.attributePresentFlag[0] && aps.attributePresentFlag[1]) {
-    aps.crossAttrTypePred = !!m_bac->com_bsr_read1(&m_bitStream);
-    if (aps.crossAttrTypePred) {
-      aps.attrEncodeOrder = (UInt)m_bac->com_bsr_read1(&m_bitStream);
-      aps.crossAttrTypePredParam1 = (UInt)m_bac->com_bsr_read(&m_bitStream, 15);
-      aps.crossAttrTypePredParam2 = (UInt)m_bac->com_bsr_read(&m_bitStream, 21);
-    }
-  }
-  m_bac->com_bsr_read_byte_align(&m_bitStream);
-}
-
-Void TDecBacTop::parseFrameHeader(FrameHeader& frameHead) {
-  Int startCode_upper = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
-  Int startCode_lower = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
-  UInt32 startCode = (startCode_upper << 16) + startCode_lower;
-  if (startCode != frame_start_code)
-    std::cout << "ERROR: The start code of lib bistream is not Fram Header" << std::endl;
-
-  frameHead.frame_index = m_bac->com_bsr_read_ue(&m_bitStream);
-  frameHead.num_slice_minus_one = m_bac->com_bsr_read_ue(&m_bitStream);
-  frameHead.timestamp_flag = (Bool)m_bac->com_bsr_read1(&m_bitStream);
-  if (frameHead.timestamp_flag) {
-    frameHead.timestamp = m_bac->com_bsr_read_ue(&m_bitStream);
-  }
-  UInt np_upper = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  UInt np_lower = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  frameHead.geomNumPoints = (np_upper << 16) + np_lower;
-  m_bac->com_bsr_read_byte_align(&m_bitStream);
-}
-
-Void TDecBacTop::parseABH(AttributeBrickHeader& abh, const AttributeParameterSet& aps,
-                          const SequenceParameterSet& sps) {
-  //gbh.gbhID = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  Int startCode_upper = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
-  Int startCode_lower = (Int)m_bac->com_bsr_read(&m_bitStream, 16);
-  UInt32 startCode = (startCode_upper << 16) + startCode_lower;
-  if (startCode < slice_start_code_lower || startCode > slice_start_code_upper)
-    std::cout << "ERROR: The start code of lib bistream is not Fram slice" << std::endl;
-
-  for (int attrIdx = 0; attrIdx < (sps.maxNumAttrMinus1 + 1); attrIdx++) {
-    if (aps.attributePresentFlag[attrIdx]) {
-      for (int multiIdx = 0; multiIdx < aps.attribute_num_set_minus1[attrIdx] + 1; ++multiIdx)
-        abh.attribute_ID[attrIdx][multiIdx] = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-    }
-  }
-
+Void TDecBacTop::parseABH(AttributeBrickHeader& abh, AttributeParameterSet& aps, UInt attrIdx) {
   abh.sliceID = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
-  abh.reflQPoffset = (UInt)m_bac->com_bsr_read_se(&m_bitStream);
+  m_bac->com_bsr_read1(&m_bitStream);
+  abh.attributeID = (UInt)m_bac->com_bsr_read_ue(&m_bitStream);
+  getSingleAttrAPs(aps, attrIdx, abh.attributeID);
+
+  abh.QpOffset = (UInt)m_bac->com_bsr_read_se(&m_bitStream);
+  abh.colorInitPredTransRatio = m_bac->com_bsr_read_se(&m_bitStream);
+  abh.reflInitPredTransRatio = m_bac->com_bsr_read_se(&m_bitStream);
+  if (aps.colorQPAdjustFlag) {
+    abh.colorQPAdjustScalar = m_bac->com_bsr_read_ue(&m_bitStream);
+  }
   m_bac->com_bsr_read_byte_align(&m_bitStream);
+}
+
+Void TDecBacTop::getSingleAttrAPs(AttributeParameterSet& aps, const int& attrIdx,
+                                  const int& multiIdx) {
+  if (attrIdx == 0) {
+    aps.orderSwitch = aps.orderMultiSwitch[multiIdx];
+    aps.colorReorderMode = aps.colorMultiReordermode[multiIdx];
+    aps.colorGolombNum = aps.colorMultiGolombNum[multiIdx];
+    aps.golombGroupSizeLog2 = aps.golombMultiGroupSizeLog2[multiIdx];
+  }
+  if (attrIdx == 1) {
+    aps.axisBias = aps.axisMultiBiasMinus1[multiIdx] + 1;
+    aps.reflReorderMode = aps.reflMultiReordermode[multiIdx];
+    aps.reflGolombNum = aps.reflMultiGolombNum[multiIdx];
+    aps.predFixedPointFracBit = aps.predMultiFixedPointFracBit[multiIdx];
+  }
+
+  aps.colorOutputDepth = aps.colorMultiOutputDepth[multiIdx];
+  aps.reflOutputDepth = aps.reflMultiOutputDepth[multiIdx];
+  aps.colorQuantParam = aps.colorMultiQuantParam[multiIdx];
+  aps.reflQuantParam = aps.reflMultiQuantParam[multiIdx];
+
+  aps.transform = aps.transformMulti[attrIdx][multiIdx];
+  if ((aps.transform == 0) || (aps.transform == 2)) {
+    aps.maxNumOfNeighbours = 1 << (aps.maxMultiNumOfNeighboursLog2Minus7[attrIdx][multiIdx] + 7);
+    if (attrIdx == 0) {
+      aps.crossComponentPred = aps.crossMultiComponentPred[multiIdx];
+      aps.chromaQpOffsetCb = aps.chromaMultiQpOffsetCb[multiIdx];
+      aps.chromaQpOffsetCr = aps.chromaMultiQpOffsetCr[multiIdx];
+    }
+    if (attrIdx == 1) {
+      aps.nearestPredParam1 = aps.nearestMultiPredParam1[multiIdx];
+      aps.nearestPredParam2 = aps.nearestMultiPredParam2[multiIdx];
+      aps.predDistWeightGroupSizeLog2 = aps.predDistWeightMultiGroupSizeLog2[multiIdx];
+    }
+  }
+  if (aps.transform == 1) {
+    aps.kFracBits = aps.kMultiFracBits[attrIdx][multiIdx];
+    aps.attrTransQpDelta = aps.attrMultiTransformQpDelta[attrIdx][multiIdx];
+    aps.transformSegmentSize = aps.transformMultiSegmentSize[attrIdx][multiIdx];
+    aps.transResLayer = aps.transMultiResLayer[attrIdx][multiIdx];
+    FXPoint::set_kFracBits(aps.kFracBits);
+  }
+  if (aps.transform == 2) {
+    aps.maxNumofCoeffLog2Minus8 = aps.MultimaxNumofCoeffLog2Minus8[attrIdx][multiIdx];
+    if (aps.maxNumofCoeffLog2Minus8) {
+      aps.maxNumofCoeff = 1 << (aps.maxNumofCoeffLog2Minus8 + 8);
+    }
+    aps.QpOffsetDC = aps.QpMultiOffsetDC[attrIdx][multiIdx];
+    aps.QpOffsetAC = aps.QpMultiOffsetAC[attrIdx][multiIdx];
+    if (attrIdx == 0) {
+      aps.colorMaxTransNum = aps.colorMaxMultiTransNum[multiIdx];
+      aps.chromaQpOffsetDC = aps.chromaMultiQpOffsetDC[multiIdx];
+      aps.chromaQpOffsetAC = aps.chromaMultiQpOffsetAC[multiIdx];
+      aps.colorQPAdjustFlag = aps.colorMultiQPAdjustFlag[multiIdx];
+    }
+    if (attrIdx == 1) {
+      aps.reflMaxTransNum = aps.reflMaxMultiTransNum[multiIdx];
+      aps.reflGroupPredict = aps.reflMultiGroupPredict[multiIdx];
+    }
+  }
+
+  aps.coeffLengthControlLog2Minus8 = aps.coeffMultiLengthControlLog2Minus8[attrIdx][multiIdx];
+  if (aps.coeffLengthControlLog2Minus8) {
+    aps.coeffLengthControl = 1 << (aps.coeffLengthControlLog2Minus8 + 8);
+  }
 }
 
 Int TDecBacTop::parseRunlength() {
@@ -379,7 +374,7 @@ Int TDecBacTop::parseRunlength() {
   else {
     val = parseExpGolombRunlength(2, p_aec->attribute_syn_ctx.ctx_length_prefix,
                                   p_aec->attribute_syn_ctx.ctx_length_suffix);
-    return (1+val);
+    return (1 + val);
   }
   return val + 1;
 }
@@ -403,191 +398,125 @@ int TDecBacTop::parseExpGolombRunlength(int k, context_t* p_ctxPrefix, context_t
   return static_cast<unsigned int>(symbol + binary_symbol);
 }
 
-int TDecBacTop::parseExpGolomb(int k, context_t* p_ctxPrefix, context_t* p_ctxSufffix) {
-  unsigned int l;
-  int symbol = 0;
-  int binary_symbol = 0;
-  do {
-    l = m_bac->biari_decode_symbol(p_aec, p_ctxPrefix);
-    if (l == 1) {
-      symbol += (1 << k);
-      k++;
-    }
-  } while (l != 0);
-  while (k--)  //next binary part
-    if (m_bac->biari_decode_symbol(p_aec, p_ctxSufffix) == 1) {
-      binary_symbol |= (1 << k);
-    }
-  return static_cast<unsigned int>(symbol + binary_symbol);
-}
-
 int TDecBacTop::parseExpGolombN(int k, context_t* p_ctxPrefix, context_t* p_ctxSufffix) {
-    int count = 4;
-    unsigned int l;
-    int symbol = 0;
-    int binary_symbol = 0;
-    do {
-        if (count) {
-            l = m_bac->biari_decode_symbol(p_aec, p_ctxPrefix);
-            count--;
-        }
-        else {
-            l = m_bac->biari_decode_symbol_eq_prob(p_aec);
-        }
-        if (l == 1) {
-            symbol += (1 << k);
-            k++;
-        }
-    } while (l != 0);
-    while (k--) {  //next binary part
-        if (count) {
-            if (m_bac->biari_decode_symbol(p_aec, p_ctxSufffix) == 1) {
-                binary_symbol |= (1 << k);
-            }
-            count--;
-        }
-        else {
-            if (m_bac->biari_decode_symbol_eq_prob(p_aec) == 1) {
-                binary_symbol |= (1 << k);
-            }
-        }
-    }
-    return static_cast<unsigned int>(symbol + binary_symbol);
-}
-
-int TDecBacTop::parseExpGolombAdp(const int k, const int colorType, const int ctx_id) {
-    golombK[colorType] = golombK[colorType] > 0 ? golombK[colorType] : 1;
-    int golombDeVal = parseExpGolombN(golombK[colorType],
-        &p_aec->attribute_syn_ctx.ctx_attr_residual_prefix[ctx_id],
-        &p_aec->attribute_syn_ctx.ctx_attr_residual_suffix[ctx_id]);
-    if (ExpGolombInputGroup[colorType].size() < Group_size) {
-        inputGroupSum[colorType] += golombDeVal;
-        ExpGolombInputGroup[colorType].push_back(golombDeVal);
-    }
-    else {
-        auto valFirst = ExpGolombInputGroup[colorType].begin();
-        inputGroupSum[colorType] -= *valFirst;
-        ExpGolombInputGroup[colorType].erase(valFirst);
-        inputGroupSum[colorType] += golombDeVal;
-        ExpGolombInputGroup[colorType].push_back(golombDeVal);
-        int64_t inputGroupAvg = inputGroupSum[colorType] / Group_size;
-        golombK[colorType] = k;
-        if (inputGroupAvg < golombkForValLower)
-            golombK[colorType]--;
-        else if (inputGroupAvg > golombkForValUpper)
-            golombK[colorType]++;
-    }
-    return golombDeVal;
-}
-
-int TDecBacTop::parseExpGolombRefl(int k, context_t* p_ctxPrefix, context_t* p_ctxSufffix) {
-  int k0 = k;
-  int kmax = k;
+  int count = 4;
   unsigned int l;
   int symbol = 0;
   int binary_symbol = 0;
-  unsigned int p;
   do {
-    if (k == k0) {
-      l = m_bac->biari_decode_symbol(p_aec, &p_ctxPrefix[0]);
-    } else if (k == k0 + 1) {
-      l = m_bac->biari_decode_symbol(p_aec, &p_ctxPrefix[1]);
+    if (count) {
+      l = m_bac->biari_decode_symbol(p_aec, p_ctxPrefix);
+      count--;
     } else {
-      l = m_bac->biari_decode_symbol(p_aec, &p_ctxPrefix[2]);
+      l = m_bac->biari_decode_symbol_eq_prob(p_aec);
     }
     if (l == 1) {
       symbol += (1 << k);
       k++;
-      kmax = k;
     }
   } while (l != 0);
   while (k--) {  //next binary part
-    if (k == kmax - 1) {
-      p = m_bac->biari_decode_symbol(p_aec, &p_ctxSufffix[0]);
-    } else if (k == kmax - 2) {
-      p = m_bac->biari_decode_symbol(p_aec, &p_ctxSufffix[1]);
+    if (count) {
+      if (m_bac->biari_decode_symbol(p_aec, p_ctxSufffix) == 1) {
+        binary_symbol |= (1 << k);
+      }
+      count--;
     } else {
-      p = m_bac->biari_decode_symbol(p_aec, &p_ctxSufffix[2]);
-    }
-    if (p == 1) {
-      binary_symbol |= (1 << k);
+      if (m_bac->biari_decode_symbol_eq_prob(p_aec) == 1) {
+        binary_symbol |= (1 << k);
+      }
     }
   }
   return static_cast<unsigned int>(symbol + binary_symbol);
 }
 
-UInt64 TDecBacTop::parseExpGolombReflN(int k, context_t* p_ctxPrefix, context_t* p_ctxSufffix) {
-    int count = 4;
-    int k0 = k;
-    int kmax = k;
-    UInt64 l;
-    UInt64 symbol = 0;
-    UInt64 binary_symbol = 0;
-    unsigned int p;
-    do {
-        if (count) {
-            if (k == k0) {
-                l = m_bac->biari_decode_symbol(p_aec, &p_ctxPrefix[0]);
-            }
-            else if (k == k0 + 1) {
-                l = m_bac->biari_decode_symbol(p_aec, &p_ctxPrefix[1]);
-            }
-            else {
-                l = m_bac->biari_decode_symbol(p_aec, &p_ctxPrefix[2]);
-            }
-            count--;
-        }
-        else {
-            l = m_bac->biari_decode_symbol_eq_prob(p_aec);
-        }
-        if (l == 1) {
-            symbol += (1LL << k);
-            k++;
-            kmax = k;
-        }
-    } while (l != 0);
-    while (k--) {  //next binary part
-        if (count) {
-            if (k == kmax - 1) {
-                p = m_bac->biari_decode_symbol(p_aec, &p_ctxSufffix[0]);
-            }
-            else if (k == kmax - 2) {
-                p = m_bac->biari_decode_symbol(p_aec, &p_ctxSufffix[1]);
-            }
-            else {
-                p = m_bac->biari_decode_symbol(p_aec, &p_ctxSufffix[2]);
-            }
-            count--;
-        }
-        else {
-            p = m_bac->biari_decode_symbol_eq_prob(p_aec);
-        }
-        if (p == 1) {
-            binary_symbol |= (1LL << k);
-        }
-    }
-    return static_cast<UInt64>(symbol + binary_symbol);
-}
-
-Void TDecBacTop::setGolombGroupSize(const UInt& log2groupSize) {
-  Group_size = 1 << log2groupSize;
-  Group_size_shift = log2groupSize;
-}
-
-Void TDecBacTop::setColorGolombKandBound(const UInt& GolombNum) {
+Void TDecBacTop::setColorGolombKandBound(const UInt& groupSizeLog2, const UInt& GolombNum) {
+  Group_size = 1 << groupSizeLog2;
+  Group_size_log2 = groupSizeLog2;
   golombK[0] = GolombNum;
   golombK[1] = GolombNum;
   golombK[2] = GolombNum;
   if (GolombNum > 1) {
     golombkForValUpper = (1 << (GolombNum - 1)) + (1 << (GolombNum - 2));
     golombkForValLower = (1 << (GolombNum - 1)) - (1 << (GolombNum - 2));
-
   } else {
     golombkForValUpper = 1;
     golombkForValLower = 1;
   }
+  ExpGolombInputGroup = {{}, {}, {}};
+  inputGroupSum = {0, 0, 0};
 }
 
+int TDecBacTop::parseExpGolombAdp(const int k, const int colorType, const int ctx_id) {
+  golombK[colorType] = golombK[colorType] > 0 ? golombK[colorType] : 1;
+  int golombDeVal =
+    parseExpGolombN(golombK[colorType], &p_aec->attribute_syn_ctx.ctx_attr_residual_prefix[ctx_id],
+                    &p_aec->attribute_syn_ctx.ctx_attr_residual_suffix[ctx_id]);
+  if (ExpGolombInputGroup[colorType].size() < Group_size) {
+    inputGroupSum[colorType] += golombDeVal;
+    ExpGolombInputGroup[colorType].push_back(golombDeVal);
+  } else {
+    auto valFirst = ExpGolombInputGroup[colorType].begin();
+    inputGroupSum[colorType] -= *valFirst;
+    ExpGolombInputGroup[colorType].erase(valFirst);
+    inputGroupSum[colorType] += golombDeVal;
+    ExpGolombInputGroup[colorType].push_back(golombDeVal);
+    int64_t inputGroupAvg = inputGroupSum[colorType] / Group_size;
+    golombK[colorType] = k;
+    if (inputGroupAvg < golombkForValLower)
+      golombK[colorType]--;
+    else if (inputGroupAvg > golombkForValUpper)
+      golombK[colorType]++;
+  }
+  return golombDeVal;
+}
+
+UInt64 TDecBacTop::parseExpGolombReflN(int k, context_t* p_ctxPrefix, context_t* p_ctxSufffix) {
+  int count = 4;
+  int k0 = k;
+  int kmax = k;
+  UInt64 l;
+  UInt64 symbol = 0;
+  UInt64 binary_symbol = 0;
+  unsigned int p;
+  do {
+    if (count) {
+      if (k == k0) {
+        l = m_bac->biari_decode_symbol(p_aec, &p_ctxPrefix[0]);
+      } else if (k == k0 + 1) {
+        l = m_bac->biari_decode_symbol(p_aec, &p_ctxPrefix[1]);
+      } else {
+        l = m_bac->biari_decode_symbol(p_aec, &p_ctxPrefix[2]);
+      }
+      count--;
+    } else {
+      l = m_bac->biari_decode_symbol_eq_prob(p_aec);
+    }
+    if (l == 1) {
+      symbol += (1LL << k);
+      k++;
+      kmax = k;
+    }
+  } while (l != 0);
+  while (k--) {  //next binary part
+    if (count) {
+      if (k == kmax - 1) {
+        p = m_bac->biari_decode_symbol(p_aec, &p_ctxSufffix[0]);
+      } else if (k == kmax - 2) {
+        p = m_bac->biari_decode_symbol(p_aec, &p_ctxSufffix[1]);
+      } else {
+        p = m_bac->biari_decode_symbol(p_aec, &p_ctxSufffix[2]);
+      }
+      count--;
+    } else {
+      p = m_bac->biari_decode_symbol_eq_prob(p_aec);
+    }
+    if (p == 1) {
+      binary_symbol |= (1LL << k);
+    }
+  }
+  return static_cast<UInt64>(symbol + binary_symbol);
+}
 
 Int TDecBacTop::parseRefl(const int ctx_id, const bool isDuplicatePoint,
                           const bool residualminusone_flag, const UInt& golombNum) {
@@ -604,12 +533,13 @@ Int TDecBacTop::parseRefl(const int ctx_id, const bool isDuplicatePoint,
           p_aec, &p_aec->attribute_syn_ctx_dual.ctx_attr_residual_flag2[ctx_id])) {
       int golombDeVal =
         parseExpGolombReflN(golombNum, p_aec->attribute_syn_ctx_dual.ctx_attr_residual_prefix,
-                           p_aec->attribute_syn_ctx_dual.ctx_attr_residual_suffix);
+                            p_aec->attribute_syn_ctx_dual.ctx_attr_residual_suffix);
       val = 5 + parity + (golombDeVal << 1);
     } else {
       val = 3 + parity;
     }
-  } else {    val = 1 + parity;
+  } else {
+    val = 1 + parity;
   }
   val = (sign_bit == 1) ? val : -val;
   return val;
@@ -626,9 +556,10 @@ Int TDecBacTop::parseColor(const int ctx_id, const bool isDuplicatePoint,
       Int sign_bit = m_bac->biari_decode_symbol_eq_prob(p_aec);
       if (!m_bac->biari_decode_symbol(
             p_aec, &p_aec->attribute_syn_ctx_dual.ctx_attr_residual_flag1[ctx_id])) {
-        if (!m_bac->biari_decode_symbol(p_aec, &p_aec->attribute_syn_ctx_dual.ctx_attr_residual_flag2[ctx_id])) {
+        if (!m_bac->biari_decode_symbol(
+              p_aec, &p_aec->attribute_syn_ctx_dual.ctx_attr_residual_flag2[ctx_id])) {
           val = parseExpGolombN(1, &p_aec->attribute_syn_ctx_dual.ctx_attr_residual_prefix[ctx_id],
-                               &p_aec->attribute_syn_ctx_dual.ctx_attr_residual_suffix[ctx_id]) +
+                                &p_aec->attribute_syn_ctx_dual.ctx_attr_residual_suffix[ctx_id]) +
             3;
         } else {
           val = 2;
@@ -652,7 +583,7 @@ Int TDecBacTop::parseColor(const int ctx_id, const bool isDuplicatePoint,
         if (!m_bac->biari_decode_symbol(
               p_aec, &p_aec->attribute_syn_ctx_dual.ctx_attr_residual_minusone_flag2[ctx_id])) {
           val = parseExpGolombN(1, &p_aec->attribute_syn_ctx_dual.ctx_attr_residual_prefix[ctx_id],
-                               &p_aec->attribute_syn_ctx_dual.ctx_attr_residual_suffix[ctx_id]) +
+                                &p_aec->attribute_syn_ctx_dual.ctx_attr_residual_suffix[ctx_id]) +
             3;
         } else {
           val = 2;
@@ -669,10 +600,9 @@ Int TDecBacTop::parseColor(const int ctx_id, const bool isDuplicatePoint,
   }
 }
 
-
 int64_t TDecBacTop::parseAttr(const bool& isColor, const int& colorType, const int ctx_id,
-                          const bool isDuplicatePoint, const bool residualminusone_flag,
-                          const UInt& golombNum, const int b0) {
+                              const bool isDuplicatePoint, const bool residualminusone_flag,
+                              const UInt& golombNum, const int b0) {
   int ExpGolombNumber = golombNum;
   if (!isColor) {
     int64_t val = 0;
@@ -688,9 +618,9 @@ int64_t TDecBacTop::parseAttr(const bool& isColor, const int& colorType, const i
                                      &p_aec->attribute_syn_ctx.ctx_attr_residual_flag2[ctx_id])) {
         UInt64 golombDeVal =
           parseExpGolombReflN(ExpGolombNumber, p_aec->attribute_syn_ctx.ctx_attr_residual_prefix,
-                             p_aec->attribute_syn_ctx.ctx_attr_residual_suffix);
+                              p_aec->attribute_syn_ctx.ctx_attr_residual_suffix);
         val = 5 + parity + (golombDeVal << 1);
-       
+
       } else {
         val = 3 + parity;
       }
@@ -705,7 +635,8 @@ int64_t TDecBacTop::parseAttr(const bool& isColor, const int& colorType, const i
       bool tempflag = 0;
       if (b0 == 1) {
         if (isDuplicatePoint == 0) {
-          tempflag = m_bac->biari_decode_symbol(p_aec, &p_aec->attribute_syn_ctx.ctx_attr_residual_eq0[6]);
+          tempflag =
+            m_bac->biari_decode_symbol(p_aec, &p_aec->attribute_syn_ctx.ctx_attr_residual_eq0[6]);
 
         } else {
           tempflag =
@@ -720,14 +651,16 @@ int64_t TDecBacTop::parseAttr(const bool& isColor, const int& colorType, const i
       if (!tempflag)
 
       {
-        if (m_bac->biari_decode_symbol(p_aec, &p_aec->attribute_syn_ctx.ctx_attr_residual_flag1[ctx_id + b0])) {
+        if (m_bac->biari_decode_symbol(
+              p_aec, &p_aec->attribute_syn_ctx.ctx_attr_residual_flag1[ctx_id + b0])) {
           int parity =
             m_bac->biari_decode_symbol(p_aec, &p_aec->attribute_syn_ctx.parity[ctx_id + b0]);
-          if (m_bac->biari_decode_symbol(p_aec, &p_aec->attribute_syn_ctx.ctx_attr_residual_flag2[ctx_id + b0])) {
+          if (m_bac->biari_decode_symbol(
+                p_aec, &p_aec->attribute_syn_ctx.ctx_attr_residual_flag2[ctx_id + b0])) {
             golombK[colorType] = golombK[colorType] > 0 ? golombK[colorType] : 1;
             int golombDeVal = parseExpGolombAdp(ExpGolombNumber, colorType, ctx_id);
             val = 4 + parity + (golombDeVal << 1);
-           
+
           } else {
             val = 2 + parity;
           }
@@ -742,7 +675,8 @@ int64_t TDecBacTop::parseAttr(const bool& isColor, const int& colorType, const i
             p_aec,
             &p_aec->attribute_syn_ctx
                .ctx_attr_residual_minusone_eq0[ctx_id + (3 * isDuplicatePoint)])) {
-        if (m_bac->biari_decode_symbol(p_aec, &p_aec->attribute_syn_ctx.ctx_attr_residual_minusone_flag1[ctx_id])) {
+        if (m_bac->biari_decode_symbol(
+              p_aec, &p_aec->attribute_syn_ctx.ctx_attr_residual_minusone_flag1[ctx_id])) {
           int parity = m_bac->biari_decode_symbol(p_aec, &p_aec->attribute_syn_ctx.parity[ctx_id]);
           if (m_bac->biari_decode_symbol(
                 p_aec, &p_aec->attribute_syn_ctx.ctx_attr_residual_minusone_flag2[ctx_id])) {
@@ -761,14 +695,14 @@ int64_t TDecBacTop::parseAttr(const bool& isColor, const int& colorType, const i
   }
 }
 
-void TDecBacTop::parseSign(int64_t& delta) {
-    if (delta != 0) {
-      int sign_bit = m_bac->biari_decode_symbol_eq_prob(p_aec);
-      delta = (sign_bit == 1) ? delta : -delta;
-    }
+Void TDecBacTop::parseSign(int64_t& delta) {
+  if (delta != 0) {
+    int sign_bit = m_bac->biari_decode_symbol_eq_prob(p_aec);
+    delta = (sign_bit == 1) ? delta : -delta;
+  }
 }
 
-Int TDecBacTop::parseAttrHaar(const bool& isColor,const int& colorType, const bool reslayer,
+Int TDecBacTop::parseAttrHaar(const bool& isColor, const int& colorType, const bool reslayer,
                               const int ctx_id, const bool isDuplicatePoint,
                               const bool residualminusone_flag, const UInt& golombNum) {
   if (!isColor) {
@@ -784,15 +718,15 @@ Int TDecBacTop::parseAttrHaar(const bool& isColor,const int& colorType, const bo
                                       &p_aec->attribute_syn_ctx.ctx_attr_residual_flag2[ctx_id])) {
         if (reslayer) {
           val = parseExpGolombReflN(golombNum, p_aec->attribute_syn_ctx.ctx_attr_residual_prefix,
-                                   p_aec->attribute_syn_ctx.ctx_attr_residual_suffix) +
+                                    p_aec->attribute_syn_ctx.ctx_attr_residual_suffix) +
             3;
         } else {
-          int golombDeVal = parseExpGolombReflN(golombNum,
-                                               p_aec->attribute_syn_ctx.ctx_attr_residual_prefix,
-                                               p_aec->attribute_syn_ctx.ctx_attr_residual_suffix);
+          int golombDeVal =
+            parseExpGolombReflN(golombNum, p_aec->attribute_syn_ctx.ctx_attr_residual_prefix,
+                                p_aec->attribute_syn_ctx.ctx_attr_residual_suffix);
           val = golombDeVal + 3;
         }
-        
+
       } else {
         val = 2;
       }
@@ -814,14 +748,13 @@ Int TDecBacTop::parseAttrHaar(const bool& isColor,const int& colorType, const bo
                 p_aec, &p_aec->attribute_syn_ctx.ctx_attr_residual_flag2[ctx_id])) {
             if (reslayer) {
               val = parseExpGolombN(golombNum,
-                                   &p_aec->attribute_syn_ctx.ctx_attr_residual_prefix[ctx_id],
-                                   &p_aec->attribute_syn_ctx.ctx_attr_residual_suffix[ctx_id]) +
+                                    &p_aec->attribute_syn_ctx.ctx_attr_residual_prefix[ctx_id],
+                                    &p_aec->attribute_syn_ctx.ctx_attr_residual_suffix[ctx_id]) +
                 3;
             } else {
               int golombDeVal = parseExpGolombAdp(golombNum, colorType, ctx_id);
               val = golombDeVal + 3;
-            
-            } 
+            }
           } else {
             val = 2;
           }
@@ -836,13 +769,14 @@ Int TDecBacTop::parseAttrHaar(const bool& isColor,const int& colorType, const bo
             p_aec,
             &p_aec->attribute_syn_ctx
                .ctx_attr_residual_minusone_eq0[ctx_id + (3 * isDuplicatePoint)])) {
-        if (!m_bac->biari_decode_symbol(p_aec, &p_aec->attribute_syn_ctx.ctx_attr_residual_minusone_flag1[ctx_id])) {
+        if (!m_bac->biari_decode_symbol(
+              p_aec, &p_aec->attribute_syn_ctx.ctx_attr_residual_minusone_flag1[ctx_id])) {
           if (!m_bac->biari_decode_symbol(
                 p_aec, &p_aec->attribute_syn_ctx.ctx_attr_residual_minusone_flag2[ctx_id])) {
             if (reslayer) {
               val = parseExpGolombN(golombNum,
-                                   &p_aec->attribute_syn_ctx.ctx_attr_residual_prefix[ctx_id],
-                                   &p_aec->attribute_syn_ctx.ctx_attr_residual_suffix[ctx_id]) +
+                                    &p_aec->attribute_syn_ctx.ctx_attr_residual_prefix[ctx_id],
+                                    &p_aec->attribute_syn_ctx.ctx_attr_residual_suffix[ctx_id]) +
                 3;
             } else {
               int golombDeVal = parseExpGolombAdp(golombNum, colorType, ctx_id);
@@ -861,17 +795,12 @@ Int TDecBacTop::parseAttrHaar(const bool& isColor,const int& colorType, const bo
   }
 }
 
-Int TDecBacTop::parseAttrequaltwo0() {
+Int TDecBacTop::parseAttrequaltwo() {
   int val = m_bac->biari_decode_symbol(p_aec, &p_aec->attribute_syn_ctx.ctx_attr_flag2);
   return val;
 }
-Int TDecBacTop::parseAttrequalone0() {
+Int TDecBacTop::parseAttrequalone() {
   Int val = m_bac->biari_decode_symbol(p_aec, &p_aec->attribute_syn_ctx.ctx_attr_flag1);
-  return val;
-}
-
-Int TDecBacTop::parseAttrequal0() {
-  Int val = m_bac->biari_decode_symbol(p_aec, &p_aec->attribute_syn_ctx.ctx_attr_flag4);
   return val;
 }
 
@@ -880,7 +809,7 @@ UInt TDecBacTop::decodeGeomTreeType() {
   return geomTreeType;
 }
 
-bool TDecBacTop::decodeKOctreeDepthflag() {
+Bool TDecBacTop::decodeKOctreeDepthflag() {
   bool m = m_bac->biari_decode_symbol(p_aec, &p_aec->geometry_syn_ctx.ctxdepth);
   return m;
 }
@@ -1012,8 +941,6 @@ UInt TDecBacTop::decodePredTreeNumPtsInLcu() {
   return numPtrsInLcu;
 }
 
-
-
 UInt TDecBacTop::decodeOccUsingMemoryChannel(TComOctreePartitionParams& params,
                                              TComGeomContext& geomCtx,
                                              bool& planarModeEligibleForSlice) {
@@ -1121,8 +1048,8 @@ UInt TDecBacTop::decodeOccUsingMemoryChannel(TComOctreePartitionParams& params,
 }
 
 UInt TDecBacTop::decodeOccupancyCode(const TComOctreePartitionParams& params,
-                                      TComGeomContext& geomCtx, bool& planarModeEligibleForSlice,
-                                      const UInt contextMode) {
+                                     TComGeomContext& geomCtx, bool& planarModeEligibleForSlice,
+                                     const UInt contextMode) {
   UInt occupancy = 0;
   UInt8 context = 0;
   UInt16 childInformation = 0;
@@ -1237,9 +1164,7 @@ UInt TDecBacTop::decodeOccupancyCode(const TComOctreePartitionParams& params,
           context = ctxFromMemory;
           bit = m_bac->biari_decode_symbol(p_aec, bit_ctx + context);
           *memoryVal = ((*memoryVal) << 1) | bit;
-        }
-        else
-        {
+        } else {
           bit_ctx = p_aec->geometry_syn_ctx.ctxRUB_occupancy[i];
           context = ctxParentAdv1[i];
           bit = m_bac->biari_decode_symbol(p_aec, bit_ctx + context);
@@ -1259,8 +1184,6 @@ UInt TDecBacTop::decodeOccupancyCode(const TComOctreePartitionParams& params,
   }
   return occupancy;
 }
-
-
 
 Bool TDecBacTop::decodeSinglePointFlag() {
   return !!m_bac->biari_decode_symbol(p_aec, &p_aec->geometry_syn_ctx.ctx_geom_single_mode_flag);
@@ -1282,14 +1205,25 @@ V3<UInt> TDecBacTop::decodeSinglePointIndex(V3<UInt> nodeSizeLog2) {
 UInt TDecBacTop::decodeDuplicateNumber() {
   UInt numDup = 1;
   auto p_ctx = &p_aec->geometry_syn_ctx.ctx_geom_num_dup_eq1;
-  if (!m_bac->biari_decode_symbol(p_aec, p_ctx))
-    numDup = m_bac->sbac_read_ue_ep(p_aec) + 2;
+  if (!m_bac->biari_decode_symbol(p_aec, p_ctx)) {
+    unsigned int l;
+    int symbol = 0;
+    int k = 0;
+    int binary_symbol = 0;
+    do {
+      l = m_bac->biari_decode_symbol_eq_prob(p_aec);
+      if (l == 1) {
+        symbol += (1 << k);
+        k++;
+      }
+    } while (l != 0);
+    while (k--)  //next binary part
+      if (m_bac->biari_decode_symbol_eq_prob(p_aec) == 1) {
+        binary_symbol |= (1 << k);
+      }
+    numDup = symbol + binary_symbol + 2;
+  }
   return numDup;
-}
-
-UInt TDecBacTop::parseRunlengthGroup() {
-  Int val = m_bac->sbac_read_ue_ep(p_aec);
-  return val;
 }
 
 Bool TDecBacTop::decodeTerminationFlag() {
@@ -1323,10 +1257,12 @@ Void TDecBacTop::reset() {
   p_aec = &aec;
   std::fill(begin(memoryChannel), end(memoryChannel), 15);
 }
+
 Void TDecBacTop::LcuReset() {
   std::fill(begin(memoryChannel), end(memoryChannel), 15);
   m_bac->init_geometry_contexts(p_aec);
 }
+
 Void TDecBacTop::setBitstreamBuffer(TComBufferChunk& buffer, const bool& initDulatAttribute) {
   m_bac->com_bsr_init(&m_bitStream, (UInt8*)buffer.addr, buffer.ssize, NULL);
 
@@ -1334,8 +1270,7 @@ Void TDecBacTop::setBitstreamBuffer(TComBufferChunk& buffer, const bool& initDul
     m_bac->init_geometry_contexts(p_aec);
     m_bac->aec_start_decoding(p_aec, m_bitStream.beg, 0,
                               buffer.ssize);  // TODO:╪сио
-  } else if (buffer.getBufferType() == BufferChunkType::BCT_ATTR ||
-             buffer.getBufferType() == BufferChunkType::BCT_COL ||
+  } else if (buffer.getBufferType() == BufferChunkType::BCT_COL ||
              buffer.getBufferType() == BufferChunkType::BCT_REFL) {
     m_bac->init_attribute_contexts(p_aec, initDulatAttribute);
     m_bac->aec_start_decoding(p_aec, m_bitStream.beg, 0,
@@ -1343,4 +1278,5 @@ Void TDecBacTop::setBitstreamBuffer(TComBufferChunk& buffer, const bool& initDul
   }
 }
 
+Void TDecBacTop::parseUserData(){};
 ///< \{

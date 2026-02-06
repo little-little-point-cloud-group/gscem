@@ -55,8 +55,12 @@ protected:
   string m_bitstreamFileName;  ///< output bitstream file
   string m_reconFileName;      ///< output reconstruction file
   string m_MD5FileName;        ///< output MD5 string file
+  string attribute;            ///< control the attribute information
   UInt m_startFrame;           ///< start frame number
   UInt m_numOfFrames;          ///< number of frames to be encoded
+  Float m_geomTarbpp;          ///< geometry target bpip
+  Float m_attrTarbpp;          ///< attribute target bpip
+
 
   UInt m_maxPointNumOfSlicesLog2;///< max number of points in every slice
   UInt m_sliceDivisionMode;    ///< select the method of slice division
@@ -64,6 +68,7 @@ protected:
   Bool m_geomOnlyFlag;         ///< if true, only encode the geometry information
   Bool m_writePlyInAsciiFlag;  ///< ascii/binary mode of output ply file
   Bool m_colorTransformFlag;   ///< color transform e.g. RGB-YUV, this should be per-attribute
+  Bool m_splitBinFlag;         ///< split bin file for multi frames. 0: disable, 1: enable
   HighLevelSyntax m_hls;       ///< high-level syntax parameters
   Bool m_metricsEnable;        ///< if calculate metrics. 1: yes, 0: no
   Bool m_symmetry;             ///< Force running a single pass, where the loop is over the original point cloud
@@ -75,6 +80,10 @@ protected:
   Bool m_multiNeighbourMode;   ///< process same distance neighbours. 1: average 0 : no process
   Bool m_showHausdorff;        ///< if show hausdorff and hausdorffPSNR. 1: yes, 0: no
   Bool m_PeakMemoryFlag;       ///< output peak memory
+  Bool m_parseMultiAttrParams; ///< parse multi attribute parameters
+  UInt m_numMultiAttrParamSet; ///< control the number of attribute parametes set
+  UInt m_multiAttrParamSetIdx; ///< control the index of the current attribute parametes set
+  
 
 private:
   Bool checkParameter();       ///< check validity of configuration values

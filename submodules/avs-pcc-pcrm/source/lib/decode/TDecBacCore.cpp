@@ -179,35 +179,6 @@ UInt32 TDecBacCore::sbac_read_unary_sym_ep(COM_BS* bs, aec_t* p_aec) {
   return val;
 }
 
-UInt32 TDecBacCore::sbac_read_ue_ep(aec_t* p_aec) {
-  UInt32 val = 0;
-  int Level = 0;
-
-  int golomb_order = 0;
-  int binary_symbol = 0;
-
-  for (;;) {
-    int l = biari_decode_symbol_eq_prob(p_aec);
-    AEC_RETURN_ON_ERROR(-1);
-    if (l) {
-      break;
-    }
-    Level += (1 << golomb_order);
-    golomb_order++;
-  }
-
-  while (golomb_order--) {
-    // next binary part
-    int sig = biari_decode_symbol_eq_prob(p_aec);
-    binary_symbol |= (sig << golomb_order);
-  }
-
-  Level += binary_symbol;
-  val = Level;
-
-  return val;
-}
-
 int TDecBacCore::aec_get_next_bit(aec_t* p_aec) {
   uint32_t next_bit;
 

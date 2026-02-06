@@ -54,7 +54,7 @@ protected:
   string m_reconFileName;      ///< output reconstruction file name
   string m_md5FileName;        ///< filename for MD5 in encoding process, set default to skip
   UInt m_startFrame;           ///< start frame number
-  UInt m_numOfFrames;          ///< number of frames to be encoded
+  UInt m_numOfBins;            ///< number of bins to be decoded
   Bool m_writePlyInAsciiFlag;  ///< ascii/binary mode of output ply file
   Bool m_colorTransformFlag;   ///< color transform e.g. RGB-YUV, this should be per-attribute
   Bool m_PeakMemoryFlag;       ///< output peak memory

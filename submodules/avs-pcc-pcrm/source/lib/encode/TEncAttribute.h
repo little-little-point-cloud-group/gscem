@@ -44,10 +44,10 @@ private:
   HighLevelSyntax* m_hls;             ///< pointer to high-level syntax parameters
   TEncBacTop* m_encBac;               ///< pointer to bac
   TEncBacTop* m_encBacDual;           ///< pointer to bac
-  size_t m_colorBits;  ///< color bits
-  size_t m_reflBits;   ///< reflectance bits
-  double m_colorTime;  ///< color encoding time
-  double m_reflTime;   ///< reflectance encoding time
+  size_t m_colorBits;                 ///< color bits
+  size_t m_reflBits;                  ///< reflectance bits
+  double m_colorTime;                 ///< color encoding time
+  double m_reflTime;                  ///< reflectance encoding time
   int frame_Id;
   int frame_Count;
   int multil_ID;
@@ -76,17 +76,16 @@ public:
                 HighLevelSyntax* hls, TEncBacTop* encBac, TEncBacTop* encBacDual,
                 const int& frame_Id, const int& frame_count, const int& multil_Id);
 
-  Void attributePredictingResidual();
-  Void predictEncodeAttribute();
-  Void transformEncodeAttribute();
-  Void predictAndTransformEncodeAttribute();
+  Void dualEncodeAttribute();
 
   Void predictEncodeColor();
   Void transformEncodeColor();
+  Void transformEncodeColorFromReflectance();
   Void predictAndTransformEncodeColor();
 
   Void predictEncodeReflectance();
   Void transformEncodeReflectance();
+  Void transformEncodeReflectanceFromColor();
   Void predictAndTransformEncodeReflectance();
 
   Void predictEncodeMultiReflectance();
@@ -96,11 +95,10 @@ public:
 
   Void reflectancePredictingResidual();
   Void colorPredictingResidual();
+  Void attributePredictingResidual();
 
   Void colorPredictAndTransformMemControl();
-
   Void reflectancePredictAndTransformMemControl();
-
   Void attributePredictAndTransformMemControl();
 
   Void reflectanceWaveletTransform();
@@ -114,39 +112,32 @@ public:
   void reflectancePredictCode(const int64_t& predictor, PC_REFL& currValue, int& run_length,
                               const bool isDuplicatePoint = false);
 
-  void colorResidualCorrelationCode(const int64_t signResidualQuantvalue[3],                                   
-                                    const bool isDuplicatePoint = false, const UInt& golombNum = 1);
+  void colorResidualCorrelationCode(const int64_t signResidualQuantvalue[3],
+                                    const bool isDuplicatePoint, const UInt& golombNum,
+                                    const V3<bool>& codeSign);
 
-  void colorResidualCorrelationCodeOS(const int64_t signResidualQuantvalue[3],                                      
-                                      const bool isDuplicatePoint = false,
-                                      const UInt& golombNum = 1);
+  void determineNeedCodeSign(V3<bool>& codeSign, const bool& os);
 
   void colorTransformCode(std::vector<pointCodeWithIndex>& pointCloudCode,
                           std::vector<int>& transformPointIdx, int& dcIndex, int& acIndex,
                           int64_t transformBuf[][8], int64_t transformPredBuf[][8],
                           const quantizedQP& colorQp, int* Coefficients,
-                          std::vector<colorNeighborSet>& neighborSet,
+                          std::vector<neighborSet>& neighborSet, colorQuantShift& colorQuantShift,
                           const bool isLengthControl = false, bool colorQPAdjustFlag = false,
                           bool deadZoneChromaFlag = false);
 
- void reflectanceTransformCodeMemControl(std::vector<pointCodeWithIndex>& pointCloudCode,
-                                          std::vector<int>& transformPointIdx, int& dcIndex,
-                                          int& acIndex, int64_t transformBuf[1][8],
-                                          int64_t transformPredBuf[1][8], int* Coefficients,
-                                          std::vector<reflNeighborSet>& neighborSet,
-                                          PC_REFL& lastref);
+  void reflectanceCode(const int64_t& predictor, PC_REFL& currValue, int64_t& value,
+                       const bool isDuplicatePoint);
 
- void reflectanceCode(const int64_t& predictor, PC_REFL& currValue, int& run_length, int64_t& value,
-                      const bool isDuplicatePoint);
+  void reflectanceTransformCode(std::vector<pointCodeWithIndex>& pointCloudCode,
+                                std::vector<int>& transformPointIdx, int& dcIndex, int& acIndex,
+                                int64_t transformBuf[1][8], int64_t transformPredBuf[1][8],
+                                int* Coefficients, std::vector<neighborSet>& neighborSet,
+                                PC_REFL& lastref);
 
   void runlengthEncodeMemControl(int* Coefficients, int pointCount, int& run_length,
                                  int lengthControl, const bool isColor = false);
 
-  void colorResidualCorrelationCodeHaar(const int64_t signResidualQuantvalue[3],
-                                        const bool reslayer = false,
-                                        const bool isDuplicatePoint = false,
-                                        const UInt& golombNum = 1);
-                                        
-  void setCoeffIndex(int& groupCount, const vector<int>& numofGroupCount,
-                     const vector<int>& length, int& dcIndex, int& acIndex);
+  void setCoeffIndex(int& groupCount, const vector<int>& numofGroupCount, const vector<int>& length,
+                     int& dcIndex, int& acIndex);
 };

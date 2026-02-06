@@ -43,21 +43,22 @@
  * Class TComBufferChunk
  * bitstream buffer chunk
  */
-#define slice_geometry_start_code (0x00)
-#define slice_geometry_end_code   (0x8F) ///< slice end code is same 
-#define slice_attribute_start_code (0x3F)
-#define slice_attribute_end_code (0x8F)
+#define start_code_lower                  (0x00)
+#define start_code_upper                  (0x0B)
 
-#define slice_start_code_lower  (0x00)
-#define slice_start_code_upper  (0x7F)
-#define slice_end_code          (0x8F)
-#define pcc_sequence_start_code (0xB0)
-#define pcc_sequence_end_code   (0xB1)
-#define geometry_start_code     (0xB2)
-#define attribute_start_code    (0xB3)
-#define frame_start_code        (0xB4)
-#define user_data_start_code    (0xB5)
-#define pcc_edit_code           (0xB6)
+
+#define sequence_start_code               (0x00)
+#define sequence_end_code                 (0x01)
+#define geometry_start_code               (0x02)
+#define attribute_start_code              (0x03)
+#define frame_start_code                  (0x04)
+#define user_data_start_code              (0x05)
+#define geometry_slice_header_start_code  (0x06)
+#define color_slice_header_start_code     (0x07)
+#define refl_slice_header_start_code      (0x08)
+#define geometry_slice_payload_start_code (0x09)
+#define color_slice_payload_start_code    (0x0A)
+#define refl_slice_payload_start_code     (0x0B)
 
 class TComBufferChunk : public TComBitstream {
 private:
@@ -69,12 +70,16 @@ public:
   ~TComBufferChunk() = default;
 
   Void writeToBitstream(ofstream* outBitstream, UInt64 length);
-  Int readFromBitstream(ifstream& inBitstream, int buffersize);
+  Void writeStartCodeToBitstream(ofstream* outBitstream);
+  Void writeFinalCodeToBitstream(ofstream* outBitstream);
+  BufferChunkType determineBufferType(const uint32_t& startCode);
+  Int readFromBitstream(ifstream& inBitstream, int buffersize, bool& decodeSequence,
+                        uint8_t& nextStartCode, bool& decodeFrame);
   Void setBufferType(BufferChunkType bufferType);
   BufferChunkType getBufferType();
 
 private:
-  Int readBufferChunk(ifstream& inBitstream, TSize& bufferChunkSize);
+  Int readBufferChunk(ifstream& inBitstream, TSize& bufferChunkSize, uint8_t& nextStartCode);
   TSize initParsingConvertPayloadToRBSP(const TSize uiBytesRead, UChar* pBuffer, UChar* pBuffer2);
 
 };  ///< END CLASS TComBufferChunk

@@ -68,7 +68,6 @@ typedef struct geom_ctx_set_t {
   context_t ctx_occupancy[1 << 5][NUM_OCCUPANCY_CHILD_CTX];
   context_t ctx_occupancyCombinechild[8][7];
   context_t ctx_occupancyCombineParent1[8][9];
-
   context_t ctx_geom_num_dup_eq1;
   context_t ctx_geom_single_mode_flag;
 
@@ -89,76 +88,22 @@ typedef struct attr_ctx_set_t {
 
   ///< runlength context
   context_t ctx_attr_length_eq0;
-  context_t ctx_attr_length_eq1;
-  context_t ctx_attr_length_eq2;
-  context_t ctx_attr_length_eg3;
   context_t ctx_length_prefix[3];
   context_t ctx_length_suffix[2];
 
   ///< context using for attribute residual
   context_t ctx_attr_residual_prefix[3];
   context_t ctx_attr_residual_suffix[3];
+
   ///< context using for equal to zero
   context_t ctx_attr_flag1;
   context_t ctx_attr_flag2;
-  context_t ctx_attr_flag4;
 
   ///< context using for attribute_yuv_minusone residual
   context_t ctx_attr_residual_minusone_eq0[6];
   context_t ctx_attr_residual_minusone_flag1[3];
   context_t ctx_attr_residual_minusone_flag2[3];
 } attr_ctx_set_t;
-
-
-
-//typedef struct ctx_set_t {
-//  context_t planarMode[2];
-//  context_t ctx_occupancyCombineParent[NUM_child_CTX];
-//  context_t ctxRUB_occupancy[NUM_OCCUPANCY_CHILD_CTX][8];
-//  context_t ctxMemoryChannel[288];
-//  context_t ctx_compute[8][3];
-//  context_t ctx_occupancy[1 << 5][NUM_OCCUPANCY_CHILD_CTX];
-//  context_t ctx_occupancyCombinechild[8][7];
-//  context_t ctx_occupancyCombineParent1[8][9];
-//
-//  context_t ctx_geom_num_dup_eq1;
-//  context_t ctx_geom_single_mode_flag;
-//
-//  context_t ctx_attr_residual_eq0[8];
-//  context_t ctx_attr_residual_flag1[4];
-//  context_t ctx_attr_residual_flag2[4];
-//  context_t parity[4];
-//
-//  ///< runlength context
-//  context_t ctx_attr_length_eq0;
-//  context_t ctx_attr_length_eq1;
-//  context_t ctx_attr_length_eq2;
-//  context_t ctx_attr_length_eg3;
-//  context_t ctx_length_prefix[3];
-//  context_t ctx_length_suffix[2];
-//
-//
-//  ///< context using for attribute residual
-//  context_t ctx_attr_residual_prefix[3];
-//  context_t ctx_attr_residual_suffix[3];
-//
-//  //context model for predtree/tsp coding
-//  context_t ctxGeomTreeType;
-//  context_t ctxdepth;
-//  context_t ctxPredTreeIsZero[3];
-//  context_t ctxPredTreeSign[3];
-//  context_t ctxPredTreeNumBits[3][10];
-//
-//  ///< context using for equal to zero
-//  context_t ctx_attr_flag1;
-//  context_t ctx_attr_flag2;
-//  context_t ctx_attr_flag4;
-//
-//  ///< context using for attribute_yuv_minusone residual
-//  context_t ctx_attr_residual_minusone_eq0[6];
-//  context_t ctx_attr_residual_minusone_flag1[3];
-//  context_t ctx_attr_residual_minusone_flag2[3];
-//} ctx_set_t;
 
 typedef struct ctx_set_t_dual {
   context_t ctx_attr_residual_eq0[6];
@@ -167,16 +112,9 @@ typedef struct ctx_set_t_dual {
 
   ///< runlength context
   context_t ctx_attr_length_eq0;
-  context_t ctx_attr_length_eq1;
-  context_t ctx_attr_length_eg2[3];
 
   ///< context using for attribute residual
   context_t ctx_attr_residual_prefix[3];
   context_t ctx_attr_residual_suffix[3];
-
-  ///< context using for attribute_yuv_minusone residual
-  context_t ctx_attr_residual_minusone_eq0[6];
-  context_t ctx_attr_residual_minusone_eq1[3];
-  context_t ctx_attr_residual_minusone_eq2[3];
 } ctx_set_t_dual;
 ///< \}

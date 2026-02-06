@@ -16,41 +16,33 @@ template<typename T>
 void WaveletCoreTransform(FXPoint* attributes, const int attribCount, const int voxelCount,
                           T* integerizedAttributes, const SequenceParameterSet& sps,
                           const AttributeParameterSet& aps, const AttributeBrickHeader& abh,
-                          int* positions, int* RecAttributes,
-                          const int disThInit);
+                          int* positions, int* RecAttributes, const int disThInit);
 template<typename T>
 void WaveletCoreInverseTransform(FXPoint* attributes, const int attribCount, const int voxelCount,
                                  T* integerizedAttributes, const SequenceParameterSet& sps,
                                  const AttributeParameterSet& aps, const AttributeBrickHeader& abh,
-                                 int* positions,
-                                 const int disThInit);
+                                 int* positions, const int disThInit);
 // predict and haar transform with cross attribute predict
 template<typename T>
 void WaveletCoreTransform(FXPoint* attributes, const int attribCount, const int voxelCount,
-    T* integerizedAttributes, const SequenceParameterSet& sps,
+                          T* integerizedAttributes, const SequenceParameterSet& sps,
                           const AttributeParameterSet& aps, const AttributeBrickHeader& abh,
-                          int* positions, int* RecAttributes,
-    const int disThInit, int* refAttributes, const int refAttribCount);
+                          int* positions, int* RecAttributes, const int disThInit,
+                          int* refAttributes, const int refAttribCount);
 template<typename T>
 void WaveletCoreInverseTransform(FXPoint* attributes, const int attribCount, const int voxelCount,
-    T* integerizedAttributes, const SequenceParameterSet& sps,
+                                 T* integerizedAttributes, const SequenceParameterSet& sps,
                                  const AttributeParameterSet& aps, const AttributeBrickHeader& abh,
-                                 int* positions,
-    const int disThInit, int* refAttributes, const int refAttribCount);
+                                 int* positions, const int disThInit, int* refAttributes,
+                                 const int refAttribCount);
 
 Void getLength(std::vector<pointCodeWithIndex>& pointCloudHilbert, vector<int>& length,
-               vector<int>& numofGroupCount, int maxNumofCoeff, 
-               int& ShiftBits, UInt MaxNum);
+               vector<int>& numofGroupCount, int maxNumofCoeff, int& ShiftBits, UInt MaxNum);
 
 Void lengthDivide(std::vector<pointCodeWithIndex>& pointCloudHilbert, vector<int>& length, int num,
-                  int MaxNum, int maxNumofCoeff, vector<int>& numofGroupCount, int& totalNum,
+                  int MaxTransNum, int maxNumofCoeff, vector<int>& numofGroupCount, int& totalNum,
                   int curIdx, int shiftBits, bool isduplicate);
 
 Void getLengthRef(const Int& shift, std::vector<pointCodeWithIndex>& pointCloudHilbert,
-                  vector<int>& length, vector<int>& numofGroupCount, 
-                  int maxNumofCoeff,int& ShiftBits, const UInt& MaxNum, const bool isMemControl);
-
-void lengthDivideRef(std::vector<pointCodeWithIndex>& pointCloudHilbert, vector<int>& length,
-                     int num, int MaxNum, int maxNumofCoeff, vector<int>& numofGroupCount,
-                     int& totalNum, int curIdx, int shiftBits, bool isduplicate,
-                     const bool isMemControl);
+                  vector<int>& length, vector<int>& numofGroupCount, int maxNumofCoeff,
+                  int& ShiftBits, const UInt& MaxNum, const bool isMemControl);

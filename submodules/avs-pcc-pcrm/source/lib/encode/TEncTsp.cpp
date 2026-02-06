@@ -121,10 +121,10 @@ void encodeTspLcu(TComPointCloud* pointCloudOrg, TComPointCloud* pointCloudRec,
   vector<UInt> isDuplicatePointSet(numPointsInLcu, 0);
 
   // sort the points in the Lcu node
-  if (encParams.sortMode == TreeEncoderParams::NoSort) {
+  if (encParams.sortMode == TreeEncoderParams::NoSort && !hls->aps.eligibleDupPointPred) {
     noSortLcu(pointCloudOrg, lcuNodePointIdx, lcuNode, isDuplicatePointSet,
               hls->sps.geomRemoveDuplicateFlag);
-  } else if (encParams.sortMode == TreeEncoderParams::MortonSort) {
+  } else if (encParams.sortMode == TreeEncoderParams::MortonSort || hls->aps.eligibleDupPointPred) {
     mortonSortLcu(pointCloudOrg, lcuNodePointIdx, lcuNode, isDuplicatePointSet,
                   hls->sps.geomRemoveDuplicateFlag);
   } else {
@@ -187,13 +187,13 @@ static Void mortonSortLcu(TComPointCloud* pointCloud, vector<int32_t>& lcuNodePo
     const PC_POS& point = (*pointCloud)[index];
     mortonOrder[idx].code = mortonAddr((Int32)point[0], (Int32)point[1], (Int32)point[2]);
     if (pointCloud->hasColors()) {
-      auto attr = pointCloud->getColor(index,0);
+      auto attr = pointCloud->getColor(index, 0);
       mortonOrder[idx].attr = attr[0];
     }
     if (pointCloud->hasReflectances()) {
-      auto attr = pointCloud->getReflectance(index,0);
+      auto attr = pointCloud->getReflectance(index, 0);
       mortonOrder[idx].attr = attr;
-    }   
+    }
   }
   std::sort(mortonOrder.begin(), mortonOrder.end());
 

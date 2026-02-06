@@ -46,22 +46,118 @@
 //////////////////////////////////////////////////////////////////////////
 // Public class functions
 //////////////////////////////////////////////////////////////////////////
-
+Void TComBufferChunk::writeFinalCodeToBitstream(ofstream* outBitstream) {
+  outBitstream->put(0);
+  outBitstream->put(0);
+  outBitstream->put(1);
+  outBitstream->put(sequence_end_code);
+}
+Void TComBufferChunk::writeStartCodeToBitstream(ofstream* outBitstream) {
+  switch (getBufferType()) {
+  case BufferChunkType(BCT_SPS):
+    outBitstream->put(sequence_start_code);
+    break;
+  case BufferChunkType(BCT_GPS):
+    outBitstream->put(geometry_start_code);
+    ;
+    break;
+  case BufferChunkType(BCT_APS):
+    outBitstream->put(attribute_start_code);
+    ;
+    break;
+  case BufferChunkType(BCT_FRAME):
+    outBitstream->put(frame_start_code);
+    ;
+    break;
+  case BufferChunkType(BCT_GBH):
+    outBitstream->put(geometry_slice_header_start_code);
+    ;
+    break;
+  case BufferChunkType(BCT_ABH_COL):
+    outBitstream->put(color_slice_header_start_code);
+    ;
+    break;
+  case BufferChunkType(BCT_ABH_REFL):
+    outBitstream->put(refl_slice_header_start_code);
+    break;
+  case BufferChunkType(BCT_GEOM):
+    outBitstream->put(geometry_slice_payload_start_code);
+    ;
+    break;
+  case BufferChunkType(BCT_COL):
+    outBitstream->put(color_slice_payload_start_code);
+    ;
+    break;
+  case BufferChunkType(BCT_REFL):
+    outBitstream->put(refl_slice_payload_start_code);
+    ;
+    break;
+  case BufferChunkType(BCT_UDA):
+    outBitstream->put(user_data_start_code);
+    break;
+  default:
+    break;
+  }
+}
 Void TComBufferChunk::writeToBitstream(ofstream* outBitstream, UInt64 length) {
   ///< write start code
   outBitstream->put(0);
   outBitstream->put(0);
   outBitstream->put(1);
 
-  ///< write buffer chunk type
-  outBitstream->put(TChar(m_bufferType));
+  ///< write buffer start code
+  writeStartCodeToBitstream(outBitstream);
 
   ///< write buffer chunk data
   outBitstream->write((TChar*)getBitStreamBuffer(), length);
   //printf("%d\n", length);
 }
+BufferChunkType TComBufferChunk::determineBufferType(const uint32_t& startCode) {
+  switch (startCode) {
+  case sequence_start_code:
+    return BufferChunkType(BCT_SPS);
+    break;
+  case geometry_start_code:
+    return BufferChunkType(BCT_GPS);
+    break;
+  case attribute_start_code:
+    return BufferChunkType(BCT_APS);
+  case frame_start_code:
+    return BufferChunkType(BCT_FRAME);
+    break;
+  case geometry_slice_header_start_code:
+    return BufferChunkType(BCT_GBH);
+    break;
+  case color_slice_header_start_code:
+    return BufferChunkType(BCT_ABH_COL);
+    break;
+  case refl_slice_header_start_code:
+    return BufferChunkType(BCT_ABH_REFL);
+    break;
+  case geometry_slice_payload_start_code:
+    return BufferChunkType(BCT_GEOM);
+    break;
+  case color_slice_payload_start_code:
+    return BufferChunkType(BCT_COL);
+    break;
+  case refl_slice_payload_start_code:
+    return BufferChunkType(BCT_REFL);
+    break;
+  case user_data_start_code:
+    return BufferChunkType(BCT_UDA);
+    break;
+  case sequence_end_code:
+	  return BufferChunkType(BCT_MAX);
+	  break;
+  default:
+    return BufferChunkType(BCT_MIN);
+    break;
+  }
+  return BufferChunkType(BCT_MIN);
+}
 
-Int TComBufferChunk::readFromBitstream(ifstream& inBitstream, int buffersize = (1 << 28)) {
+Int TComBufferChunk::readFromBitstream(ifstream& inBitstream, int buffersize, bool& decodeSequence,
+                                       uint8_t& nextStartCode, bool& endDecodeFrame) {
   ///< read start code 00 00 01
   if (!checkCond(inBitstream.get() == 0x00, "Error: invalid start code!"))
     return EXIT_FAILURE;
@@ -70,17 +166,27 @@ Int TComBufferChunk::readFromBitstream(ifstream& inBitstream, int buffersize = (
   if (!checkCond(inBitstream.get() == 0x01, "Error: invalid start code!"))
     return EXIT_FAILURE;
 
-  ///< read buffer chunk type
-  m_bufferType = (BufferChunkType)inBitstream.get();
+  uint8_t startCode = inBitstream.get();
+  nextStartCode = 0;
 
+  m_bufferType = determineBufferType(startCode);
+  if (startCode == sequence_end_code) {
+    decodeSequence = true;
+    return EXIT_SUCCESS;
+  }
+  if (startCode == frame_start_code) {
+    endDecodeFrame = true;
+  }
+  
   if (m_bufferType == BCT_SPS || m_bufferType == BCT_GPS || m_bufferType == BCT_APS ||
-      m_bufferType == BCT_GBH || m_bufferType == BCT_ABH)
+      m_bufferType == BCT_GBH || m_bufferType == BCT_ABH_COL || m_bufferType == BCT_ABH_REFL)
     allocateBuffSize(MAX_HEADER_BS_BUF);
   else
     allocateBuffSize(buffersize);
 
   TSize length = 0;
-  if (readBufferChunk(inBitstream, length) == EXIT_FAILURE)  ///< read buffer chunk data
+  if (readBufferChunk(inBitstream, length, nextStartCode) ==
+      EXIT_FAILURE)  ///< read buffer chunk data
     return EXIT_FAILURE;
   length = initParsingConvertPayloadToRBSP(length, (UChar*)addr, (UChar*)addr2);  ///< demulate
   allocateBuffSize(length);
@@ -103,7 +209,8 @@ BufferChunkType TComBufferChunk::getBufferType() {
 // Private class functions
 //////////////////////////////////////////////////////////////////////////
 
-Int TComBufferChunk::readBufferChunk(ifstream& inBitstream, TSize& bufferChunkSize) {
+Int TComBufferChunk::readBufferChunk(ifstream& inBitstream, TSize& bufferChunkSize,
+                                     uint8_t& nextStartCode) {
   UChar* pucBuffer = (UChar*)getBitStreamBuffer();
   UChar ucByte = 0;
   char bEndOfStream = 0;
@@ -140,9 +247,11 @@ Int TComBufferChunk::readBufferChunk(ifstream& inBitstream, TSize& bufferChunkSi
       iBytesRead_Temp++;
 
       if (pucBuffer_Temp[0] == 0x01 &&
-          (pucBuffer_Temp[1] > BCT_MIN && pucBuffer_Temp[1] < BCT_MAX))  ///< 00 00 01 CODE
+          (pucBuffer_Temp[1] >= start_code_lower &&
+           pucBuffer_Temp[1] <= start_code_upper))  ///< 00 00 01 CODE
       {
         iNextStartCodeBytes = 2 + 1 + 1;  ///< encounter the next start code
+        nextStartCode = pucBuffer_Temp[1];
         uiZeros = 0;
         break;
       } else {

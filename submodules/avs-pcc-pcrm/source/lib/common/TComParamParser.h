@@ -34,6 +34,10 @@
 */
 
 #include "contributors.h"
+#include "common/CommonDef.h"
+#include "common/TypeDef.h"
+#include "common/TComVector.h"
+#include "HighLevelSyntax.h"
 #include <algorithm>
 #include <cctype>
 #include <fstream>
@@ -191,7 +195,10 @@ private:
   ParameterGroups m_paramGroups;   ///< generic parameter group
   vector<string> m_invalidParams;  ///< invalid parameters
   Parameters* m_curParamGroup;     ///< a pointer to current active parameter group
-
+  bool m_reserveMultiAttrParams = false; ///< control whether need to reserve multi attribute parameters
+  uint32_t m_numAttrParamSet;      ///< control the number of attribute parameters 
+  int m_multiAttrIdx = -1;         ///< indicate multil attribute paramaters idx
+  int attrIdx = 0;                 ///< indicate attribute index color:0; refl:1
 public:
   TComParamParser()
     : m_curParamGroup(nullptr){};
@@ -201,9 +208,8 @@ public:
   void printHelp(ostream& out);
   void printParameters(ostream& out);
   void printInvalidParameters(ostream& out);
-
-  void parseParameters(const int argc, const char* argv[]);
-  void parseConfigureFile(const string& configFileName);
+  void parseParameters(const int argc, const char* argv[], AttributeParameterSet* aps,const bool& isEncoder=false);
+  void parseConfigureFile(const string& configFileName, AttributeParameterSet& aps);
 
   TComParamParser& addParameter();
 
@@ -236,8 +242,42 @@ public:
   }
 
 private:
-  bool setLongParameter(const string& key, const string& val);
-  bool setShortParameter(const string& key, const string& val);
+  bool setLongParameter(const string& key, const string& val, AttributeParameterSet& aps);
+  void setMultiAttrLongParameter(const string& key, const string& val, AttributeParameterSet& aps);
+  void setMultiAttrShortParameter(const string& key, const string& val, AttributeParameterSet& aps);
+  bool isMultiAttrLongParameter(const string& key);
+  bool isMultiAttrShortParameter(const string& key);
+  void stringToArray(const string& str, UInt* multiAttriGroupID) {
+    string flag = ",";
+    int prevPosition = 0;
+    int position = 0;
+    int idx = 0;
+    int len = str.length();
+    while (position < len)
+    {
+      int find_pos = str.find(flag, position);
+      if (find_pos < 0)
+      {
+        UInt num = stoul(str.substr(position, len - prevPosition));
+        multiAttriGroupID[idx++] = num;
+        break;
+      }
+      UInt num = stoul(str.substr(position, find_pos - position));
+      multiAttriGroupID[idx++] = num;
+      position = find_pos + 1;
+    }
+  }
+  template<typename T>
+  void stringToValue(const string& key, const string& str, T& data) {
+    stringstream ss(str, istringstream::in);
+    try {
+      ss >> data;
+    }
+    catch (...) {
+      cerr << "Error: fail to read parameter --" << key << endl;
+    }
+  }
+  bool setShortParameter(const string& key, const string& val, AttributeParameterSet& aps);
   int getKey(int& argi, const char* argv[], string& key);
   void getValue(int& argi, const char* argv[], string& val);
 

@@ -58,16 +58,16 @@ Bool TDecCfg::parseCfg(Int argc, TChar* argv[]) {
     (ConfigParser,                          "c",   "config",               "config file")
     (m_bitstreamFileName,     string(""),   "b",   "bitstream",            "bitstream output file name")
     (m_reconFileName,         string(""),   "r",   "recon",                "reconstructed PLY output file name")
-    (m_numOfFrames,           (UInt)1,      "ftbc","frames_to_be_coded",   "number of frames to be coded. Default: 1")
+    (m_numOfBins,             (UInt)1,      "btbc","bins_to_be_decoded",   "number of bins to be decoded. Default: 1")
     (m_writePlyInAsciiFlag,   true,         "awf", "ascii_write_flag",     "recon ply write mode. 1: ascii, 0: binary")
     (m_colorTransformFlag,    false,        "ctf", "color_transform_flag", "apply color transform method. 1: on, 0: off")
     (m_PeakMemoryFlag,        false,        "pmf", "peak_memory_flag",     "output peak memory info. 1: on, 0: off")
     (m_md5FileName,           string(""),   "mdf", "md5_file_name",        "filename for MD5 in encoding process, set default to skip")
   ;
   // clang-format on
-
+  //AttributeParameterSet aps;
   parser.initParameters();                            ///< set the default parameters
-  parser.parseParameters(argc, (const TChar**)argv);  ///< parsing
+  parser.parseParameters(argc, (const TChar**)argv, nullptr);  ///< parsing
   parser.printInvalidParameters(cout);                ///< print warnings
 
   if (isHelp || argc == 1)  ///< print help info

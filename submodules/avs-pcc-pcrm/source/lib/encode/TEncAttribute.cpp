@@ -57,6 +57,14 @@ Void TEncAttribute::init(TComPointCloud* pointCloudOrg, TComPointCloud* pointClo
   frame_Id = m_frame_ID;
   frame_Count = m_numOfFrames;
   multil_ID = multil_Id;
+  //set adaptive expGolomb decoder parameter
+  if (m_hls->aps.attributeDataPresentFlag[0]) {
+    m_encBac->setColorGolombKandBound(m_hls->aps.golombGroupSizeLog2, m_hls->aps.colorGolombNum);
+    if (m_encBacDual) {
+      m_encBacDual->setColorGolombKandBound(m_hls->aps.golombGroupSizeLog2,
+                                            m_hls->aps.colorGolombNum);
+    }
+  }
 }
 
 Void TEncAttribute::initDual(TComPointCloud* pointCloudOrg, TComPointCloud* pointCloudRecon,
@@ -68,7 +76,7 @@ Void TEncAttribute::initDual(TComPointCloud* pointCloudOrg, TComPointCloud* poin
   m_pointCloudRecon->setNumPoint(m_pointCloudOrg->getNumPoint());
   m_hls = hls;
   m_encBac = encBac;
-  if (m_hls->aps.attributePresentFlag[0] && m_hls->aps.attributePresentFlag[1]) {
+  if (m_hls->aps.attributeDataPresentFlag[0] && m_hls->aps.attributeDataPresentFlag[1]) {
     m_encBacDual = encBacDual;
   } else {
     m_encBacDual = NULL;
@@ -76,6 +84,14 @@ Void TEncAttribute::initDual(TComPointCloud* pointCloudOrg, TComPointCloud* poin
   frame_Id = m_frame_ID;
   frame_Count = m_numOfFrames;
   multil_ID = multil_Id;
+  //set adaptive expGolomb decoder parameter
+  if (m_hls->aps.attributeDataPresentFlag[0]) {
+    m_encBac->setColorGolombKandBound(m_hls->aps.golombGroupSizeLog2, m_hls->aps.colorGolombNum);
+    if (m_encBacDual) {
+      m_encBacDual->setColorGolombKandBound(m_hls->aps.golombGroupSizeLog2,
+                                            m_hls->aps.colorGolombNum);
+    }
+  }
 }
 
 // Attribute compression consists of the following stages:
@@ -84,58 +100,16 @@ Void TEncAttribute::initDual(TComPointCloud* pointCloudOrg, TComPointCloud* poin
 //  - residual quantization
 //  - entropy encode
 //  - local decode
-Void TEncAttribute::predictEncodeAttribute() {
+Void TEncAttribute::dualEncodeAttribute() {
   clock_t userTimeColorBegin = clock();
-  attributePredictingResidual();
-  m_colorTime = (Double)(clock() - userTimeColorBegin) / CLOCKS_PER_SEC;
-  m_colorBits = m_encBac->getBitStreamLength() * 8;
-  clock_t userTimeReflectanceBegin = clock();
-  m_reflTime = (Double)(clock() - userTimeReflectanceBegin) / CLOCKS_PER_SEC;
-  m_reflBits = m_encBac->getBitStreamLength() * 8 - m_colorBits;
-}
-
-Void TEncAttribute::transformEncodeAttribute() {
-  const AttributeParameterSet& aps = m_hls->aps;
-  bool isEnableCrossAttrTypePred = aps.crossAttrTypePred;
-  if (!isEnableCrossAttrTypePred) {
-    clock_t userTimeColorBegin = clock();
-    colorWaveletTransform();
-    m_colorTime = (Double)(clock() - userTimeColorBegin) / CLOCKS_PER_SEC;
-    m_colorBits = m_encBac->getBitStreamLength() * 8;
-    clock_t userTimeReflectanceBegin = clock();
-    reflectanceWaveletTransform();
-    m_reflTime = (Double)(clock() - userTimeReflectanceBegin) / CLOCKS_PER_SEC;
-    m_reflBits = m_encBac->getBitStreamLength() * 8 - m_colorBits;
-  } else if (!aps.attrEncodeOrder) {  // firstly encode color
-    clock_t userTimeColorBegin = clock();
-    colorWaveletTransform();
-    m_colorTime = (Double)(clock() - userTimeColorBegin) / CLOCKS_PER_SEC;
-    m_colorBits = m_encBac->getBitStreamLength() * 8;
-    clock_t userTimeReflectanceBegin = clock();
-    reflectanceWaveletTransformFromColor();
-    m_reflTime = (Double)(clock() - userTimeReflectanceBegin) / CLOCKS_PER_SEC;
-    m_reflBits = m_encBac->getBitStreamLength() * 8 - m_colorBits;
-  } else {  // firstly encode refl, CTC default
-    clock_t userTimeReflectanceBegin = clock();
-    reflectanceWaveletTransform();
-    m_reflTime = (Double)(clock() - userTimeReflectanceBegin) / CLOCKS_PER_SEC;
-    m_reflBits = m_encBac->getBitStreamLength() * 8;
-    clock_t userTimeColorBegin = clock();
-    colorWaveletTransformFromReflectance();
-    m_colorTime = (Double)(clock() - userTimeColorBegin) / CLOCKS_PER_SEC;
-    m_colorBits = m_encBac->getBitStreamLength() * 8 - m_reflBits;
+  if (m_hls->aps.transform == 0) {
+    attributePredictingResidual();
+  } else if (m_hls->aps.transform == 2) {
+    attributePredictAndTransformMemControl();
   }
-  m_encBac->codeSliceAttrEndCode();
-  if (frame_Id == frame_Count - 1 && m_hls->abh.sliceID == m_hls->frameHead.num_slice_minus_one)
-    m_encBac->codeSPSEndCode();
-}
-
-Void TEncAttribute::predictAndTransformEncodeAttribute() {
-  clock_t userTimeColorBegin = clock();
-  attributePredictAndTransformMemControl();
   m_colorTime = (Double)(clock() - userTimeColorBegin) / CLOCKS_PER_SEC;
-  clock_t userTimeReflectanceBegin = clock();
-  m_reflTime = (Double)(clock() - userTimeReflectanceBegin) / CLOCKS_PER_SEC;
+  clock_t userTimeReflBegin = clock();
+  m_reflTime = (Double)(clock() - userTimeReflBegin) / CLOCKS_PER_SEC;
 }
 
 Void TEncAttribute::predictEncodeColor() {
@@ -147,6 +121,12 @@ Void TEncAttribute::predictEncodeColor() {
 Void TEncAttribute::transformEncodeColor() {
   clock_t userTimeColorBegin = clock();
   colorWaveletTransform();
+  m_colorTime = (Double)(clock() - userTimeColorBegin) / CLOCKS_PER_SEC;
+}
+
+Void TEncAttribute::transformEncodeColorFromReflectance() {
+  clock_t userTimeColorBegin = clock();
+  colorWaveletTransformFromReflectance();
   m_colorTime = (Double)(clock() - userTimeColorBegin) / CLOCKS_PER_SEC;
 }
 
@@ -174,6 +154,12 @@ Void TEncAttribute::transformEncodeReflectance() {
   m_reflTime = (Double)(clock() - userTimeReflectanceBegin) / CLOCKS_PER_SEC;
 }
 
+Void TEncAttribute::transformEncodeReflectanceFromColor() {
+  clock_t userTimeReflectanceBegin = clock();
+  reflectanceWaveletTransformFromColor();
+  m_reflTime = (Double)(clock() - userTimeReflectanceBegin) / CLOCKS_PER_SEC;
+}
+
 Void TEncAttribute::predictAndTransformEncodeReflectance() {
   clock_t userTimeReflectanceBegin = clock();
   reflectancePredictAndTransformMemControl();
@@ -183,86 +169,113 @@ Void TEncAttribute::predictAndTransformEncodeReflectance() {
 void TEncAttribute::attributePredictingResidual() {
   const SequenceParameterSet& sps = m_hls->sps;
   const AttributeParameterSet& aps = m_hls->aps;
+  const FrameHeader& frameheader = m_hls->frameheader;
   const AttributeBrickHeader& abh = m_hls->abh;
   TComPointCloud& pointCloudRec = *m_pointCloudRecon;
   const int voxelCount = int(pointCloudRec.getNumPoint());
+
+  // predict parameters
+  predictOptParams predictOptParams;
+  predictOptParams.colorQP = aps.colorQuantParam;
+  predictOptParams.maxNumOfNeighbours = aps.maxNumOfNeighbours;
+  predictOptParams.minNeighborDisFlag = aps.colorQPAdjustFlag || aps.chromaDeadzoneFlag;
+  predictOptParams.minNeighborDis = 0;
+  predictOptParams.reflThreshold =
+    (aps.reflQuantParam + abh.QpOffset) * aps.nearestPredParam1 + aps.nearestPredParam2;
+  predictOptParams.predFixedPointFracBit = aps.predFixedPointFracBit;
+  predictOptParams.axisBias = aps.axisBias;
+  predictOptParams.reflectanceDistWeight = {0, 0, 0};
+  predictOptParams.curReflWithCoef = 0;
+  predictOptParams.curColorWithCoef = {0, 0, 0};
+
   // cross attribute parameter
-  bool isEnableCrossAttrTypePred = aps.crossAttrTypePred;
   uint64_t crossAttrTypeLambda = 0;
   int64_t crossAttrTypeCoef = 0;
-  if (isEnableCrossAttrTypePred && (!aps.attrEncodeOrder)) {
+  if (aps.crossAttrTypePred && !aps.attrEncodeOrder) {
     crossAttrTypeLambda =
-      (-sps.colorQuantParam * aps.crossAttrTypePredParam1 + aps.crossAttrTypePredParam2);
-    UInt maxPos =
-      sps.geomBoundingBoxSize[0] + sps.geomBoundingBoxSize[1] + sps.geomBoundingBoxSize[2];
+      (-aps.colorQuantParam * aps.crossAttrTypePredParam1 + aps.crossAttrTypePredParam2);
+    UInt maxPos = frameheader.geomBoundingBoxSize[0] + frameheader.geomBoundingBoxSize[1] +
+      frameheader.geomBoundingBoxSize[2];
     uint64_t maxColor = (1 << m_hls->aps.colorOutputDepth) - 1;
     uint64_t maxColorSum = 3 * maxColor;
     crossAttrTypeCoef = round((maxPos << 10) / (double)maxColorSum);
     crossAttrTypeCoef = uint64_t(crossAttrTypeCoef * crossAttrTypeLambda + 524288) >> 20;
-  } else if (isEnableCrossAttrTypePred && (aps.attrEncodeOrder)) {
-    crossAttrTypeLambda = (-(sps.reflQuantParam + abh.reflQPoffset) * aps.crossAttrTypePredParam1 +
+
+    predictOptParams.colorCrossAttrTypePred = false;
+    predictOptParams.colorUpdateFlag = false;
+    predictOptParams.reflCrossAttrTypePred = true;
+    predictOptParams.reflUpdateFlag = true;
+  } else if (aps.crossAttrTypePred && aps.attrEncodeOrder) {
+    crossAttrTypeLambda = (-(aps.reflQuantParam + abh.QpOffset) * aps.crossAttrTypePredParam1 +
                            aps.crossAttrTypePredParam2);
-    auto diffPos =
-      sps.geomBoundingBoxSize[0] + sps.geomBoundingBoxSize[1] + sps.geomBoundingBoxSize[2];
+    auto diffPos = frameheader.geomBoundingBoxSize[0] + frameheader.geomBoundingBoxSize[1] +
+      frameheader.geomBoundingBoxSize[2];
     uint64_t maxRefl = (1 << m_hls->aps.reflOutputDepth) - 1;
     crossAttrTypeCoef = round((diffPos << 10) / (double)maxRefl);
     crossAttrTypeCoef = uint64_t(crossAttrTypeCoef * crossAttrTypeLambda + 524288) >> 20;
+
+    predictOptParams.colorCrossAttrTypePred = true;
+    predictOptParams.colorUpdateFlag = true;
+    predictOptParams.reflCrossAttrTypePred = false;
+    predictOptParams.reflUpdateFlag = false;
   }
   // Reorder
   std::vector<pointCodeWithIndex> pointCloudCode(voxelCount);
-  reOrder(pointCloudRec.positions(), aps.colorReordermode, pointCloudCode, voxelCount, 1);
+  reOrder(pointCloudRec.positions(), aps.colorReorderMode, pointCloudCode, voxelCount,
+          aps.axisBias);
   // Qp compute
   quantizedQP colorQp;
-  colorQp.attrQuantForLuma = sps.colorQuantParam;
+  colorQp.attrQuantForLuma = aps.colorQuantParam;
   colorQp.attrQuantForChromaCb =
     TComClip(0, 63, (Int)colorQp.attrQuantForLuma + aps.chromaQpOffsetCb);
   colorQp.attrQuantForChromaCr =
     TComClip(0, 63, (Int)colorQp.attrQuantForLuma + aps.chromaQpOffsetCr);
 
-  m_hls->sps.reflThreshold =
-    (sps.reflQuantParam + abh.reflQPoffset) * aps.nearestPredParam1 + aps.nearestPredParam2;
   //dist weight calculation patameter
-  auto boudingSize = (sps.geomBoundingBoxSize[0] * sps.geomBoundingBoxSize[1] +
-                      sps.geomBoundingBoxSize[0] * sps.geomBoundingBoxSize[2] +
-                      sps.geomBoundingBoxSize[1] * sps.geomBoundingBoxSize[2]) *
-    2;
-  uint64_t reflectanceDistCoef = log2(round(boudingSize / voxelCount));
+  uint64_t boundingSize =
+    ((uint64_t)frameheader.geomBoundingBoxSize[0] * (uint64_t)frameheader.geomBoundingBoxSize[1] +
+     (uint64_t)frameheader.geomBoundingBoxSize[0] * (uint64_t)frameheader.geomBoundingBoxSize[2] +
+     (uint64_t)frameheader.geomBoundingBoxSize[1] * (uint64_t)frameheader.geomBoundingBoxSize[2])
+    << 1;
+  uint64_t reflectanceDistCoef =
+    (boundingSize / frameheader.geomNumPoints > 0) ? boundingSize / frameheader.geomNumPoints : 1;
+  UInt log2_reflectanceDistCoef = ceilLog2(reflectanceDistCoef);
 
-  std::vector<int64_t> reflectanceRes = {0, 0, 0};
-  std::vector<int64_t> reflResNum = {0, 0, 0};
-  std::vector<int> reflectanceDistWeight = {0, 0, 0};
-
-  PC_POS prePosition = pointCloudRec[pointCloudCode[0].index];
-  PC_REFL preReflectance = 0;
-  int distWeightGroupSize = 1 << aps.log2predDistWeightGroupSize;
-  // obtain predictors
+  V3<int64_t> reflectanceRes = {0, 0, 0};
+  V3<int64_t> reflResNum = {0, 0, 0};
+  int distWeightGroupSize = 1 << aps.predDistWeightGroupSizeLog2;
+  // Initialize predictors
   pair<PC_COL, PC_REFL> predictorAttr;
   PC_COL predictorColor;
   PC_REFL predictorRefl;
   int prevIndex = -1;
   int setlength = aps.maxNumOfNeighbours;
   int setCount = 0;
+
+  vector<neighborSet> neighborSet;
+  neighborSet.resize(setlength);
+  PC_POS prePosition = pointCloudRec[pointCloudCode[0].index];
+  PC_REFL preReflectance = 0;
   // runlength
   int run_length_col = 0;
   int run_length_refl = 0;
-  const bool refisGolomb = m_hls->aps.refGolombNum == 1 ? true : false;
+  const bool refisGolomb = m_hls->aps.reflGolombNum == 1 ? true : false;
   const bool colorisGolomb = m_hls->aps.colorGolombNum == 1 ? true : false;
   // disable cross-attribute-type-prediction
-  if (!isEnableCrossAttrTypePred) {
-    vector<attrNeighborSet> neighborSet;
-    neighborSet.resize(setlength);
+  if (!aps.crossAttrTypePred) {
     for (int curIndex = 0; curIndex < voxelCount; ++curIndex) {
       auto pointIndex = pointCloudCode[curIndex].index;
       const PC_POS& curPosition = pointCloudRec[pointIndex];
       PC_COL& curColor = pointCloudRec.getColor(pointIndex, multil_ID);
       PC_REFL& curReflectance = pointCloudRec.getReflectance(pointIndex, multil_ID);
-      Bool isDuplicatePoint = curIndex > 0 && curPosition == pointCloudRec[prevIndex];
+      Bool isDuplicatePoint =
+        curIndex > 0 && curPosition == pointCloudRec[prevIndex] && m_hls->aps.eligibleDupPointPred;
       if (isDuplicatePoint) {
         predictorColor = pointCloudRec.getColor(prevIndex, multil_ID);
         predictorRefl = pointCloudRec.getReflectance(prevIndex, multil_ID);
       } else {
-        predictorAttr = getAttributePredictorFarthest(curIndex, curIndex, pointCloudRec, sps, aps,
-                                                      pointCloudCode, setCount, neighborSet);
+        getAttributePredictorFarthest(curIndex, curIndex, curPosition, setCount, neighborSet,
+                                      predictOptParams, predictorAttr);
         predictorColor = predictorAttr.first;
         predictorRefl = predictorAttr.second;
       }
@@ -281,266 +294,276 @@ void TEncAttribute::attributePredictingResidual() {
     m_encBacDual->encodeRunlength(run_length_refl);
     // enable cross-attribute-type-prediction , encode the color and then encode the reflectance
   } else if (!aps.attrEncodeOrder) {
-    std::vector<reflNeighborSet> neighborSet;
-    neighborSet.resize(setlength);
-    int setCount = 0;
-    std::vector<colorWithCoefNeighborSet> colorWithCoefNeighborSet;
-    colorWithCoefNeighborSet.resize(setlength);
-    vector<colorNeighborSet> reflbuffer;
     for (int curIndex = 0; curIndex < voxelCount; ++curIndex) {
       auto pointIndex = pointCloudCode[curIndex].index;
       const PC_POS& curPosition = pointCloudRec[pointIndex];
       PC_COL& curColor = pointCloudRec.getColor(pointIndex, multil_ID);
-      PC_REFL& curReflectance = pointCloudRec.getReflectance(pointIndex, multil_ID);
-      Bool isDuplicatePoint = curIndex > 0 && curPosition == pointCloudRec[prevIndex];
+      PC_REFL& curRefl = pointCloudRec.getReflectance(pointIndex, multil_ID);
+      Bool isDuplicatePoint =
+        curIndex > 0 && curPosition == pointCloudRec[prevIndex] && m_hls->aps.eligibleDupPointPred;
       if (isDuplicatePoint) {
         predictorColor = pointCloudRec.getColor(prevIndex, multil_ID);
       } else {
-        predictorColor =
-          getColorPredictorNoUpdate(curIndex, curIndex, pointCloudRec, sps, aps, pointCloudCode,
-                                    setCount, neighborSet, colorWithCoefNeighborSet, reflbuffer);
+        getColorPredictorFarthest(curIndex, curIndex, curPosition, setCount, neighborSet,
+                                  predictOptParams, predictorColor);
       }
       colorPredictCode(predictorColor, curColor, colorQp, run_length_col, isDuplicatePoint);
       // calculate the color with coefficient, which is used in cross-attribute-type-prediction
-      V3<int64_t> curColorWithCoef;
-      curColorWithCoef[0] = curColor[0] * crossAttrTypeCoef;
-      curColorWithCoef[1] = curColor[1] * crossAttrTypeCoef;
-      curColorWithCoef[2] = curColor[2] * crossAttrTypeCoef;
+      predictOptParams.curColorWithCoef[0] = curColor[0] * crossAttrTypeCoef;
+      predictOptParams.curColorWithCoef[1] = curColor[1] * crossAttrTypeCoef;
+      predictOptParams.curColorWithCoef[2] = curColor[2] * crossAttrTypeCoef;
       if (isDuplicatePoint) {
         predictorRefl = pointCloudRec.getReflectance(prevIndex, multil_ID);
       } else {
         // get the better refl prediction through the geometric distance and the color distance
-        predictorRefl = getReflectancePredictorFromColor(
-          curIndex, curIndex, pointCloudRec, sps, aps, pointCloudCode, setCount, neighborSet,
-          colorWithCoefNeighborSet, curColorWithCoef, reflectanceDistWeight);
+        getReflPredictorFarthestDual(curIndex, curIndex, curPosition, setCount, neighborSet,
+                                     predictOptParams, predictorRefl);
       }
-      reflectancePredictCode(predictorRefl, curReflectance, run_length_refl, isDuplicatePoint);
+      reflectancePredictCode(predictorRefl, curRefl, run_length_refl, isDuplicatePoint);
 
       if (curIndex != 0)
-        calculateReflTrend(curPosition, prePosition, curReflectance, preReflectance,
-                           reflectanceDistCoef, reflectanceRes, reflResNum, reflectanceDistWeight,
-                           distWeightGroupSize);
-      prePosition = curPosition;
-      preReflectance = curReflectance;
+        calculateReflTrend(curPosition, prePosition, curRefl, preReflectance,
+                           log2_reflectanceDistCoef, reflectanceRes, reflResNum,
+                           predictOptParams.reflectanceDistWeight, distWeightGroupSize);
 
       int farthestIdx = 0;
       if (curIndex < setlength) {
         farthestIdx = curIndex;
       }
-      neighborSet[farthestIdx].pos = pointCloudRec[pointIndex];
-      neighborSet[farthestIdx].refl = curReflectance;
-      colorWithCoefNeighborSet[farthestIdx].color = curColor;
-      colorWithCoefNeighborSet[farthestIdx].colorWithCoef = curColorWithCoef;
+      neighborSet[farthestIdx].pos = curPosition;
+      neighborSet[farthestIdx].refl = curRefl;
+      neighborSet[farthestIdx].color = curColor;
+      neighborSet[farthestIdx].colorWithCoef = predictOptParams.curColorWithCoef;
       prevIndex = pointIndex;
+      prePosition = curPosition;
+      preReflectance = curRefl;
     }
     m_encBac->encodeRunlength(run_length_col);
     m_encBacDual->encodeRunlength(run_length_refl);
     // enable cross-attribute-type-prediction , encode the reflectance and then encode the color
   } else {
-    std::vector<colorNeighborSet> neighborSet;
-    neighborSet.resize(setlength);
-    std::vector<reflWithCoefNeighborSet> reflWithCoefNeighborSet;
-    reflWithCoefNeighborSet.resize(setlength);
-    vector<reflNeighborSet> reflbuffer;
     for (int curIndex = 0; curIndex < voxelCount; ++curIndex) {
-      auto pointIndex = pointCloudCode[curIndex].index;
+      int pointIndex = pointCloudCode[curIndex].index;
       const PC_POS& curPosition = pointCloudRec[pointIndex];
       PC_COL& curColor = pointCloudRec.getColor(pointIndex, multil_ID);
-      PC_REFL& curReflectance = pointCloudRec.getReflectance(pointIndex, multil_ID);
-      Bool isDuplicatePoint = curIndex > 0 && curPosition == pointCloudRec[prevIndex];
+      PC_REFL& curRefl = pointCloudRec.getReflectance(pointIndex, multil_ID);
+      Bool isDuplicatePoint =
+        curIndex > 0 && curPosition == pointCloudRec[prevIndex] && m_hls->aps.eligibleDupPointPred;
       if (isDuplicatePoint) {
         predictorRefl = pointCloudRec.getReflectance(prevIndex, multil_ID);
       } else {
-        predictorRefl = getReflectancePredictorNoUpdate(
-          curIndex, curIndex, pointCloudRec, sps, aps, pointCloudCode, setCount, neighborSet,
-          reflWithCoefNeighborSet, reflbuffer, reflectanceDistWeight);
+        getReflPredictorFarthestDual(curIndex, curIndex, curPosition, setCount, neighborSet,
+                                     predictOptParams, predictorRefl);
       }
-      reflectancePredictCode(predictorRefl, curReflectance, run_length_refl, isDuplicatePoint);
+      reflectancePredictCode(predictorRefl, curRefl, run_length_refl, isDuplicatePoint);
       // calculate the reflectance with coefficient, which is used in cross-attribute-type-prediction
-      int64_t curReflWithCoef = curReflectance * crossAttrTypeCoef;
-      //
+      predictOptParams.curReflWithCoef = curRefl * crossAttrTypeCoef;
+
       if (curIndex != 0)
-        calculateReflTrend(curPosition, prePosition, curReflectance, preReflectance,
-                           reflectanceDistCoef, reflectanceRes, reflResNum, reflectanceDistWeight,
-                           distWeightGroupSize);
-      prePosition = curPosition;
-      preReflectance = curReflectance;
+        calculateReflTrend(curPosition, prePosition, curRefl, preReflectance,
+                           log2_reflectanceDistCoef, reflectanceRes, reflResNum,
+                           predictOptParams.reflectanceDistWeight, distWeightGroupSize);
       if (isDuplicatePoint) {
         predictorColor = pointCloudRec.getColor(prevIndex, multil_ID);
       } else {
         // get the better color prediction through the geometric distance and the reflectance distance
-        predictorColor = getColorPredictorFromReflectance(
-          curIndex, curIndex, pointCloudRec, sps, aps, pointCloudCode, setCount, neighborSet,
-          reflWithCoefNeighborSet, curReflWithCoef);
+        getColorPredictorFarthest(curIndex, curIndex, curPosition, setCount, neighborSet,
+                                  predictOptParams, predictorColor);
       }
       colorPredictCode(predictorColor, curColor, colorQp, run_length_col, isDuplicatePoint);
       int farthestIdx = 0;
       if (curIndex < setlength) {
         farthestIdx = curIndex;
       }
-      neighborSet[farthestIdx].pos = pointCloudRec[pointIndex];
+      neighborSet[farthestIdx].pos = curPosition;
       neighborSet[farthestIdx].color = curColor;
-      reflWithCoefNeighborSet[farthestIdx].refl = curReflectance;
-      reflWithCoefNeighborSet[farthestIdx].reflWithCoef = curReflWithCoef;
+      neighborSet[farthestIdx].refl = curRefl;
+      neighborSet[farthestIdx].reflWithCoef = predictOptParams.curReflWithCoef;
       prevIndex = pointIndex;
+      prePosition = curPosition;
+      preReflectance = curRefl;
     }
     m_encBacDual->encodeRunlength(run_length_refl);
     m_encBac->encodeRunlength(run_length_col);
   }
-
-  m_encBac->codeSliceAttrEndCode();
-  if (frame_Id == frame_Count - 1 && m_hls->abh.sliceID == m_hls->frameHead.num_slice_minus_one)
-    m_encBac->codeSPSEndCode();
 }
 
 void TEncAttribute::reflectancePredictingResidual() {
   const SequenceParameterSet& sps = m_hls->sps;
   const AttributeParameterSet& aps = m_hls->aps;
+  const FrameHeader& frameheader = m_hls->frameheader;
   const AttributeBrickHeader& abh = m_hls->abh;
   TComPointCloud& pointCloudRec = *m_pointCloudRecon;
   const int voxelCount = int(pointCloudRec.getNumPoint());
+
   // Reorder
   std::vector<pointCodeWithIndex> pointCloudCode(voxelCount);
-  reOrder(pointCloudRec.positions(), aps.refReordermode, pointCloudCode, voxelCount, aps.axisBias);
-  m_hls->sps.reflThreshold =
-    (sps.reflQuantParam + abh.reflQPoffset) * aps.nearestPredParam1 + aps.nearestPredParam2;
-  // obtain reflectance predictor
-  int64_t predictorRefl;
-  std::vector<reflNeighborSet> neighborSet;
+  reOrder(pointCloudRec.positions(), aps.reflReorderMode, pointCloudCode, voxelCount, aps.axisBias);
+
+  // Initialize reflectance predictor
+  PC_REFL predictorRefl;
+  std::vector<neighborSet> neighborSet;
   int setlength = aps.maxNumOfNeighbours;
   neighborSet.resize(setlength);
   int setCount = 0;
   int prevIndex = -1;
   PC_REFL lastref = 0;
+
   // runlength
   int run_length = 0;
-  const bool isGolomb = m_hls->aps.refGolombNum == 1 ? true : false;
-  for (int curIndex = 0; curIndex < voxelCount; ++curIndex) {
-    auto pointIndex = pointCloudCode[curIndex].index;
-      PC_REFL& curReflectance = pointCloudRec.getReflectance(pointIndex, multil_ID);
-      const PC_POS& curPosition = pointCloudRec[pointIndex];
-      Bool isDuplicatePoint = curIndex > 0 && curPosition == pointCloudRec[prevIndex];
 
+  // predict parameters
+  predictOptParams predictOptParams;
+  predictOptParams.colorQP = 0;
+  predictOptParams.maxNumOfNeighbours = aps.maxNumOfNeighbours;
+  predictOptParams.minNeighborDisFlag = 0;
+  predictOptParams.minNeighborDis = 0;
+  predictOptParams.reflThreshold =
+    (aps.reflQuantParam + abh.QpOffset) * aps.nearestPredParam1 + aps.nearestPredParam2;
+  predictOptParams.predFixedPointFracBit = aps.predFixedPointFracBit;
+  predictOptParams.axisBias = aps.axisBias;
+  predictOptParams.reflCrossAttrTypePred = false;
+  predictOptParams.reflUpdateFlag = true;
+  predictOptParams.reflectanceDistWeight = {0, 0, 0};
+  predictOptParams.curReflWithCoef = 0;
+  predictOptParams.curColorWithCoef = {0, 0, 0};
+
+  for (int curIndex = 0; curIndex < voxelCount; ++curIndex) {
+    int pointIndex = pointCloudCode[curIndex].index;
+    const PC_POS& curPosition = pointCloudRec[pointIndex];
+    PC_REFL& curReflectance = pointCloudRec.getReflectance(pointIndex, multil_ID);
+    Bool isDuplicatePoint =
+      curIndex > 0 && curPosition == pointCloudRec[prevIndex] && m_hls->aps.eligibleDupPointPred;
     if (isDuplicatePoint) {
-        predictorRefl = lastref;
+      predictorRefl = lastref;
     } else {
-        predictorRefl = getReflectancePredictorFarthest(curIndex, curIndex, pointCloudRec, sps, aps,
-                                                        pointCloudCode, setCount, neighborSet);
+      getReflPredictorFarthest(curIndex, curIndex, curPosition, setCount, neighborSet,
+                               predictOptParams, predictorRefl);
     }
-      isDuplicatePoint &= multil_ID == 0;
-      reflectancePredictCode(predictorRefl, curReflectance, run_length, isDuplicatePoint);
-      int farthestIdx = 0;
-      if (curIndex < setlength) {
-        farthestIdx = curIndex;
-      }
-      neighborSet[farthestIdx].pos = pointCloudRec[pointIndex];
-      neighborSet[farthestIdx].refl = curReflectance;
-      prevIndex = pointIndex;
-      lastref = curReflectance;
+    isDuplicatePoint &= multil_ID == 0;
+    reflectancePredictCode(predictorRefl, curReflectance, run_length, isDuplicatePoint);
+    int farthestIdx = 0;
+    if (curIndex < setlength) {
+      farthestIdx = curIndex;
+    }
+    neighborSet[farthestIdx].pos = pointCloudRec[pointIndex];
+    neighborSet[farthestIdx].refl = curReflectance;
+    prevIndex = pointIndex;
+    lastref = curReflectance;
   }
   m_encBac->encodeRunlength(run_length);
-
-  m_encBac->codeSliceAttrEndCode();
-  if (frame_Id == frame_Count - 1 && m_hls->abh.sliceID == m_hls->frameHead.num_slice_minus_one)
-    m_encBac->codeSPSEndCode();
 }
 
 void TEncAttribute::colorPredictingResidual() {
-    const SequenceParameterSet& sps = m_hls->sps;
-    const AttributeParameterSet& aps = m_hls->aps;
-    TComPointCloud& pointCloudRec = *m_pointCloudRecon;
-    const int voxelCount = int(pointCloudRec.getNumPoint());
-    // Reorder
-    std::vector<pointCodeWithIndex> pointCloudCode(voxelCount);
-    reOrder(pointCloudRec.positions(), aps.colorReordermode, pointCloudCode, voxelCount, 1);
-    //Qp compute
-    quantizedQP colorQp;
-    colorQp.attrQuantForLuma = sps.colorQuantParam;
-    colorQp.attrQuantForChromaCb =
-      TComClip(0, 63, (Int)colorQp.attrQuantForLuma + aps.chromaQpOffsetCb);
-    colorQp.attrQuantForChromaCr =
-      TComClip(0, 63, (Int)colorQp.attrQuantForLuma + aps.chromaQpOffsetCr);
+  const SequenceParameterSet& sps = m_hls->sps;
+  const AttributeParameterSet& aps = m_hls->aps;
+  TComPointCloud& pointCloudRec = *m_pointCloudRecon;
+  const int voxelCount = int(pointCloudRec.getNumPoint());
+  // Reorder
+  std::vector<pointCodeWithIndex> pointCloudCode(voxelCount);
+  reOrder(pointCloudRec.positions(), aps.colorReorderMode, pointCloudCode, voxelCount, 1);
+  //Qp compute
+  quantizedQP colorQp;
+  colorQp.attrQuantForLuma = aps.colorQuantParam;
+  colorQp.attrQuantForChromaCb =
+    TComClip(0, 63, (Int)colorQp.attrQuantForLuma + aps.chromaQpOffsetCb);
+  colorQp.attrQuantForChromaCr =
+    TComClip(0, 63, (Int)colorQp.attrQuantForLuma + aps.chromaQpOffsetCr);
 
-    // obtain color predictor
-    PC_COL predictorColor;
-    std::vector<colorNeighborSet> neighborSet;
-    int setlength = aps.maxNumOfNeighbours;
-    neighborSet.resize(setlength);
-    PC_COL lastColor;
-    int prevIndex = -1;
-    int setCount = 0;
-    int run_length = 0;
-    const bool isGolomb = aps.colorGolombNum == 1 ? true : false;
-    for (int curIndex = 0; curIndex < voxelCount; curIndex++) {
-      int pointIndex = pointCloudCode[curIndex].index;
-      const PC_POS& curPosition = pointCloudRec[pointIndex];
-      PC_COL& curColor = pointCloudRec.getColor(pointIndex, multil_ID);
-      Bool isDuplicatePoint = curIndex > 0 && curPosition == pointCloudRec[prevIndex];
-      if (isDuplicatePoint) {
-        predictorColor = lastColor;
-      } else {
-        predictorColor = getColorPredictorFarthest(curIndex, curIndex, pointCloudRec, sps, aps,
-                                                   pointCloudCode, setCount, neighborSet);
-      }
-      colorPredictCode(predictorColor, curColor, colorQp, run_length, isDuplicatePoint);
-      int farthestIdx = 0;
-      if (curIndex < setlength) {
-        farthestIdx = curIndex;
-      }
-      neighborSet[farthestIdx].pos = pointCloudRec[pointIndex];
-      neighborSet[farthestIdx].color = curColor;
-      prevIndex = pointIndex;
-      lastColor = curColor;
+  // obtain color predictor
+  PC_COL predictorColor;
+  std::vector<neighborSet> neighborSet;
+  int setlength = aps.maxNumOfNeighbours;
+  neighborSet.resize(setlength);
+  PC_COL lastColor;
+  int prevIndex = -1;
+  int setCount = 0;
+  int run_length = 0;
+
+  // predict parameters
+  predictOptParams predictOptParams;
+  predictOptParams.colorQP = aps.colorQuantParam;
+  predictOptParams.maxNumOfNeighbours = aps.maxNumOfNeighbours;
+  predictOptParams.minNeighborDisFlag = aps.colorQPAdjustFlag || aps.chromaDeadzoneFlag;
+  predictOptParams.minNeighborDis = 0;
+  predictOptParams.reflThreshold = 0;
+  predictOptParams.predFixedPointFracBit = aps.predFixedPointFracBit;
+  predictOptParams.axisBias = 0;
+  predictOptParams.colorCrossAttrTypePred = false;
+  predictOptParams.colorUpdateFlag = true;
+  predictOptParams.reflectanceDistWeight = {0, 0, 0};
+  predictOptParams.curReflWithCoef = 0;
+  predictOptParams.curColorWithCoef = {0, 0, 0};
+
+  for (int curIndex = 0; curIndex < voxelCount; curIndex++) {
+    int pointIndex = pointCloudCode[curIndex].index;
+    const PC_POS& curPosition = pointCloudRec[pointIndex];
+    PC_COL& curColor = pointCloudRec.getColor(pointIndex, multil_ID);
+    Bool isDuplicatePoint =
+      curIndex > 0 && curPosition == pointCloudRec[prevIndex] && m_hls->aps.eligibleDupPointPred;
+    if (isDuplicatePoint) {
+      predictorColor = lastColor;
+    } else {
+      getColorPredictorFarthest(curIndex, curIndex, curPosition, setCount, neighborSet,
+                                predictOptParams, predictorColor);
     }
-    m_encBac->encodeRunlength(run_length);
-  m_encBac->codeSliceAttrEndCode();
-  if (frame_Id == frame_Count - 1 && m_hls->abh.sliceID == m_hls->frameHead.num_slice_minus_one)
-    m_encBac->codeSPSEndCode();
+    colorPredictCode(predictorColor, curColor, colorQp, run_length, isDuplicatePoint);
+    int farthestIdx = 0;
+    if (curIndex < setlength) {
+      farthestIdx = curIndex;
+    }
+    neighborSet[farthestIdx].pos = pointCloudRec[pointIndex];
+    neighborSet[farthestIdx].color = curColor;
+    prevIndex = pointIndex;
+    lastColor = curColor;
+  }
+  m_encBac->encodeRunlength(run_length);
 }
 
 void TEncAttribute::colorPredictAndTransformMemControl() {
   std::cout << "ColorPredictingAndTransformMemControl" << std::endl;
   const SequenceParameterSet& sps = m_hls->sps;
   const AttributeParameterSet& aps = m_hls->aps;
+  const FrameHeader& frameheader = m_hls->frameheader;
+  const AttributeBrickHeader& abh = m_hls->abh;
   TComPointCloud& pointCloudRec = *m_pointCloudRecon;
   const int voxelCount = int(pointCloudRec.getNumPoint());
   //Reorder
   std::vector<pointCodeWithIndex> pointCloudCode(voxelCount);
-  reOrder(pointCloudRec.positions(), aps.colorReordermode, pointCloudCode, voxelCount, 1);
+  reOrder(pointCloudRec.positions(), aps.colorReorderMode, pointCloudCode, voxelCount, 1);
   // Qp compute
   quantizedQP colorQp;
-  colorQp.attrQuantForLuma = sps.colorQuantParam;
+  colorQp.attrQuantForLuma = aps.colorQuantParam;
   colorQp.attrQuantForChromaCb =
     TComClip(0, 63, (Int)colorQp.attrQuantForLuma + aps.chromaQpOffsetCb);
   colorQp.attrQuantForChromaCr =
     TComClip(0, 63, (Int)colorQp.attrQuantForLuma + aps.chromaQpOffsetCr);
 
   //quantization deadzone offset
-  if (sps.colorQuantParam <= 48) {
-    m_hls->sps.colorOffsetParamLumaAc =
-      (0.2 + ((48 - sps.colorQuantParam) >> 3) * 0.01);  // Quantization Shift
-    m_hls->sps.colorOffsetParamChromaAc = (0.02 + ((48 - sps.colorQuantParam) >> 3) * 0.08);
-    m_hls->sps.colorOffsetParamLumaDc =
-      (0.18 + ((48 - sps.colorQuantParam) >> 3) * 0.008);  // Quantization Shift
-    m_hls->sps.colorOffsetParamChromaDc = (0.02 + ((48 - sps.colorQuantParam) >> 3) * 0.06);
+  colorQuantShift colorQuantShift;
+  if (aps.colorQuantParam <= 48) {
+    colorQuantShift.colorOffsetParamLumaAc =
+      (0.2 + ((48 - aps.colorQuantParam) >> 3) * 0.01);  // Quantization Shift
+    colorQuantShift.colorOffsetParamChromaAc = (0.02 + ((48 - aps.colorQuantParam) >> 3) * 0.08);
+    colorQuantShift.colorOffsetParamLumaDc =
+      (0.18 + ((48 - aps.colorQuantParam) >> 3) * 0.008);  // Quantization Shift
+    colorQuantShift.colorOffsetParamChromaDc = (0.02 + ((48 - aps.colorQuantParam) >> 3) * 0.06);
   } else {
-    m_hls->sps.colorOffsetParamLumaAc = 0.2;  // Quantization Shift
-    m_hls->sps.colorOffsetParamChromaAc = 0.02;
-    m_hls->sps.colorOffsetParamLumaDc = 0.18;  // Quantization Shift
-    m_hls->sps.colorOffsetParamChromaDc = 0.02;
+    colorQuantShift.colorOffsetParamLumaAc = 0.2;  // Quantization Shift
+    colorQuantShift.colorOffsetParamChromaAc = 0.02;
+    colorQuantShift.colorOffsetParamLumaDc = 0.18;  // Quantization Shift
+    colorQuantShift.colorOffsetParamChromaDc = 0.02;
   }
   //  grouping
-  UInt maxBB = std::max(
-    {1U, sps.geomBoundingBoxSize[0], sps.geomBoundingBoxSize[1], sps.geomBoundingBoxSize[2]});
-  int maxNodeSizeLog2 = ceilLog2(maxBB);
+  int maxNodeSizeLog2 = std::max(
+    {1U, m_hls->gbh.nodeSizeLog2[0], m_hls->gbh.nodeSizeLog2[1], m_hls->gbh.nodeSizeLog2[2]});
   int groupShiftBits = std::max(3, 3 * (maxNodeSizeLog2 - ((ceilLog2(voxelCount / 4) + 1) >> 1)));
   // adjust color QP per point
-  int64_t minNeighborDis = 0;
   bool colorQPAdjustSliceFlag = aps.colorQPAdjustFlag;
   bool colorQPAdjustFlag = false;
   int scalar = 1;
   if (colorQPAdjustSliceFlag)
-    scalar = aps.colorQPAdjustScalar;
+    scalar = abh.colorQPAdjustScalar;
   int colorQPAdjustDis = std::max(4, (1 << (groupShiftBits / 3 + 4)) / scalar);
   bool deadZoneChromaSliceFlag = aps.chromaDeadzoneFlag;
   bool deadZoneChromaFlag = false;
@@ -554,11 +577,12 @@ void TEncAttribute::colorPredictAndTransformMemControl() {
   int subGroupCount = 0;
   // obtain color predictor
   PC_COL predictorColor;
-  std::vector<int> transformPointIdx;
-  std::vector<colorNeighborSet> neighborSet;
+  std::vector<neighborSet> neighborSet;
   int setlength = aps.maxNumOfNeighbours;
   neighborSet.resize(setlength);
+
   // transform and entropy coding parameter
+  std::vector<int> transformPointIdx;
   int64_t transformBuf[3][8] = {};
   int64_t transformPredBuf[3][8] = {};
   int dcIndex = 0;
@@ -569,18 +593,32 @@ void TEncAttribute::colorPredictAndTransformMemControl() {
   int* CoeffGroup = new int[maxNumofCoeff * 3]();
 
   int run_length = 0;
-  const bool colorGolomb = aps.colorGolombNum <= 2 ? true : false;
   int lengthControl = aps.maxNumofCoeff * aps.coeffLengthControl;
+
+  // predict parameters
+  predictOptParams predictOptParams;
+  predictOptParams.colorQP = aps.colorQuantParam;
+  predictOptParams.maxNumOfNeighbours = aps.maxNumOfNeighbours;
+  predictOptParams.minNeighborDisFlag = aps.colorQPAdjustFlag || aps.chromaDeadzoneFlag;
+  predictOptParams.minNeighborDis = 0;
+  predictOptParams.reflThreshold = 0;
+  predictOptParams.predFixedPointFracBit = aps.predFixedPointFracBit;
+  predictOptParams.axisBias = 0;
+  predictOptParams.colorCrossAttrTypePred = false;
+  predictOptParams.colorUpdateFlag = true;
+  predictOptParams.reflectanceDistWeight = {0, 0, 0};
+  predictOptParams.curReflWithCoef = 0;
+  predictOptParams.curColorWithCoef = {0, 0, 0};
 
   for (int curIndex = 0; curIndex < voxelCount;) {
     subGroupCount = 0;
     while (subGroupCount < length[subgroupIndex]) {
       transformPointIdx.push_back(curIndex);
       int pointIndex = pointCloudCode[curIndex].index;
+      const PC_POS& curPosition = pointCloudRec[pointIndex];
       PC_COL& curColor = pointCloudRec.getColor(pointIndex, multil_ID);
-      predictorColor =
-        getColorPredictorFarthest(curIndex, transformPointIdx[0], pointCloudRec, sps, aps,
-                                  pointCloudCode, subGroupCount, neighborSet, minNeighborDis);
+      getColorPredictorFarthest(curIndex, transformPointIdx[0], curPosition, subGroupCount,
+                                neighborSet, predictOptParams, predictorColor);
       for (int k = 0; k < 3; k++) {
         transformBuf[k][subGroupCount] = curColor[k];
         transformPredBuf[k][subGroupCount] = predictorColor[k];
@@ -590,13 +628,13 @@ void TEncAttribute::colorPredictAndTransformMemControl() {
       curIndex++;
     }
     if (colorQPAdjustSliceFlag)
-      colorQPAdjustFlag = minNeighborDis > colorQPAdjustDis;
+      colorQPAdjustFlag = predictOptParams.minNeighborDis > colorQPAdjustDis;
     if (deadZoneChromaSliceFlag)
-      deadZoneChromaFlag = minNeighborDis > deadZoneChromaDis;
+      deadZoneChromaFlag = predictOptParams.minNeighborDis > deadZoneChromaDis;
 
     colorTransformCode(pointCloudCode, transformPointIdx, dcIndex, acIndex, transformBuf,
-                       transformPredBuf, colorQp, CoeffGroup, neighborSet, true, colorQPAdjustFlag,
-                       deadZoneChromaFlag);
+                       transformPredBuf, colorQp, CoeffGroup, neighborSet, colorQuantShift, true,
+                       colorQPAdjustFlag, deadZoneChromaFlag);
 
     transformPointIdx.erase(transformPointIdx.begin(), transformPointIdx.end());
     numofCoeff += length[subgroupIndex];
@@ -610,30 +648,25 @@ void TEncAttribute::colorPredictAndTransformMemControl() {
   }
   m_encBac->encodeRunlength(run_length);
   delete[] CoeffGroup;
-  m_encBac->codeSliceAttrEndCode();
-  if (frame_Id == frame_Count - 1 && m_hls->abh.sliceID == m_hls->frameHead.num_slice_minus_one)
-    m_encBac->codeSPSEndCode();
 }
 
 void TEncAttribute::reflectancePredictAndTransformMemControl() {
   std::cout << "ReflectancePredictingAndTransformMemControl" << std::endl;
   const SequenceParameterSet& sps = m_hls->sps;
   const AttributeParameterSet& aps = m_hls->aps;
+  const FrameHeader& frameheader = m_hls->frameheader;
   const AttributeBrickHeader& abh = m_hls->abh;
   TComPointCloud& pointCloudRec = *m_pointCloudRecon;
   const int voxelCount = int(pointCloudRec.getNumPoint());
   // Reorder
   std::vector<pointCodeWithIndex> pointCloudCode(voxelCount);
-  reOrder(pointCloudRec.positions(), aps.refReordermode, pointCloudCode, voxelCount,
-                  aps.axisBias);
-  // weighted average parameter
-  m_hls->sps.reflThreshold =
-    (sps.reflQuantParam + abh.reflQPoffset) * aps.nearestPredParam1 + aps.nearestPredParam2;
+  reOrder(pointCloudRec.positions(), aps.reflReorderMode, pointCloudCode, voxelCount, aps.axisBias);
   // grouping
-  int MaxBits = ceilLog2((UInt64)sps.geomBoundingBoxSize[0] * (UInt64)sps.geomBoundingBoxSize[1] *
-                         (UInt64)sps.geomBoundingBoxSize[2]);
+  int MaxBits =
+    m_hls->gbh.nodeSizeLog2[0] + m_hls->gbh.nodeSizeLog2[1] + m_hls->gbh.nodeSizeLog2[2];
+  MaxBits = TComClip(0, 32, MaxBits);
   int MinBits = ceilLog2(voxelCount);
-  int shift = ((sps.reflQuantParam + abh.reflQPoffset) >= 32) ? 12 : -6;
+  int shift = ((aps.reflQuantParam + abh.QpOffset) >= 32) ? 12 : -6;
   int shiftBits = aps.reflMaxTransNum == 4 ? std::max(3, 3 * ((MaxBits - MinBits) / 3)) + shift : 3;
   std::vector<int> length;
   vector<int> numofGroupCount;
@@ -642,14 +675,31 @@ void TEncAttribute::reflectancePredictAndTransformMemControl() {
   int subgroupIndex = 0;
   int subGroupCount = 0;
   //obtain the reflectance predictor
-  int64_t predictorRefl;
-  std::vector<int> transformPointIdx;
-  std::vector<reflNeighborSet> neighborSet;
+  PC_REFL predictorRefl;
+  std::vector<neighborSet> neighborSet;
   int setlength = aps.maxNumOfNeighbours;
   neighborSet.resize(setlength);
   int prevIndex = -1;
   PC_REFL lastref = 0;
+
+  // predict parameters
+  predictOptParams predictOptParams;
+  predictOptParams.colorQP = 0;
+  predictOptParams.maxNumOfNeighbours = aps.maxNumOfNeighbours;
+  predictOptParams.minNeighborDisFlag = 0;
+  predictOptParams.minNeighborDis = 0;
+  predictOptParams.reflThreshold =
+    (aps.reflQuantParam + abh.QpOffset) * aps.nearestPredParam1 + aps.nearestPredParam2;
+  predictOptParams.predFixedPointFracBit = aps.predFixedPointFracBit;
+  predictOptParams.axisBias = aps.axisBias;
+  predictOptParams.reflCrossAttrTypePred = false;
+  predictOptParams.reflUpdateFlag = true;
+  predictOptParams.reflectanceDistWeight = {0, 0, 0};
+  predictOptParams.curReflWithCoef = 0;
+  predictOptParams.curColorWithCoef = {0, 0, 0};
+
   // transform and entropy coding parameter
+  std::vector<int> transformPointIdx;
   int64_t transformBuf[1][8] = {};
   int64_t transformPredBuf[1][8] = {};
   const int maxNumofCoeff = max(aps.maxNumofCoeff, aps.reflMaxTransNum);
@@ -661,19 +711,17 @@ void TEncAttribute::reflectancePredictAndTransformMemControl() {
 
   int run_length = 0;
   int64_t value = 0;
-  const bool refGolomb = aps.refGolombNum == 1 ? true : false;
   int lengthControl = aps.maxNumofCoeff * aps.coeffLengthControl;
   for (int curIndex = 0; curIndex < voxelCount; ++curIndex) {
-    //determine whether to use adaptive decision
     auto pointIndex = pointCloudCode[curIndex].index;
     PC_REFL& curReflectance = pointCloudRec.getReflectance(pointIndex, multil_ID);
     const PC_POS& curPosition = pointCloudRec[pointIndex];
-    Bool isDuplicatePoint =
-      (curIndex > (length[0] - 1)) && (curPosition == pointCloudRec[prevIndex]);
+    Bool isDuplicatePoint = (curIndex > (length[0] - 1)) &&
+      (curPosition == pointCloudRec[prevIndex]) && m_hls->aps.eligibleDupPointPred;
     if (isDuplicatePoint) {
       predictorRefl = lastref;
       isDuplicatePoint &= multil_ID == 0;
-      reflectanceCode(predictorRefl, curReflectance, run_length, value, isDuplicatePoint);
+      reflectanceCode(predictorRefl, curReflectance, value, isDuplicatePoint);
       CoeffGroup[dcIndex++] = value;
       numofCoeff += length[subgroupIndex];
       subgroupIndex++;
@@ -681,25 +729,22 @@ void TEncAttribute::reflectancePredictAndTransformMemControl() {
       lastref = curReflectance;
     } else {
       transformPointIdx.push_back(curIndex);
-      if (aps.refGroupPredict && (length[subgroupIndex] < 3)) {
+      if (aps.reflGroupPredict && (length[subgroupIndex] < 3)) {
         if (subGroupCount == 0) {
-          predictorRefl =
-            getReflectancePredictorFarthest(curIndex, transformPointIdx[0], pointCloudRec, sps, aps,
-                                            pointCloudCode, subGroupCount, neighborSet);
+          getReflPredictorFarthest(curIndex, transformPointIdx[0], curPosition, subGroupCount,
+                                   neighborSet, predictOptParams, predictorRefl);
         }
       } else {
-        predictorRefl =
-          getReflectancePredictorFarthest(curIndex, transformPointIdx[0], pointCloudRec, sps, aps,
-                                          pointCloudCode, subGroupCount, neighborSet);
+        getReflPredictorFarthest(curIndex, transformPointIdx[0], curPosition, subGroupCount,
+                                 neighborSet, predictOptParams, predictorRefl);
       }
       transformBuf[0][subGroupCount] = curReflectance;
       transformPredBuf[0][subGroupCount] = predictorRefl;
       transformBuf[0][subGroupCount] -= transformPredBuf[0][subGroupCount];
       ++subGroupCount;
       if (subGroupCount == length[subgroupIndex]) {
-        reflectanceTransformCodeMemControl(pointCloudCode, transformPointIdx, dcIndex, acIndex,
-                                           transformBuf, transformPredBuf, CoeffGroup, neighborSet,
-                                           lastref);
+        reflectanceTransformCode(pointCloudCode, transformPointIdx, dcIndex, acIndex, transformBuf,
+                                 transformPredBuf, CoeffGroup, neighborSet, lastref);
         subGroupCount = 0;
         transformPointIdx.erase(transformPointIdx.begin(), transformPointIdx.end());
         numofCoeff += length[subgroupIndex];
@@ -716,87 +761,77 @@ void TEncAttribute::reflectancePredictAndTransformMemControl() {
   }
   m_encBac->encodeRunlength(run_length);
   delete[] CoeffGroup;
-  m_encBac->codeSliceAttrEndCode();
-  if (frame_Id == frame_Count - 1 && m_hls->abh.sliceID == m_hls->frameHead.num_slice_minus_one)
-    m_encBac->codeSPSEndCode();
 }
 
 void TEncAttribute::attributePredictAndTransformMemControl() {
   std::cout << "attributePredictAndTransformMemControl" << std::endl;
   const SequenceParameterSet& sps = m_hls->sps;
   const AttributeParameterSet& aps = m_hls->aps;
+  const FrameHeader& frameheader = m_hls->frameheader;
   const AttributeBrickHeader& abh = m_hls->abh;
   TComPointCloud& pointCloudRec = *m_pointCloudRecon;
   const int voxelCount = int(pointCloudRec.getNumPoint());
 
   //HilbertAddr Sorting
   std::vector<pointCodeWithIndex> pointCloudCode(voxelCount);
-  reOrder(pointCloudRec.positions(), aps.colorReordermode, pointCloudCode, voxelCount, 1);
+  reOrder(pointCloudRec.positions(), aps.colorReorderMode, pointCloudCode, voxelCount,
+          aps.axisBias);
 
   quantizedQP colorQp;
-  colorQp.attrQuantForLuma = sps.colorQuantParam;
+  colorQp.attrQuantForLuma = aps.colorQuantParam;
   colorQp.attrQuantForChromaCb =
     TComClip(0, 63, (Int)colorQp.attrQuantForLuma + aps.chromaQpOffsetCb);
   colorQp.attrQuantForChromaCr =
     TComClip(0, 63, (Int)colorQp.attrQuantForLuma + aps.chromaQpOffsetCr);
-  const bool colorGolomb = aps.colorGolombNum <= 2 ? true : false;
-  const bool refGolomb = aps.refGolombNum == 1 ? true : false;
-  // weighted average parameter
-  m_hls->sps.reflThreshold =
-    (sps.reflQuantParam + abh.reflQPoffset) * aps.nearestPredParam1 + aps.nearestPredParam2;
+
   //dist weight calculation patameter
-  auto boudingSize = (sps.geomBoundingBoxSize[0] * sps.geomBoundingBoxSize[1] +
-                      sps.geomBoundingBoxSize[0] * sps.geomBoundingBoxSize[2] +
-                      sps.geomBoundingBoxSize[1] * sps.geomBoundingBoxSize[2]) *
-    2;
-  uint64_t reflectanceDistCoef = log2(round(boudingSize / voxelCount));
+  uint64_t boundingSize =
+    ((uint64_t)frameheader.geomBoundingBoxSize[0] * (uint64_t)frameheader.geomBoundingBoxSize[1] +
+     (uint64_t)frameheader.geomBoundingBoxSize[0] * (uint64_t)frameheader.geomBoundingBoxSize[2] +
+     (uint64_t)frameheader.geomBoundingBoxSize[1] * (uint64_t)frameheader.geomBoundingBoxSize[2])
+    << 1;
+  uint64_t reflectanceDistCoef =
+    (boundingSize / frameheader.geomNumPoints > 0) ? boundingSize / frameheader.geomNumPoints : 1;
+  UInt log2_reflectanceDistCoef = ceilLog2(reflectanceDistCoef);
 
-  std::vector<int64_t> reflectanceRes = {0, 0, 0};
-  std::vector<int64_t> reflResNum = {0, 0, 0};
-  std::vector<int> reflectanceDistWeight = {0, 0, 0};
-
-  PC_POS prePosition = pointCloudRec[pointCloudCode[0].index];
-  PC_REFL preReflectance = 0;
-  int distWeightGroupSize = 1 << aps.log2predDistWeightGroupSize;
+  V3<int64_t> reflectanceRes = {0, 0, 0};
+  V3<int64_t> reflResNum = {0, 0, 0};
+  int distWeightGroupSize = 1 << aps.predDistWeightGroupSizeLog2;
 
   //quantization deadzone offset
-  if (sps.colorQuantParam <= 48) {
-    m_hls->sps.colorOffsetParamLumaAc =
-      (0.2 + ((48 - sps.colorQuantParam) >> 3) * 0.01);  // Quantization Shift
-    m_hls->sps.colorOffsetParamChromaAc = (0.02 + ((48 - sps.colorQuantParam) >> 3) * 0.08);
-    m_hls->sps.colorOffsetParamLumaDc =
-      (0.18 + ((48 - sps.colorQuantParam) >> 3) * 0.008);  // Quantization Shift
-    m_hls->sps.colorOffsetParamChromaDc = (0.02 + ((48 - sps.colorQuantParam) >> 3) * 0.06);
+  colorQuantShift colorQuantShift;
+  if (aps.colorQuantParam <= 48) {
+    colorQuantShift.colorOffsetParamLumaAc =
+      (0.2 + ((48 - aps.colorQuantParam) >> 3) * 0.01);  // Quantization Shift
+    colorQuantShift.colorOffsetParamChromaAc = (0.02 + ((48 - aps.colorQuantParam) >> 3) * 0.08);
+    colorQuantShift.colorOffsetParamLumaDc =
+      (0.18 + ((48 - aps.colorQuantParam) >> 3) * 0.008);  // Quantization Shift
+    colorQuantShift.colorOffsetParamChromaDc = (0.02 + ((48 - aps.colorQuantParam) >> 3) * 0.06);
   } else {
-    m_hls->sps.colorOffsetParamLumaAc = 0.2;  // Quantization Shift
-    m_hls->sps.colorOffsetParamChromaAc = 0.02;
-    m_hls->sps.colorOffsetParamLumaDc = 0.18;  // Quantization Shift
-    m_hls->sps.colorOffsetParamChromaDc = 0.02;
+    colorQuantShift.colorOffsetParamLumaAc = 0.2;  // Quantization Shift
+    colorQuantShift.colorOffsetParamChromaAc = 0.02;
+    colorQuantShift.colorOffsetParamLumaDc = 0.18;  // Quantization Shift
+    colorQuantShift.colorOffsetParamChromaDc = 0.02;
   }
   // color grouping
+  int countColor = 0;
   PC_COL predictorColor;
   int64_t transformBufColor[3][8] = {};
   int64_t transformPredBufColor[3][8] = {};
   vector<int> lengthColor;
   std::vector<int> transformPointIdxColor;
   transformPointIdxColor.reserve(8);
-  std::vector<colorNeighborSet> neighborSetColor;
-  neighborSetColor.resize(aps.maxNumOfNeighbours);
-  std::vector<reflWithCoefNeighborSet> reflWithCoefNeighborSet;
-  reflWithCoefNeighborSet.resize(aps.maxNumOfNeighbours);
-  int countColor = 0;
 
-  UInt maxBB = std::max(
-    {1U, sps.geomBoundingBoxSize[0], sps.geomBoundingBoxSize[1], sps.geomBoundingBoxSize[2]});
-  int maxNodeSizeLog2 = ceilLog2(maxBB);
+  int maxNodeSizeLog2 = std::max(
+    {1U, m_hls->gbh.nodeSizeLog2[0], m_hls->gbh.nodeSizeLog2[1], m_hls->gbh.nodeSizeLog2[2]});
   int groupShiftBits = std::max(3, 3 * (maxNodeSizeLog2 - ((ceilLog2(voxelCount / 4) + 1) >> 1)));
+
   // adjust color QP per point
-  int64_t minNeighborDis = 0;
   bool colorQPAdjustSliceFlag = aps.colorQPAdjustFlag;
   bool colorQPAdjustFlag = false;
   int scalar = 1;
   if (colorQPAdjustSliceFlag)
-    scalar = aps.colorQPAdjustScalar;
+    scalar = abh.colorQPAdjustScalar;
   int colorQPAdjustDis = std::max(4, (1 << (groupShiftBits / 3 + 4)) / scalar);
   bool deadZoneChromaSliceFlag = aps.chromaDeadzoneFlag;
   bool deadZoneChromaFlag = false;
@@ -807,76 +842,84 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
             aps.colorMaxTransNum);
 
   // ref grouping
+  PC_REFL predictorRefl;
   vector<int> lengthRefl;
   vector<int> numofGroupCountRefl;
   vector<int> transformPointIdxRefl;
   transformPointIdxRefl.reserve(8);
-  std::vector<reflNeighborSet> neighborSetRefl;
-  neighborSetRefl.resize(aps.maxNumOfNeighbours);
-  int setlength = aps.maxNumOfNeighbours;
-  std::vector<colorWithCoefNeighborSet> colorWithCoefNeighborSet;
-  colorWithCoefNeighborSet.resize(aps.maxNumOfNeighbours);
   bool dupPredFlagRefl = 0;
   PC_REFL lastref;
   int64_t transformBufRefl[3][8] = {};
   int64_t transformPredBufRefl[3][8] = {};
-  PC_REFL predictorRefl;
+
   int countRefl = 0;
   int subgroupIndexRefl = 0;
-  int MaxBits = ceilLog2((UInt64)sps.geomBoundingBoxSize[0] * (UInt64)sps.geomBoundingBoxSize[1] *
-                         (UInt64)sps.geomBoundingBoxSize[2]);
+  int MaxBits =
+    m_hls->gbh.nodeSizeLog2[0] + m_hls->gbh.nodeSizeLog2[1] + m_hls->gbh.nodeSizeLog2[2];
+  MaxBits = TComClip(0, 32, MaxBits);
   int MinBits = ceilLog2(voxelCount);
-  int shift = ((sps.reflQuantParam + abh.reflQPoffset) >= 32) ? 12 : -6;
+  int shift = ((aps.reflQuantParam + abh.QpOffset) >= 32) ? 12 : -6;
   groupShiftBits =
     aps.reflMaxTransNum == 4 ? std::max(3, 3 * ((MaxBits - MinBits) / 3)) + shift : 3;
 
-  if (aps.reflMaxTransNum > 1) {
-    getLengthRef(shift, pointCloudCode, lengthRefl, numofGroupCountRefl, aps.maxNumofCoeff,
-                 groupShiftBits, aps.reflMaxTransNum, false);
-  } else {
-    lengthRefl.resize(voxelCount, 1);
-    numofGroupCountRefl.resize((voxelCount / aps.maxNumofCoeff + 1));
-    if (aps.maxNumofCoeff < voxelCount) {
-      numofGroupCountRefl[0] = aps.maxNumofCoeff;
-      for (int i = 1; i < voxelCount / aps.maxNumofCoeff; i++) {
-        numofGroupCountRefl[i] = aps.maxNumofCoeff + numofGroupCountRefl[i - 1];
-      }
-      numofGroupCountRefl[voxelCount / aps.maxNumofCoeff] = voxelCount;
-    } else {
-      numofGroupCountRefl[0] = voxelCount;
-    }
-  }
+  getLengthRef(shift, pointCloudCode, lengthRefl, numofGroupCountRefl, aps.maxNumofCoeff,
+               groupShiftBits, aps.reflMaxTransNum, false);
+  // predict parameters
+  predictOptParams predictOptParams;
+  predictOptParams.colorQP = aps.colorQuantParam;
+  predictOptParams.maxNumOfNeighbours = aps.maxNumOfNeighbours;
+  predictOptParams.minNeighborDisFlag = aps.colorQPAdjustFlag || aps.chromaDeadzoneFlag;
+  predictOptParams.minNeighborDis = 0;
+  predictOptParams.reflThreshold = 0;
+  predictOptParams.predFixedPointFracBit = aps.predFixedPointFracBit;
+  predictOptParams.axisBias = aps.axisBias;
+  predictOptParams.reflectanceDistWeight = {0, 0, 0};
+  predictOptParams.curReflWithCoef = 0;
+  predictOptParams.curColorWithCoef = {0, 0, 0};
+  predictOptParams.colorCrossAttrTypePred = false;
+  predictOptParams.reflCrossAttrTypePred = false;
+  predictOptParams.colorUpdateFlag = true;
+  predictOptParams.reflUpdateFlag = true;
 
-  bool isEnableCrossAttrTypePred = aps.crossAttrTypePred;
-  bool attrEncodeOrder = aps.attrEncodeOrder;
-  uint64_t crossAttrTypeLambda = 0;
-  int64_t crossAttrTypeCoef = 0;
   vector<V3<int64_t>> colorWithCoef(0);
   vector<uint64_t> reflWithCoef(0);
-  if (isEnableCrossAttrTypePred && (!aps.attrEncodeOrder)) {
+  uint64_t crossAttrTypeLambda = 0;
+  int64_t crossAttrTypeCoef = 0;
+  if (aps.crossAttrTypePred && (!aps.attrEncodeOrder)) {
     crossAttrTypeLambda =
-      (-sps.colorQuantParam * aps.crossAttrTypePredParam1 + aps.crossAttrTypePredParam2);
-    UInt maxPos =
-      sps.geomBoundingBoxSize[0] + sps.geomBoundingBoxSize[1] + sps.geomBoundingBoxSize[2];
+      (-aps.colorQuantParam * aps.crossAttrTypePredParam1 + aps.crossAttrTypePredParam2);
+    UInt maxPos = frameheader.geomBoundingBoxSize[0] + frameheader.geomBoundingBoxSize[1] +
+      frameheader.geomBoundingBoxSize[2];
     uint64_t maxColor = (1 << m_hls->aps.colorOutputDepth) - 1;
     uint64_t maxColorSum = 3 * maxColor;
     crossAttrTypeCoef = round((maxPos << 10) / (double)maxColorSum);
     crossAttrTypeCoef = uint64_t(crossAttrTypeCoef * crossAttrTypeLambda + 524288) >> 20;
     colorWithCoef.resize(voxelCount);
-  } else if (isEnableCrossAttrTypePred && (aps.attrEncodeOrder)) {
-    crossAttrTypeLambda = (-(sps.reflQuantParam + abh.reflQPoffset) * aps.crossAttrTypePredParam1 +
+    predictOptParams.reflCrossAttrTypePred = true;
+  } else if (aps.crossAttrTypePred && aps.attrEncodeOrder) {
+    crossAttrTypeLambda = (-(aps.reflQuantParam + abh.QpOffset) * aps.crossAttrTypePredParam1 +
                            aps.crossAttrTypePredParam2);
-    auto diffPos =
-      sps.geomBoundingBoxSize[0] + sps.geomBoundingBoxSize[1] + sps.geomBoundingBoxSize[2];
+    auto diffPos = frameheader.geomBoundingBoxSize[0] + frameheader.geomBoundingBoxSize[1] +
+      frameheader.geomBoundingBoxSize[2];
     uint64_t maxRefl = (1 << m_hls->aps.reflOutputDepth) - 1;
     crossAttrTypeCoef = round((diffPos << 10) / (double)maxRefl);
     crossAttrTypeCoef = uint64_t(crossAttrTypeCoef * crossAttrTypeLambda + 524288) >> 20;
     reflWithCoef.resize(voxelCount, 0);
+    predictOptParams.colorCrossAttrTypePred = true;
   }
+
+  //Initialize predictors
+  PC_POS prePosition = pointCloudRec[pointCloudCode[0].index];
+  PC_REFL preReflectance = 0;
+  int setlength = aps.maxNumOfNeighbours;
+  std::vector<neighborSet> neighborSetRefl;
+  neighborSetRefl.resize(setlength);
+  std::vector<neighborSet> neighborSetColor;
+  neighborSetColor.resize(setlength);
 
   int run_length_col = 0;  ///<zero count
   int run_length_refl = 0;
-  int LengthControl = aps.maxNumofCoeff * aps.coeffLengthControl;
+  int lengthControl = aps.maxNumofCoeff * aps.coeffLengthControl;
   const int maxNumofCoeff = max(aps.maxNumofCoeff, (UInt)8);
   int* CoeffGroupColor = new int[maxNumofCoeff * 3]();
   int dcIndexColor = 0;
@@ -893,34 +936,31 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
   int countNumRefl = lengthRefl[0];
 
   // disable cross-attribute-type-prediction
-  if (!isEnableCrossAttrTypePred) {
-    for (int idx = 0; idx < voxelCount; ++idx) {
-      auto pointIndex = pointCloudCode[idx].index;
+  if (!aps.crossAttrTypePred) {
+    for (int curIndex = 0; curIndex < voxelCount; ++curIndex) {
+      int pointIndex = pointCloudCode[curIndex].index;
+      const PC_POS& curPosition = pointCloudRec[pointIndex];
       PC_REFL& curReflectance = pointCloudRec.getReflectance(pointIndex, multil_ID);
       PC_COL& curColor = pointCloudRec.getColor(pointIndex, multil_ID);
-      transformPointIdxRefl.push_back(idx);
-      transformPointIdxColor.push_back(idx);
-      if (aps.refGroupPredict && (countNumRefl < 3)) {
+      transformPointIdxRefl.push_back(curIndex);
+      transformPointIdxColor.push_back(curIndex);
+      if (aps.reflGroupPredict && (countNumRefl < 3)) {
         if (countRefl == 0) {
-          predictorRefl =
-            getReflectancePredictorFarthest(idx, transformPointIdxRefl[0], pointCloudRec, sps, aps,
-                                            pointCloudCode, countRefl, neighborSetRefl);
+          getReflPredictorFarthestDual(curIndex, transformPointIdxColor[0], curPosition, countRefl,
+                                       neighborSetRefl, predictOptParams, predictorRefl);
         }
       } else {
-        predictorRefl =
-          getReflectancePredictorFarthest(idx, transformPointIdxRefl[0], pointCloudRec, sps, aps,
-                                          pointCloudCode, countRefl, neighborSetRefl);
+        getReflPredictorFarthestDual(curIndex, transformPointIdxColor[0], curPosition, countRefl,
+                                     neighborSetRefl, predictOptParams, predictorRefl);
       }
-
       transformBufRefl[0][countRefl] = curReflectance;
       transformPredBufRefl[0][countRefl] = predictorRefl;
       transformBufRefl[0][countRefl] -= transformPredBufRefl[0][countRefl];
       ++countRefl;
-
       if (countRefl == countNumRefl) {
-        reflectanceTransformCodeMemControl(pointCloudCode, transformPointIdxRefl, dcIndexRefl,
-                                           acIndexRefl, transformBufRefl, transformPredBufRefl,
-                                           CoeffGroupRefl, neighborSetRefl, lastref);
+        reflectanceTransformCode(pointCloudCode, transformPointIdxRefl, dcIndexRefl, acIndexRefl,
+                                 transformBufRefl, transformPredBufRefl, CoeffGroupRefl,
+                                 neighborSetRefl, lastref);
         countRefl = 0;
         numofCoeffRefl += countNumRefl;
         subgroupIndexRefl++;
@@ -929,17 +969,14 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
         transformPointIdxRefl.erase(transformPointIdxRefl.begin(), transformPointIdxRefl.end());
         if (subgroupIndexRefl == numofGroupCountRefl[groupCountRefl - 1]) {
           assert(numofCoeffRefl <= maxNumofCoeff);
-          runlengthEncodeMemControl(CoeffGroupRefl, numofCoeffRefl, run_length_refl, LengthControl,
+          runlengthEncodeMemControl(CoeffGroupRefl, numofCoeffRefl, run_length_refl, lengthControl,
                                     false);
           numofCoeffRefl = 0;
           setCoeffIndex(groupCountRefl, numofGroupCountRefl, lengthRefl, dcIndexRefl, acIndexRefl);
         }
       }
-
-      predictorColor =
-        getColorPredictorFarthest(idx, transformPointIdxColor[0], pointCloudRec, sps, aps,
-                                  pointCloudCode, countColor, neighborSetColor, minNeighborDis);
-
+      getColorPredictorFarthest(curIndex, transformPointIdxColor[0], curPosition, countColor,
+                                neighborSetColor, predictOptParams, predictorColor);
       for (int k = 0; k < 3; k++) {
         transformBufColor[k][countColor] = curColor[k];
         transformPredBufColor[k][countColor] = predictorColor[k];
@@ -949,12 +986,14 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
 
       if (countColor == countNumColor) {
         if (colorQPAdjustSliceFlag)
-          colorQPAdjustFlag = minNeighborDis > colorQPAdjustDis;
+          colorQPAdjustFlag = predictOptParams.minNeighborDis > colorQPAdjustDis;
         if (deadZoneChromaSliceFlag)
-          deadZoneChromaFlag = minNeighborDis > deadZoneChromaDis;
+          deadZoneChromaFlag = predictOptParams.minNeighborDis > deadZoneChromaDis;
+
         colorTransformCode(pointCloudCode, transformPointIdxColor, dcIndexColor, acIndexColor,
                            transformBufColor, transformPredBufColor, colorQp, CoeffGroupColor,
-                           neighborSetColor, true, colorQPAdjustFlag, deadZoneChromaFlag);
+                           neighborSetColor, colorQuantShift, true, colorQPAdjustFlag,
+                           deadZoneChromaFlag);
         transformPointIdxColor.erase(transformPointIdxColor.begin(), transformPointIdxColor.end());
         numofCoeffColor += countNumColor;
         subgroupIndexColor++;
@@ -964,7 +1003,7 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
         // entropy code CoeffGroupColor
         if (subgroupIndexColor == numofGroupCountColor[groupCountColor - 1]) {
           assert(numofCoeffColor <= maxNumofCoeff);
-          runlengthEncodeMemControl(CoeffGroupColor, numofCoeffColor, run_length_col, LengthControl,
+          runlengthEncodeMemControl(CoeffGroupColor, numofCoeffColor, run_length_col, lengthControl,
                                     true);
           numofCoeffColor = 0;
           setCoeffIndex(groupCountColor, numofGroupCountColor, lengthColor, dcIndexColor,
@@ -975,19 +1014,19 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
     m_encBac->encodeRunlength(run_length_col);
     m_encBacDual->encodeRunlength(run_length_refl);
   }  // predict reflectance using color
-  else if (!attrEncodeOrder) {
+  else if (!aps.attrEncodeOrder) {
     for (int curIndexColor = 0, curIndexRefl = 0; curIndexRefl < voxelCount;) {
-      // reflectance predict
+      // color predict
       while (curIndexColor < (curIndexRefl + countNumRefl) ||
              (countColor < countNumColor && countColor > 0)) {
         if (countColor == 0 && (curIndexColor > (curIndexRefl + countNumRefl)))
           break;
-        auto pointIndex = pointCloudCode[curIndexColor].index;
+        int pointIndex = pointCloudCode[curIndexColor].index;
+        const PC_POS& curPosition = pointCloudRec[pointIndex];
         PC_COL& curColor = pointCloudRec.getColor(pointIndex, multil_ID);
         transformPointIdxColor.push_back(curIndexColor);
-        predictorColor = getColorPredictorFarthest(curIndexColor, transformPointIdxColor[0],
-                                                   pointCloudRec, sps, aps, pointCloudCode,
-                                                   countColor, neighborSetColor, minNeighborDis);
+        getColorPredictorFarthest(curIndexColor, transformPointIdxColor[0], curPosition, countColor,
+                                  neighborSetColor, predictOptParams, predictorColor);
 
         for (int k = 0; k < 3; k++) {
           transformBufColor[k][countColor] = curColor[k];
@@ -997,12 +1036,14 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
         countColor++;
         if (countColor == countNumColor) {
           if (colorQPAdjustSliceFlag)
-            colorQPAdjustFlag = minNeighborDis > colorQPAdjustDis;
+            colorQPAdjustFlag = predictOptParams.minNeighborDis > colorQPAdjustDis;
           if (deadZoneChromaSliceFlag)
-            deadZoneChromaFlag = minNeighborDis > deadZoneChromaDis;
+            deadZoneChromaFlag = predictOptParams.minNeighborDis > deadZoneChromaDis;
+
           colorTransformCode(pointCloudCode, transformPointIdxColor, dcIndexColor, acIndexColor,
                              transformBufColor, transformPredBufColor, colorQp, CoeffGroupColor,
-                             neighborSetColor, true, colorQPAdjustFlag, deadZoneChromaFlag);
+                             neighborSetColor, colorQuantShift, true, colorQPAdjustFlag,
+                             deadZoneChromaFlag);
           for (int i = 0; i < countNumColor; i++) {
             auto pointIndex = pointCloudCode[transformPointIdxColor[i]].index;
             colorWithCoef[pointIndex][0] =
@@ -1022,7 +1063,7 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
           if (subgroupIndexColor == numofGroupCountColor[groupCountColor - 1]) {
             assert(numofCoeffColor <= maxNumofCoeff);
             runlengthEncodeMemControl(CoeffGroupColor, numofCoeffColor, run_length_col,
-                                      LengthControl, true);
+                                      lengthControl, true);
             numofCoeffColor = 0;
             setCoeffIndex(groupCountColor, numofGroupCountColor, lengthColor, dcIndexColor,
                           acIndexColor);
@@ -1031,24 +1072,23 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
         countRefl++;
         curIndexColor++;
       }
-      // color predict
+      // reflectance predict
       countRefl = 0;
       while (countRefl < countNumRefl) {
-        auto pointIndex = pointCloudCode[curIndexRefl].index;
+        int pointIndex = pointCloudCode[curIndexRefl].index;
+        const PC_POS& curPosition = pointCloudRec[pointIndex];
         transformPointIdxRefl.push_back(curIndexRefl);
+        predictOptParams.curColorWithCoef = colorWithCoef[pointIndex];
         PC_REFL& curReflectance = pointCloudRec.getReflectance(pointIndex, multil_ID);
-        if (aps.refGroupPredict && (countNumRefl < 3)) {
+        if (aps.reflGroupPredict && (countNumRefl < 3)) {
           if (countRefl == 0) {
-            predictorRefl = getReflectancePredictorFromColor(
-              curIndexRefl, transformPointIdxRefl[0], pointCloudRec, sps, aps, pointCloudCode,
-              countRefl, neighborSetRefl, colorWithCoefNeighborSet, colorWithCoef[pointIndex],
-              reflectanceDistWeight);
+            getReflPredictorFarthestDual(curIndexRefl, transformPointIdxRefl[0], curPosition,
+                                         countRefl, neighborSetRefl, predictOptParams,
+                                         predictorRefl);
           }
         } else {
-          predictorRefl = getReflectancePredictorFromColor(
-            curIndexRefl, transformPointIdxRefl[0], pointCloudRec, sps, aps, pointCloudCode,
-            countRefl, neighborSetRefl, colorWithCoefNeighborSet, colorWithCoef[pointIndex],
-            reflectanceDistWeight);
+          getReflPredictorFarthestDual(curIndexRefl, transformPointIdxRefl[0], curPosition,
+                                       countRefl, neighborSetRefl, predictOptParams, predictorRefl);
         }
         transformBufRefl[0][countRefl] = curReflectance;
         transformPredBufRefl[0][countRefl] = predictorRefl;
@@ -1057,23 +1097,23 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
         curIndexRefl++;
       }
       // transform and save coefficients in CoeffGroupColor
-      reflectanceTransformCodeMemControl(pointCloudCode, transformPointIdxRefl, dcIndexRefl,
-                                         acIndexRefl, transformBufRefl, transformPredBufRefl,
-                                         CoeffGroupRefl, neighborSetRefl, lastref);
+      reflectanceTransformCode(pointCloudCode, transformPointIdxRefl, dcIndexRefl, acIndexRefl,
+                               transformBufRefl, transformPredBufRefl, CoeffGroupRefl,
+                               neighborSetRefl, lastref);
       if (transformPointIdxRefl[0] <= setlength) {
         for (int i = 0; i < countRefl; ++i) {
           auto pointIndex = pointCloudCode[transformPointIdxRefl[i]].index;
-          colorWithCoefNeighborSet[transformPointIdxRefl[i] % setlength].colorWithCoef =
+          neighborSetRefl[transformPointIdxRefl[i] % setlength].colorWithCoef =
             colorWithCoef[pointIndex];
         }
       } else {
         for (int i = 0; i < countRefl; ++i) {
           auto pointIndex = pointCloudCode[transformPointIdxRefl[i]].index;
-          colorWithCoefNeighborSet[i].colorWithCoef = colorWithCoef[pointIndex];
+          neighborSetRefl[i].colorWithCoef = colorWithCoef[pointIndex];
           PC_REFL curReflectance = pointCloudRec.getReflectance(pointIndex, multil_ID);
           calculateReflTrend(pointCloudRec[pointIndex], prePosition, curReflectance, preReflectance,
-                             reflectanceDistCoef, reflectanceRes, reflResNum, reflectanceDistWeight,
-                             distWeightGroupSize);
+                             log2_reflectanceDistCoef, reflectanceRes, reflResNum,
+                             predictOptParams.reflectanceDistWeight, distWeightGroupSize);
           preReflectance = curReflectance;
           prePosition = pointCloudRec[pointIndex];
         }
@@ -1087,7 +1127,7 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
       // entropy code CoeffGroupColor
       if (subgroupIndexRefl == numofGroupCountRefl[groupCountRefl - 1]) {
         assert(numofCoeffColor <= maxNumofCoeff);
-        runlengthEncodeMemControl(CoeffGroupRefl, numofCoeffRefl, run_length_refl, LengthControl,
+        runlengthEncodeMemControl(CoeffGroupRefl, numofCoeffRefl, run_length_refl, lengthControl,
                                   false);
         numofCoeffRefl = 0;
         setCoeffIndex(groupCountRefl, numofGroupCountRefl, lengthRefl, dcIndexRefl, acIndexRefl);
@@ -1103,29 +1143,19 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
              (countRefl < countNumRefl && countRefl > 0)) {
         if (countRefl == 0 && (curIndexRefl > (curIndexColor + countNumColor)))
           break;
-        auto pointIndex = pointCloudCode[curIndexRefl].index;
+        int pointIndex = pointCloudCode[curIndexRefl].index;
+        const PC_POS& curPosition = pointCloudRec[pointIndex];
         PC_REFL& curReflectance = pointCloudRec.getReflectance(pointIndex, multil_ID);
         transformPointIdxRefl.push_back(curIndexRefl);
-        if (aps.refGroupPredict && (countNumRefl < 3)) {
+        if (aps.reflGroupPredict && (countNumRefl < 3)) {
           if (countRefl == 0) {
-            if (aps.log2predDistWeightGroupSize)
-              predictorRefl = getReflectancePredictorFarthest(
-                curIndexRefl, transformPointIdxRefl[0], pointCloudRec, sps, aps, pointCloudCode,
-                countRefl, neighborSetRefl, reflectanceDistWeight);
-            else
-              predictorRefl = getReflectancePredictorFarthest(
-                curIndexRefl, transformPointIdxRefl[0], pointCloudRec, sps, aps, pointCloudCode,
-                countRefl, neighborSetRefl);
+            getReflPredictorFarthestDual(curIndexRefl, transformPointIdxRefl[0], curPosition,
+                                         countRefl, neighborSetRefl, predictOptParams,
+                                         predictorRefl);
           }
         } else {
-          if (aps.log2predDistWeightGroupSize)
-            predictorRefl = getReflectancePredictorFarthest(
-              curIndexRefl, transformPointIdxRefl[0], pointCloudRec, sps, aps, pointCloudCode,
-              countRefl, neighborSetRefl, reflectanceDistWeight);
-          else
-            predictorRefl =
-              getReflectancePredictorFarthest(curIndexRefl, transformPointIdxRefl[0], pointCloudRec,
-                                              sps, aps, pointCloudCode, countRefl, neighborSetRefl);
+          getReflPredictorFarthestDual(curIndexRefl, transformPointIdxRefl[0], curPosition,
+                                       countRefl, neighborSetRefl, predictOptParams, predictorRefl);
         }
 
         transformBufRefl[0][countRefl] = curReflectance;
@@ -1134,16 +1164,16 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
         countRefl++;
 
         if (countRefl == countNumRefl) {
-          reflectanceTransformCodeMemControl(pointCloudCode, transformPointIdxRefl, dcIndexRefl,
-                                             acIndexRefl, transformBufRefl, transformPredBufRefl,
-                                             CoeffGroupRefl, neighborSetRefl, lastref);
+          reflectanceTransformCode(pointCloudCode, transformPointIdxRefl, dcIndexRefl, acIndexRefl,
+                                   transformBufRefl, transformPredBufRefl, CoeffGroupRefl,
+                                   neighborSetRefl, lastref);
           for (int i = 0; i < countNumRefl; i++) {
             auto pointIndex = pointCloudCode[transformPointIdxRefl[i]].index;
             PC_REFL curReflectance = pointCloudRec.getReflectance(pointIndex, multil_ID);
             reflWithCoef[pointIndex] = curReflectance * crossAttrTypeCoef;
             calculateReflTrend(pointCloudRec[pointIndex], prePosition, curReflectance,
-                               preReflectance, reflectanceDistCoef, reflectanceRes, reflResNum,
-                               reflectanceDistWeight, distWeightGroupSize);
+                               preReflectance, log2_reflectanceDistCoef, reflectanceRes, reflResNum,
+                               predictOptParams.reflectanceDistWeight, distWeightGroupSize);
             preReflectance = curReflectance;
             prePosition = pointCloudRec[pointIndex];
           }
@@ -1156,7 +1186,7 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
           if (subgroupIndexRefl == numofGroupCountRefl[groupCountRefl - 1]) {
             assert(numofCoeffRefl <= maxNumofCoeff);
             runlengthEncodeMemControl(CoeffGroupRefl, numofCoeffRefl, run_length_refl,
-                                      LengthControl, false);
+                                      lengthControl, false);
             numofCoeffRefl = 0;
             setCoeffIndex(groupCountRefl, numofGroupCountRefl, lengthRefl, dcIndexRefl,
                           acIndexRefl);
@@ -1169,12 +1199,12 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
       countColor = 0;
       while (countColor < countNumColor) {
         transformPointIdxColor.push_back(curIndexColor);
-        auto pointIndex = pointCloudCode[curIndexColor].index;
+        int pointIndex = pointCloudCode[curIndexColor].index;
+        const PC_POS& curPosition = pointCloudRec[pointIndex];
         PC_COL& curColor = pointCloudRec.getColor(pointIndex, multil_ID);
-        predictorColor = getColorPredictorFromReflectance(
-          curIndexColor, transformPointIdxColor[0], pointCloudRec, sps, aps, pointCloudCode,
-          countColor, neighborSetColor, reflWithCoefNeighborSet, reflWithCoef[pointIndex],
-          minNeighborDis);
+        predictOptParams.curReflWithCoef = reflWithCoef[pointIndex];
+        getColorPredictorFarthest(curIndexColor, transformPointIdxColor[0], curPosition, countColor,
+                                  neighborSetColor, predictOptParams, predictorColor);
         for (int k = 0; k < 3; k++) {
           transformBufColor[k][countColor] = curColor[k];
           transformPredBufColor[k][countColor] = predictorColor[k];
@@ -1185,24 +1215,27 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
       }
       // transform and save coefficients in CoeffGroupColor
       if (colorQPAdjustSliceFlag)
-        colorQPAdjustFlag = minNeighborDis > colorQPAdjustDis;
+        colorQPAdjustFlag = predictOptParams.minNeighborDis > colorQPAdjustDis;
       if (deadZoneChromaSliceFlag)
-        deadZoneChromaFlag = minNeighborDis > deadZoneChromaDis;
+        deadZoneChromaFlag = predictOptParams.minNeighborDis > deadZoneChromaDis;
       colorTransformCode(pointCloudCode, transformPointIdxColor, dcIndexColor, acIndexColor,
                          transformBufColor, transformPredBufColor, colorQp, CoeffGroupColor,
-                         neighborSetColor, true, colorQPAdjustFlag, deadZoneChromaFlag);
+                         neighborSetColor, colorQuantShift, true, colorQPAdjustFlag,
+                         deadZoneChromaFlag);
+
       if (transformPointIdxColor[0] <= setlength) {
         for (int i = 0; i < countColor; ++i) {
           auto pointIndex = pointCloudCode[transformPointIdxColor[i]].index;
-          reflWithCoefNeighborSet[transformPointIdxColor[i] % setlength].reflWithCoef =
+          neighborSetColor[transformPointIdxColor[i] % setlength].reflWithCoef =
             reflWithCoef[pointIndex];
         }
       } else {
         for (int i = 0; i < countColor; ++i) {
           auto pointIndex = pointCloudCode[transformPointIdxColor[i]].index;
-          reflWithCoefNeighborSet[i].reflWithCoef = reflWithCoef[pointIndex];
+          neighborSetColor[i].reflWithCoef = reflWithCoef[pointIndex];
         }
       }
+
       transformPointIdxColor.erase(transformPointIdxColor.begin(), transformPointIdxColor.end());
       numofCoeffColor += countNumColor;
       subgroupIndexColor++;
@@ -1211,7 +1244,7 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
       // entropy code CoeffGroupColor
       if (subgroupIndexColor == numofGroupCountColor[groupCountColor - 1]) {
         assert(numofCoeffColor <= maxNumofCoeff);
-        runlengthEncodeMemControl(CoeffGroupColor, numofCoeffColor, run_length_col, LengthControl,
+        runlengthEncodeMemControl(CoeffGroupColor, numofCoeffColor, run_length_col, lengthControl,
                                   true);
         numofCoeffColor = 0;
         setCoeffIndex(groupCountColor, numofGroupCountColor, lengthColor, dcIndexColor,
@@ -1224,10 +1257,6 @@ void TEncAttribute::attributePredictAndTransformMemControl() {
   }
   delete[] CoeffGroupColor;
   delete[] CoeffGroupRefl;
-
-  m_encBac->codeSliceAttrEndCode();
-  if (frame_Id == frame_Count - 1 && m_hls->abh.sliceID == m_hls->frameHead.num_slice_minus_one)
-    m_encBac->codeSPSEndCode();
 }
 
 void TEncAttribute::reflectancePredictCode(const int64_t& predictor, PC_REFL& currValue,
@@ -1235,7 +1264,6 @@ void TEncAttribute::reflectancePredictCode(const int64_t& predictor, PC_REFL& cu
   const SequenceParameterSet& sps = m_hls->sps;
   const AttributeParameterSet& aps = m_hls->aps;
   const AttributeBrickHeader& abh = m_hls->abh;
-  const bool isGolomb = aps.refGolombNum == 1 ? true : false;
   Int64 ClipMin = INT32_MIN;
   Int64 ClipMax = INT32_MAX;
   if (aps.reflOutputDepth < 16) {
@@ -1246,12 +1274,12 @@ void TEncAttribute::reflectancePredictCode(const int64_t& predictor, PC_REFL& cu
   if (isDuplicatePoint && (delta < 0)) {
     delta = 0;
   }
-  UInt golombNum = aps.refGolombNum;
+  UInt golombNum = aps.reflGolombNum;
   // Residual quantization
   int residualSign = delta < 0 ? -1 : 1;
   uint64_t absResidual = std::abs(delta);
   uint64_t residualQuant;
-  residualQuant = QuantizaResidual(absResidual, sps.reflQuantParam + abh.reflQPoffset, 1);
+  residualQuant = QuantizaResidual(absResidual, aps.reflQuantParam + abh.QpOffset, 1);
   int64_t signResidualQuant = residualSign * (int64_t)residualQuant;
   // Entropy encode
   if (signResidualQuant == 0)
@@ -1282,7 +1310,7 @@ void TEncAttribute::reflectancePredictCode(const int64_t& predictor, PC_REFL& cu
   }
   // Local decode
   uint64_t inverseResidualQuant =
-    InverseQuantizeResidual(residualQuant, sps.reflQuantParam + abh.reflQPoffset);
+    InverseQuantizeResidual(residualQuant, aps.reflQuantParam + abh.QpOffset);
   int64_t recResidual = inverseResidualQuant * residualSign;
   currValue = TComClip((Int64)ClipMin, (Int64)ClipMax, recResidual + predictor);
 }
@@ -1292,7 +1320,6 @@ void TEncAttribute::colorPredictCode(const PC_COL& predictor, PC_COL& currValue,
                                      const bool isDuplicatePoint) {
   const SequenceParameterSet& sps = m_hls->sps;
   const AttributeParameterSet& aps = m_hls->aps;
-  const bool isGolomb = aps.colorGolombNum == 1 ? true : false;
   Int64 ClipMin = 0;
   Int64 ClipMax = (1 << (m_hls->aps.colorOutputDepth)) - 1;
   int residualPrevComponent = 0;
@@ -1339,11 +1366,12 @@ void TEncAttribute::colorPredictCode(const PC_COL& predictor, PC_COL& currValue,
     int countOfZeros = 0;
     run_length = 0;
     ///<attribute correlation coding
-    if (!os) {
-      colorResidualCorrelationCode(signResidualQuantvalue, isDuplicatePoint, golombNum);
-    } else {
-      colorResidualCorrelationCodeOS(signResidualQuantvalue, isDuplicatePoint, golombNum);
-    }
+    V3<bool> codeSign(true);
+    if (isDuplicatePoint)
+      determineNeedCodeSign(codeSign, os);
+    if (os)
+      std::swap(signResidualQuantvalue[0], signResidualQuantvalue[1]);
+    colorResidualCorrelationCode(signResidualQuantvalue, isDuplicatePoint, golombNum, codeSign);
   }
   // lengthControl
   if ((aps.coeffLengthControl > 0) && (run_length == aps.coeffLengthControl)) {
@@ -1352,9 +1380,17 @@ void TEncAttribute::colorPredictCode(const PC_COL& predictor, PC_COL& currValue,
   }
 }
 
+void TEncAttribute::determineNeedCodeSign(V3<bool>& codeSign, const bool& os) {
+  codeSign = {true, true, true};
+  if (os)
+    codeSign[1] = false;
+  else
+    codeSign[0] = false;
+}
+
 void TEncAttribute::colorResidualCorrelationCode(const int64_t signResidualQuantvalue[3],
-                                                 const bool isDuplicatePoint,
-                                                 const UInt& golombNum) {
+                                                 const bool isDuplicatePoint, const UInt& golombNum,
+                                                 const V3<bool>& codeSign) {
   int flagyu_rg = 0;
   int flagy_r = 0;
   if (signResidualQuantvalue[0] == 0 && signResidualQuantvalue[1] == 0) {
@@ -1368,12 +1404,12 @@ void TEncAttribute::colorResidualCorrelationCode(const int64_t signResidualQuant
     flagy_r = 1;
   }
   //code Y/R
-  m_encBac->codeAttributerResidualequalone0(flagy_r);
+  m_encBac->codeAttributerResidualequalone(flagy_r);
   bool iscolor = true;
   bool residualminusone = true;
   if (signResidualQuantvalue[0] == 0) {
     //code U/G
-    m_encBac->codeAttributerResidualequaltwo0(flagyu_rg);
+    m_encBac->codeAttributerResidualequaltwo(flagyu_rg);
     if (signResidualQuantvalue[1] == 0) {
       m_encBac->codeAttributerResidual(signResidualQuantvalue[2], iscolor, 2, 0,
                                        2 == 0 && isDuplicatePoint, residualminusone, golombNum);
@@ -1383,7 +1419,8 @@ void TEncAttribute::colorResidualCorrelationCode(const int64_t signResidualQuant
                                        1 == 0 && isDuplicatePoint, residualminusone, golombNum);
       m_encBac->codeAttributerResidual(signResidualQuantvalue[2], iscolor, 2, 0,
                                        2 == 0 && isDuplicatePoint, !residualminusone, golombNum);
-      m_encBac->codeSign(signResidualQuantvalue[1]);
+      if (codeSign[1])
+        m_encBac->codeSign(signResidualQuantvalue[1]);
       if (signResidualQuantvalue[2] != 0) {
         m_encBac->codeSign(signResidualQuantvalue[2]);
       }
@@ -1403,8 +1440,10 @@ void TEncAttribute::colorResidualCorrelationCode(const int64_t signResidualQuant
     }
     m_encBac->codeAttributerResidual(signResidualQuantvalue[2], iscolor, 2, 2,
                                      2 == 0 && isDuplicatePoint, !residualminusone, golombNum, b0);
-    m_encBac->codeSign(signResidualQuantvalue[0]);
-    if (signResidualQuantvalue[1] != 0) {
+    if (codeSign[0])
+      m_encBac->codeSign(signResidualQuantvalue[0]);
+
+    if (signResidualQuantvalue[1] != 0 && codeSign[1]) {
       m_encBac->codeSign(signResidualQuantvalue[1]);
     }
     if (signResidualQuantvalue[2] != 0) {
@@ -1413,11 +1452,13 @@ void TEncAttribute::colorResidualCorrelationCode(const int64_t signResidualQuant
   }
 }
 
-void TEncAttribute::colorTransformCode(
-  std::vector<pointCodeWithIndex>& pointCloudCode, std::vector<int>& transformPointIdx,
-  int& dcIndex, int& acIndex, int64_t transformBuf[][8], int64_t transformPredBuf[][8],
-  const quantizedQP& colorQp, int* Coefficients, std::vector<colorNeighborSet>& neighborSet,
-  const bool isLengthControl, bool colorQPAdjustFlag, bool deadZoneChromaFlag) {
+void TEncAttribute::colorTransformCode(std::vector<pointCodeWithIndex>& pointCloudCode,
+                                       std::vector<int>& transformPointIdx, int& dcIndex,
+                                       int& acIndex, int64_t transformBuf[][8],
+                                       int64_t transformPredBuf[][8], const quantizedQP& colorQp,
+                                       int* Coefficients, std::vector<neighborSet>& neighborSet,
+                                       colorQuantShift& colorQuantShift, const bool isLengthControl,
+                                       bool colorQPAdjustFlag, bool deadZoneChromaFlag) {
   const SequenceParameterSet& sps = m_hls->sps;
   const AttributeParameterSet& aps = m_hls->aps;
   TComPointCloud& pointCloudRec = *m_pointCloudRecon;
@@ -1427,14 +1468,13 @@ void TEncAttribute::colorTransformCode(
   int offsetShift = 0.2 * (1 << encoderShiftBit);  // Quantization Shift
 
   int offsetShiftLuma1 =
-    sps.colorOffsetParamLumaAc * (1 << encoderShiftBit);  // Quantization Shift Luma AC
-  int offsetShiftChroma1 =
-    sps.colorOffsetParamChromaAc * (1 << encoderShiftBit);  // Quantization Shift Chroma AC
-
+    colorQuantShift.colorOffsetParamLumaAc * (1 << encoderShiftBit);  // Quantization Shift Luma AC
+  int offsetShiftChroma1 = colorQuantShift.colorOffsetParamChromaAc *
+    (1 << encoderShiftBit);  // Quantization Shift Chroma AC
   int offsetShiftLuma2 =
-    sps.colorOffsetParamLumaDc * (1 << encoderShiftBit);  // Quantization Shift Luma DC
-  int offsetShiftChroma2 =
-    sps.colorOffsetParamChromaDc * (1 << encoderShiftBit);  // Quantization Shift Chroma DC
+    colorQuantShift.colorOffsetParamLumaDc * (1 << encoderShiftBit);  // Quantization Shift Luma DC
+  int offsetShiftChroma2 = colorQuantShift.colorOffsetParamChromaDc *
+    (1 << encoderShiftBit);  // Quantization Shift Chroma DC
 
   if (deadZoneChromaFlag) {
     offsetShiftChroma2 = 0.1 * (1 << encoderShiftBit);
@@ -1517,12 +1557,11 @@ void TEncAttribute::colorTransformCode(
   }
 }
 
-void TEncAttribute::reflectanceCode(const int64_t& predictor, PC_REFL& currValue, int& run_length,
-                                    int64_t& value, const bool isDuplicatePoint) {
+void TEncAttribute::reflectanceCode(const int64_t& predictor, PC_REFL& currValue, int64_t& value,
+                                    const bool isDuplicatePoint) {
   const SequenceParameterSet& sps = m_hls->sps;
   const AttributeParameterSet& aps = m_hls->aps;
   const AttributeBrickHeader& abh = m_hls->abh;
-  const bool refGolomb = aps.refGolombNum == 1 ? true : false;
   Int64 ClipMin = INT32_MIN;
   Int64 ClipMax = INT32_MAX;
   if (m_hls->aps.reflOutputDepth < 16) {
@@ -1537,38 +1576,22 @@ void TEncAttribute::reflectanceCode(const int64_t& predictor, PC_REFL& currValue
   int residualSign = delta < 0 ? -1 : 1;
   uint64_t absResidual = std::abs(delta);
   uint64_t residualQuant;
-  residualQuant = QuantizaResidual(absResidual, sps.reflQuantParam + abh.reflQPoffset, 1);
+  residualQuant = QuantizaResidual(absResidual, aps.reflQuantParam + abh.QpOffset, 1);
   int64_t signResidualQuant = residualSign * (int64_t)residualQuant;
   value = signResidualQuant;
-  if (aps.attributePresentFlag[0]) {
-    // Entropy encode
-    if (signResidualQuant == 0)
-      ++run_length;
-    else {
-      if (m_encBacDual != NULL) {
-        m_encBacDual->encodeRunlength(run_length);
-        run_length = 0;
-        m_encBacDual->codeAttributeResidualDual(signResidualQuant, false, 0, isDuplicatePoint,
-                                                false, aps.refGolombNum);
-      } else {
-        m_encBac->encodeRunlength(run_length);
-        run_length = 0;
-        m_encBac->codeAttributerResidual(signResidualQuant, false, 3, 0, isDuplicatePoint, false,
-                                         aps.refGolombNum);
-      }
-    }
-  }
   // Local decode
   uint64_t inverseResidualQuant =
-    InverseQuantizeResidual(residualQuant, sps.reflQuantParam + abh.reflQPoffset);
+    InverseQuantizeResidual(residualQuant, aps.reflQuantParam + abh.QpOffset);
   int64_t recResidual = inverseResidualQuant * residualSign;
   currValue = TComClip((Int64)ClipMin, (Int64)ClipMax, recResidual + predictor);
 }
 
-void TEncAttribute::reflectanceTransformCodeMemControl(
-  std::vector<pointCodeWithIndex>& pointCloudCode, std::vector<int>& transformPointIdx,
-  int& dcIndex, int& acIndex, int64_t transformBuf[1][8], int64_t transformPredBuf[1][8],
-  int* Coefficients, std::vector<reflNeighborSet>& neighborSet, PC_REFL& lastref) {
+void TEncAttribute::reflectanceTransformCode(std::vector<pointCodeWithIndex>& pointCloudCode,
+                                             std::vector<int>& transformPointIdx, int& dcIndex,
+                                             int& acIndex, int64_t transformBuf[1][8],
+                                             int64_t transformPredBuf[1][8], int* Coefficients,
+                                             std::vector<neighborSet>& neighborSet,
+                                             PC_REFL& lastref) {
   const SequenceParameterSet& sps = m_hls->sps;
   const AttributeParameterSet& aps = m_hls->aps;
   const AttributeBrickHeader& abh = m_hls->abh;
@@ -1590,9 +1613,9 @@ void TEncAttribute::reflectanceTransformCodeMemControl(
     int64_t delta = transformBuf[0][idx];
     // quant
     if (idx == 0)
-      transQuantParam = sps.reflQuantParam + abh.reflQPoffset + 72 + aps.QpOffsetDC;
+      transQuantParam = aps.reflQuantParam + abh.QpOffset + 72 + aps.QpOffsetDC;
     else
-      transQuantParam = sps.reflQuantParam + abh.reflQPoffset + 72 + aps.QpOffsetAC;
+      transQuantParam = aps.reflQuantParam + abh.QpOffset + 72 + aps.QpOffsetAC;
     int residualSign = delta < 0 ? -1 : 1;
     uint64_t absResidual = std::abs(delta);
     uint64_t residualQuant = QuantizaResidual(absResidual, transQuantParam, offsetShift);
@@ -1631,7 +1654,7 @@ void TEncAttribute::setCoeffIndex(int& groupCount, const vector<int>& numofGroup
     if (groupCount % 2) {
       int sumofGroup = numofGroupCount[groupCount] - numofGroupCount[groupCount - 1];
       int sumofCoeff = accumulate(length.begin() + numofGroupCount[groupCount - 1],
-                              length.begin() + numofGroupCount[groupCount], 0);
+                                  length.begin() + numofGroupCount[groupCount], 0);
       dcIndex = sumofCoeff - sumofGroup;
       acIndex = 0;
     } else {
@@ -1658,11 +1681,11 @@ void TEncAttribute::runlengthEncodeMemControl(int* Coefficients, int pointCount,
         ++run_length;
       else {
         m_encBac->encodeRunlength(run_length);
-        if (!os) {
-          colorResidualCorrelationCode(values, false, colorGolombNum);
-        } else {
-          colorResidualCorrelationCodeOS(values, false, colorGolombNum);
-        }
+        V3<bool> codeSign(true);
+        if (os)
+          std::swap(values[0], values[1]);
+        colorResidualCorrelationCode(values, false, colorGolombNum, codeSign);
+
         run_length = 0;
       }
       if ((aps.coeffLengthControl > 0) && (run_length == lengthControl)) {
@@ -1671,8 +1694,8 @@ void TEncAttribute::runlengthEncodeMemControl(int* Coefficients, int pointCount,
       }
     }
   } else {
-    auto refGolombNum = aps.refGolombNum;
-    const bool refGolomb = refGolombNum == 1 ? true : false;
+    auto reflGolombNum = aps.reflGolombNum;
+    const bool refGolomb = reflGolombNum == 1 ? true : false;
     PC_REFL values;
     for (int n = 0; n < pointCount; ++n) {
       values = Coefficients[n];
@@ -1681,11 +1704,11 @@ void TEncAttribute::runlengthEncodeMemControl(int* Coefficients, int pointCount,
       else {
         if (m_encBacDual != NULL) {
           m_encBacDual->encodeRunlength(run_length);
-          m_encBacDual->codeAttributerResidual(values, false, 3, 0, false, false, refGolombNum);
+          m_encBacDual->codeAttributerResidual(values, false, 3, 0, false, false, reflGolombNum);
           run_length = 0;
         } else {
           m_encBac->encodeRunlength(run_length);
-          m_encBac->codeAttributerResidual(values, false, 3, 0, false, false, refGolombNum);
+          m_encBac->codeAttributerResidual(values, false, 3, 0, false, false, reflGolombNum);
           run_length = 0;
         }
       }
@@ -1702,75 +1725,13 @@ void TEncAttribute::runlengthEncodeMemControl(int* Coefficients, int pointCount,
   }
 }
 
-void TEncAttribute::colorResidualCorrelationCodeOS(const int64_t signResidualQuantvalue[3],
-                                                   const bool isDuplicatePoint,
-                                                   const UInt& golombNum) {
-  int flaguy_gr = 0;
-  int flagu_g = 0;
-  if (signResidualQuantvalue[1] == 0 && signResidualQuantvalue[0] == 0) {
-    flaguy_gr = 0;
-  } else {
-    flaguy_gr = 1;
-  }
-  if (signResidualQuantvalue[1] == 0) {
-    flagu_g = 0;
-  } else {
-    flagu_g = 1;
-  }
-  //code U/G
-  m_encBac->codeAttributerResidualequalone0(flagu_g);
-  bool iscolor = true;
-  bool residualminusone = true;
-  if (signResidualQuantvalue[1] == 0) {
-    //code Y/R
-    m_encBac->codeAttributerResidualequaltwo0(flaguy_gr);
-    if (signResidualQuantvalue[0] == 0) {
-      m_encBac->codeAttributerResidual(signResidualQuantvalue[2], iscolor, 2, 0,
-                                       2 == 0 && isDuplicatePoint, residualminusone, golombNum);
-      m_encBac->codeSign(signResidualQuantvalue[2]);
-    } else {
-      m_encBac->codeAttributerResidual(signResidualQuantvalue[0], iscolor, 0, 2,
-                                       0 == 0 && isDuplicatePoint, residualminusone, golombNum);
-      m_encBac->codeAttributerResidual(signResidualQuantvalue[2], iscolor, 2, 0,
-                                       2 == 0 && isDuplicatePoint, !residualminusone, golombNum);
-      m_encBac->codeSign(signResidualQuantvalue[0]);
-      if (signResidualQuantvalue[2] != 0) {
-        m_encBac->codeSign(signResidualQuantvalue[2]);
-      }
-    }
-
-  } else {
-    m_encBac->codeAttributerResidual(signResidualQuantvalue[1], iscolor, 1, 1,
-                                     1 == 0 && isDuplicatePoint, residualminusone, golombNum);
-    m_encBac->codeAttributerResidual(signResidualQuantvalue[0], iscolor, 0, 1,
-                                     0 == 0 && isDuplicatePoint, !residualminusone, golombNum);
-
-    int b0 = 0;
-    if (abs(signResidualQuantvalue[1]) > abs(signResidualQuantvalue[0])) {
-      b0 = 1;
-    } else {
-      b0 = 0;
-    }
-    m_encBac->codeAttributerResidual(signResidualQuantvalue[2], iscolor, 2, 2,
-                                     2 == 0 && isDuplicatePoint, !residualminusone, golombNum, b0);
-    m_encBac->codeSign(signResidualQuantvalue[1]);
-    if (signResidualQuantvalue[0] != 0) {
-      m_encBac->codeSign(signResidualQuantvalue[0]);
-    }
-    if (signResidualQuantvalue[2] != 0) {
-      m_encBac->codeSign(signResidualQuantvalue[2]);
-    }
-  }
-}
-
 void TEncAttribute::colorWaveletTransform() {
   const SequenceParameterSet& sps = m_hls->sps;
   const AttributeParameterSet& aps = m_hls->aps;
   const AttributeBrickHeader& abh = m_hls->abh;
-  const FrameHeader& frameHead = m_hls->frameHead;
+  const FrameHeader& frameheader = m_hls->frameheader;
   TComPointCloud& pointCloudRec = *m_pointCloudRecon;
   int voxelCount = int(pointCloudRec.getNumPoint());
-  const bool isGolomb = aps.colorGolombNum <= 2 ? true : false;
   bool os = aps.orderSwitch;
   cout << "colorWaveletTransform" << endl;
   // Allocate arrays.
@@ -1784,7 +1745,7 @@ void TEncAttribute::colorWaveletTransform() {
     new int[voxelCount * attribCount]();  // reconstructed attributes of the whole point clouds
   int* positionBuf = new int[voxelCount * 3]();  // position coordinates of the whole point clouds
   bool resLayer = aps.transResLayer;
-  int resLayerQuantParam = sps.colorQuantParam;
+  int resLayerQuantParam = aps.colorQuantParam;
   int preColor[3];
   int64_t values[3];
   PC_COL recColor;
@@ -1794,7 +1755,7 @@ void TEncAttribute::colorWaveletTransform() {
 
   //Hilbert Reorder
   std::vector<pointCodeWithIndex> pointCloudCode(voxelCount);
-  reOrder(pointCloudRec.positions(), aps.colorReordermode, pointCloudCode, voxelCount, 1);
+  reOrder(pointCloudRec.positions(), aps.colorReorderMode, pointCloudCode, voxelCount, 1);
   for (int n = 0; n < voxelCount; n++) {
     const auto color = pointCloudRec.getColor(pointCloudCode[n].index, multil_ID);
     attributesBuf[n * attribCount] = FXPoint(color[0]);
@@ -1806,14 +1767,15 @@ void TEncAttribute::colorWaveletTransform() {
     positionBuf[3 * n + 2] = point[2];
   }
   // Transform.
-  UInt64 meanBB =
-    (sps.geomBoundingBoxSize[0] + sps.geomBoundingBoxSize[1] + sps.geomBoundingBoxSize[2]) / 3;
+  UInt64 meanBB = (frameheader.geomBoundingBoxSize[0] + frameheader.geomBoundingBoxSize[1] +
+                   frameheader.geomBoundingBoxSize[2]) /
+    3;
   UInt disThInit = meanBB * meanBB;
-  if (aps.colorInitPredTransRatio >= 0)
-    disThInit = disThInit << aps.colorInitPredTransRatio;
-  else if (aps.colorInitPredTransRatio < 0)
-    disThInit = disThInit >> std::abs(aps.colorInitPredTransRatio);
-  disThInit = std::max({(UInt)1, disThInit / frameHead.geomNumPoints});
+  if (abh.colorInitPredTransRatio >= 0)
+    disThInit = disThInit << abh.colorInitPredTransRatio;
+  else if (abh.colorInitPredTransRatio < 0)
+    disThInit = disThInit >> std::abs(abh.colorInitPredTransRatio);
+  disThInit = std::max({(UInt)1, disThInit / frameheader.geomNumPoints});
   int segmentLen = (aps.transformSegmentSize == 0) ? voxelCount : aps.transformSegmentSize;
   int numSegments = (voxelCount + segmentLen - 1) / segmentLen;
   for (int segIndex = 0; segIndex < numSegments; segIndex++) {
@@ -1828,7 +1790,7 @@ void TEncAttribute::colorWaveletTransform() {
     }
     // Transform.
 
-    WaveletCoreTransform(attributes, 3, segmentVoxelCount, integerizedAttributes, sps, aps,abh,
+    WaveletCoreTransform(attributes, 3, segmentVoxelCount, integerizedAttributes, sps, aps, abh,
                          position, recAttributes, disThInit);
     // Entropy encode.
     int run_length = 0;  //segmentVoxelCount
@@ -1840,11 +1802,11 @@ void TEncAttribute::colorWaveletTransform() {
         ++run_length;
       else {
         m_encBac->encodeRunlength(run_length);
-        if (!os) {
-          colorResidualCorrelationCode(values, false, aps.colorGolombNum);
-        } else {
-          colorResidualCorrelationCodeOS(values, false, aps.colorGolombNum);
-        }
+        V3<bool> codeSign(true);
+        if (os)
+          std::swap(values[0], values[1]);
+        colorResidualCorrelationCode(values, false, aps.colorGolombNum, codeSign);
+
         run_length = 0;
       }
       if ((aps.coeffLengthControl > 0) && (run_length == aps.coeffLengthControl)) {
@@ -1880,11 +1842,10 @@ void TEncAttribute::colorWaveletTransform() {
           ++run_length;
         else {
           m_encBac->encodeRunlength(run_length);
-          if (!os) {
-            colorResidualCorrelationCode(values, false, aps.colorGolombNum);
-          } else {
-            colorResidualCorrelationCodeOS(values, false, aps.colorGolombNum);
-          }
+          V3<bool> codeSign(true);
+          if (os)
+            std::swap(values[0], values[1]);
+          colorResidualCorrelationCode(values, false, aps.colorGolombNum, codeSign);
           run_length = 0;
         }
         if ((aps.coeffLengthControl > 0) && (run_length == aps.coeffLengthControl)) {
@@ -1912,17 +1873,13 @@ void TEncAttribute::colorWaveletTransform() {
   delete[] integerizedAttributesBuf;
   delete[] positionBuf;
   delete[] recAttributesBuf;
-
-  m_encBac->codeSliceAttrEndCode();
-  if (frame_Id == frame_Count - 1 && m_hls->abh.sliceID == m_hls->frameHead.num_slice_minus_one)
-    m_encBac->codeSPSEndCode();
 }
 
 void TEncAttribute::reflectanceWaveletTransform() {
   const SequenceParameterSet& sps = m_hls->sps;
   const AttributeParameterSet& aps = m_hls->aps;
   const AttributeBrickHeader& abh = m_hls->abh;
-  const FrameHeader& frameHead = m_hls->frameHead;
+  const FrameHeader& frameheader = m_hls->frameheader;
   TComPointCloud& pointCloudRec = *m_pointCloudRecon;
   int voxelCount = int(pointCloudRec.getNumPoint());
   cout << "reflectanceWaveletTransform" << endl;
@@ -1934,11 +1891,11 @@ void TEncAttribute::reflectanceWaveletTransform() {
     new int[voxelCount]();  // reconstructed attributes of the whole point clouds
   int* positionBuf = new int[voxelCount * 3]();  // position coordinates of the whole point clouds
   bool resLayer = aps.transResLayer;
-  int golombnum = resLayer ? 3 : aps.refGolombNum;
-  const bool isGolomb = golombnum <= 2 ? true : false;
+  int golombnum = resLayer ? 3 : aps.reflGolombNum;
+
   //Reorder
   std::vector<pointCodeWithIndex> pointCloudCode(voxelCount);
-  reOrder(pointCloudRec.positions(), aps.refReordermode, pointCloudCode, voxelCount, aps.axisBias);
+  reOrder(pointCloudRec.positions(), aps.reflReorderMode, pointCloudCode, voxelCount, aps.axisBias);
   for (int n = 0; n < voxelCount; n++) {
     const auto reflectance = pointCloudRec.getReflectance(pointCloudCode[n].index, multil_ID);
     attributesBuf[n] = FXPoint(reflectance);
@@ -1948,7 +1905,7 @@ void TEncAttribute::reflectanceWaveletTransform() {
     positionBuf[3 * n + 2] = point[2];
   }
   // Transform.
-  int resLayerQuantParam = sps.reflQuantParam + abh.reflQPoffset;
+  int resLayerQuantParam = aps.reflQuantParam + abh.QpOffset;
   Int64 ClipMin = INT32_MIN;
   Int64 ClipMax = INT32_MAX;
   if (m_hls->aps.reflOutputDepth < 16) {
@@ -1956,13 +1913,14 @@ void TEncAttribute::reflectanceWaveletTransform() {
     ClipMax = (1 << (m_hls->aps.reflOutputDepth)) - 1;
   }
 
-  UInt64 meanBB =
-    (sps.geomBoundingBoxSize[0] + sps.geomBoundingBoxSize[1] + sps.geomBoundingBoxSize[2]) / 3;
-  int disThInit = meanBB * meanBB / frameHead.geomNumPoints;
-  if (aps.refInitPredTransRatio >= 0)
-    disThInit = disThInit << aps.refInitPredTransRatio;
-  else if (aps.refInitPredTransRatio < 0)
-    disThInit = disThInit >> std::abs(aps.refInitPredTransRatio);
+  UInt64 meanBB = (frameheader.geomBoundingBoxSize[0] + frameheader.geomBoundingBoxSize[1] +
+                   frameheader.geomBoundingBoxSize[2]) /
+    3;
+  int disThInit = meanBB * meanBB / frameheader.geomNumPoints;
+  if (abh.reflInitPredTransRatio >= 0)
+    disThInit = disThInit << abh.reflInitPredTransRatio;
+  else if (abh.reflInitPredTransRatio < 0)
+    disThInit = disThInit >> std::abs(abh.reflInitPredTransRatio);
   disThInit = std::max({1, disThInit});
   int segmentLen = (aps.transformSegmentSize == 0) ? voxelCount : aps.transformSegmentSize;
   int numSegments = (voxelCount + segmentLen - 1) / segmentLen;
@@ -1998,15 +1956,14 @@ void TEncAttribute::reflectanceWaveletTransform() {
     m_encBac->encodeRunlength(run_length);
     // Add residues for limitedlosy and lossless attribute compression
     if (resLayer) {
-      cout << "ResLayer Needed!" << endl;
-      for (int n = 0; n < voxelCount; n++) {
+      for (int n = 0; n < segmentVoxelCount; n++) {
         int reflectance_rec = recAttributes[n];
         const auto reflectance_ori =
           pointCloudRec.getReflectance(pointCloudCode[n].index, multil_ID);
         integerizedAttributes[n] = (int)reflectance_ori - reflectance_rec;
       }
       int run_length = 0;
-      for (int n = 0; n < voxelCount; ++n) {
+      for (int n = 0; n < segmentVoxelCount; ++n) {
         auto pointIndex = pointCloudCode[n + segmentStartPosition].index;
         int64_t detail = static_cast<int64_t>(integerizedAttributes[n]);
         int residualSign = detail < 0 ? -1 : 1;
@@ -2046,20 +2003,16 @@ void TEncAttribute::reflectanceWaveletTransform() {
   delete[] integerizedAttributesBuf;
   delete[] positionBuf;
   delete[] recAttributesBuf;
-
-  m_encBac->codeSliceAttrEndCode();
-  if (frame_Id == frame_Count - 1 && m_hls->abh.sliceID == m_hls->frameHead.num_slice_minus_one)
-    m_encBac->codeSPSEndCode();
 }
 
 void TEncAttribute::colorWaveletTransformFromReflectance() {
+  cout << "colorWaveletTransformFromReflectance" << endl;
   TComPointCloud& pointCloudRec = *m_pointCloudRecon;
   const SequenceParameterSet& sps = m_hls->sps;
   const AttributeParameterSet& aps = m_hls->aps;
+  const FrameHeader& frameheader = m_hls->frameheader;
   const AttributeBrickHeader& abh = m_hls->abh;
-  const FrameHeader& frameHead = m_hls->frameHead;
-  const bool isGolomb = aps.colorGolombNum <= 2 ? true : false;
-  cout << "colorWaveletTransformFromReflectance" << endl;
+
   int voxelCount = int(pointCloudRec.getNumPoint());
   bool os = aps.orderSwitch;
 
@@ -2073,21 +2026,20 @@ void TEncAttribute::colorWaveletTransformFromReflectance() {
   int* recAttributesBuf =
     new int[voxelCount * attribCount]();  // reconstructed attributes of the whole point clouds
   int* positionBuf = new int[voxelCount * 3]();  // position coordinates of the whole point clouds
-
   int* reflectanceBuf = new int[voxelCount];
-  bool isEnableCrossAttrTypePred = aps.crossAttrTypePred;
+
   uint64_t crossAttrTypeLambda = 0;
   int64_t crossAttrTypeCoef = 0;
-  crossAttrTypeLambda = (-(sps.reflQuantParam + abh.reflQPoffset) * aps.crossAttrTypePredParam1 +
+  crossAttrTypeLambda = (-(aps.reflQuantParam + abh.QpOffset) * aps.crossAttrTypePredParam1 +
                          aps.crossAttrTypePredParam2);
-  auto diffPos =
-    sps.geomBoundingBoxSize[0] + sps.geomBoundingBoxSize[1] + sps.geomBoundingBoxSize[2];
+  auto diffPos = frameheader.geomBoundingBoxSize[0] + frameheader.geomBoundingBoxSize[1] +
+    frameheader.geomBoundingBoxSize[2];
   uint64_t maxRefl = (1 << m_hls->aps.reflOutputDepth) - 1;
   crossAttrTypeCoef = round((diffPos << 10) / (double)maxRefl);
   crossAttrTypeCoef = int64_t(crossAttrTypeCoef * crossAttrTypeLambda + 524288) >> 20;
 
   bool resLayer = aps.transResLayer;
-  int resLayerQuantParam = sps.colorQuantParam;
+  int resLayerQuantParam = aps.colorQuantParam;
   Int64 ClipMin = 0;
   Int64 ClipMax = (1 << (m_hls->aps.colorOutputDepth)) - 1;
   int preColor[3];
@@ -2096,7 +2048,7 @@ void TEncAttribute::colorWaveletTransformFromReflectance() {
   PC_COL oriColor;
   //Hilbert Reorder
   std::vector<pointCodeWithIndex> pointCloudCode(voxelCount);
-  reOrder(pointCloudRec.positions(), aps.colorReordermode, pointCloudCode, voxelCount, 1);
+  reOrder(pointCloudRec.positions(), aps.colorReorderMode, pointCloudCode, voxelCount, 1);
 
   for (int n = 0; n < voxelCount; n++) {
     const auto color = pointCloudRec.getColor(pointCloudCode[n].index, multil_ID);
@@ -2113,14 +2065,15 @@ void TEncAttribute::colorWaveletTransformFromReflectance() {
   }
 
   // Transform.
-  UInt64 meanBB =
-    (sps.geomBoundingBoxSize[0] + sps.geomBoundingBoxSize[1] + sps.geomBoundingBoxSize[2]) / 3;
+  UInt64 meanBB = (frameheader.geomBoundingBoxSize[0] + frameheader.geomBoundingBoxSize[1] +
+                   frameheader.geomBoundingBoxSize[2]) /
+    3;
   UInt disThInit = meanBB * meanBB;
-  if (aps.colorInitPredTransRatio >= 0)
-    disThInit = disThInit << aps.colorInitPredTransRatio;
-  else if (aps.colorInitPredTransRatio < 0)
-    disThInit = disThInit >> std::abs(aps.colorInitPredTransRatio);
-  disThInit = std::max({(UInt)1, disThInit / frameHead.geomNumPoints});
+  if (abh.colorInitPredTransRatio >= 0)
+    disThInit = disThInit << abh.colorInitPredTransRatio;
+  else if (abh.colorInitPredTransRatio < 0)
+    disThInit = disThInit >> std::abs(abh.colorInitPredTransRatio);
+  disThInit = std::max({(UInt)1, disThInit / frameheader.geomNumPoints});
 
   int segmentLen = (aps.transformSegmentSize == 0) ? voxelCount : aps.transformSegmentSize;
   int numSegments = (voxelCount + segmentLen - 1) / segmentLen;
@@ -2151,11 +2104,11 @@ void TEncAttribute::colorWaveletTransformFromReflectance() {
         ++run_length;
       else {
         m_encBac->encodeRunlength(run_length);
-        if (!os) {
-          colorResidualCorrelationCode(values, false, aps.colorGolombNum);
-        } else {
-          colorResidualCorrelationCodeOS(values, false, aps.colorGolombNum);
-        }
+        V3<bool> codeSign(true);
+        if (os)
+          std::swap(values[0], values[1]);
+        colorResidualCorrelationCode(values, false, aps.colorGolombNum, codeSign);
+
         run_length = 0;
       }
       if ((aps.coeffLengthControl > 0) && (run_length == aps.coeffLengthControl)) {
@@ -2191,11 +2144,11 @@ void TEncAttribute::colorWaveletTransformFromReflectance() {
           ++run_length;
         else {
           m_encBac->encodeRunlength(run_length);
-          if (!os) {
-            colorResidualCorrelationCode(values, false, aps.colorGolombNum);
-          } else {
-            colorResidualCorrelationCodeOS(values, false, aps.colorGolombNum);
-          }
+          V3<bool> codeSign(true);
+          if (os)
+            std::swap(values[0], values[1]);
+          colorResidualCorrelationCode(values, false, aps.colorGolombNum, codeSign);
+
           run_length = 0;
         }
         if ((aps.coeffLengthControl > 0) && (run_length == aps.coeffLengthControl)) {
@@ -2234,7 +2187,7 @@ void TEncAttribute::reflectanceWaveletTransformFromColor() {
   const SequenceParameterSet& sps = m_hls->sps;
   const AttributeParameterSet& aps = m_hls->aps;
   const AttributeBrickHeader& abh = m_hls->abh;
-  const FrameHeader& frameHead = m_hls->frameHead;
+  const FrameHeader& frameheader = m_hls->frameheader;
   cout << "reflectanceWaveletTransformFromColor" << endl;
   int voxelCount = int(pointCloudRec.getNumPoint());
 
@@ -2246,20 +2199,20 @@ void TEncAttribute::reflectanceWaveletTransformFromColor() {
     new int[voxelCount]();  // reconstructed attributes of the whole point clouds
   int* positionBuf = new int[voxelCount * 3]();  // position coordinates of the whole point clouds
   bool resLayer = aps.transResLayer;
-  int golombnum = resLayer ? 3 : aps.refGolombNum;
-  const bool isGolomb = golombnum <= 2 ? true : false;
+  int golombnum = resLayer ? 3 : aps.reflGolombNum;
+
   //Reorder
   std::vector<pointCodeWithIndex> pointCloudCode(voxelCount);
-  reOrder(pointCloudRec.positions(), aps.refReordermode, pointCloudCode, voxelCount, aps.axisBias);
+  reOrder(pointCloudRec.positions(), aps.reflReorderMode, pointCloudCode, voxelCount, aps.axisBias);
 
   int* colorBuf = new int[voxelCount * 3];
   uint64_t crossAttrTypeLambda = 0;
   int64_t crossAttrTypeCoef = 0;
   vector<V3<int64_t>> colorWithCoef(0);
-  crossAttrTypeLambda = (-(sps.reflQuantParam + abh.reflQPoffset) * aps.crossAttrTypePredParam1 +
+  crossAttrTypeLambda = (-(aps.reflQuantParam + abh.QpOffset) * aps.crossAttrTypePredParam1 +
                          aps.crossAttrTypePredParam2);
-  UInt maxPos =
-    sps.geomBoundingBoxSize[0] + sps.geomBoundingBoxSize[1] + sps.geomBoundingBoxSize[2];
+  UInt maxPos = frameheader.geomBoundingBoxSize[0] + frameheader.geomBoundingBoxSize[1] +
+    frameheader.geomBoundingBoxSize[2];
   uint64_t maxColor = (1 << m_hls->aps.colorOutputDepth) - 1;
   uint64_t maxColorSum = 3 * maxColor;
   crossAttrTypeCoef = round((maxPos << 10) / (double)maxColorSum);
@@ -2278,7 +2231,7 @@ void TEncAttribute::reflectanceWaveletTransformFromColor() {
     positionBuf[3 * n + 2] = point[2];
   }
   // Transform.
-  int resLayerQuantParam = sps.reflQuantParam + abh.reflQPoffset;
+  int resLayerQuantParam = aps.reflQuantParam + abh.QpOffset;
   Int64 ClipMin = INT32_MIN;
   Int64 ClipMax = INT32_MAX;
   if (m_hls->aps.reflOutputDepth < 16) {
@@ -2286,13 +2239,14 @@ void TEncAttribute::reflectanceWaveletTransformFromColor() {
     ClipMax = (1 << (m_hls->aps.reflOutputDepth)) - 1;
   }
 
-  UInt64 meanBB =
-    (sps.geomBoundingBoxSize[0] + sps.geomBoundingBoxSize[1] + sps.geomBoundingBoxSize[2]) / 3;
-  int disThInit = meanBB * meanBB / frameHead.geomNumPoints;
-  if (aps.refInitPredTransRatio >= 0)
-    disThInit = disThInit << aps.refInitPredTransRatio;
-  else if (aps.refInitPredTransRatio < 0)
-    disThInit = disThInit >> std::abs(aps.refInitPredTransRatio);
+  UInt64 meanBB = (frameheader.geomBoundingBoxSize[0] + frameheader.geomBoundingBoxSize[1] +
+                   frameheader.geomBoundingBoxSize[2]) /
+    3;
+  int disThInit = meanBB * meanBB / frameheader.geomNumPoints;
+  if (abh.reflInitPredTransRatio >= 0)
+    disThInit = disThInit << abh.reflInitPredTransRatio;
+  else if (abh.reflInitPredTransRatio < 0)
+    disThInit = disThInit >> std::abs(abh.reflInitPredTransRatio);
   disThInit = std::max({1, disThInit});
 
   int segmentLen = (aps.transformSegmentSize == 0) ? voxelCount : aps.transformSegmentSize;
@@ -2334,15 +2288,14 @@ void TEncAttribute::reflectanceWaveletTransformFromColor() {
 
     // Add residues for limitedlosy and lossless attribute compression
     if (resLayer) {
-      cout << "ResLayer Needed!" << endl;
-      for (int n = 0; n < voxelCount; n++) {
+      for (int n = 0; n < segmentVoxelCount; n++) {
         int reflectance_rec = recAttributes[n];
         const auto reflectance_ori =
           pointCloudRec.getReflectance(pointCloudCode[n].index, multil_ID);
         integerizedAttributes[n] = (int)reflectance_ori - reflectance_rec;
       }
       int run_length = 0;
-      for (int n = 0; n < voxelCount; ++n) {
+      for (int n = 0; n < segmentVoxelCount; ++n) {
         int64_t detail = static_cast<int64_t>(integerizedAttributes[n]);
         int residualSign = detail < 0 ? -1 : 1;
         uint64_t absResidual = std::abs(detail);
@@ -2383,62 +2336,6 @@ void TEncAttribute::reflectanceWaveletTransformFromColor() {
   delete[] colorBuf;
 }
 
-void TEncAttribute::colorResidualCorrelationCodeHaar(const int64_t signResidualQuantvalue[3],
-                                                     const bool reslayer,
-                                                     const bool isDuplicatePoint,
-                                                     const UInt& golombNum) {
-  int flagyu_rg = 0;
-  int flagy_r = 0;
-  if (signResidualQuantvalue[0] == 0 && signResidualQuantvalue[1] == 0) {
-    flagyu_rg = 0;
-  } else {
-    flagyu_rg = 1;
-  }
-  if (signResidualQuantvalue[0] == 0) {
-    flagy_r = 0;
-  } else {
-    flagy_r = 1;
-  }
-  //code Y/R
-  m_encBac->codeAttributerResidualequalone0(flagy_r);
-  bool iscolor = true;
-  bool residualminusone = true;
-  if (signResidualQuantvalue[0] == 0) {
-    //code U/G
-    m_encBac->codeAttributerResidualequaltwo0(flagyu_rg);
-    if (signResidualQuantvalue[1] == 0) {
-      m_encBac->codeAttributerResidualHaar(signResidualQuantvalue[2], iscolor, 2, reslayer, 0,
-                                           2 == 0 && isDuplicatePoint, residualminusone, golombNum);
-      m_encBac->codeSign(signResidualQuantvalue[2]);
-    } else {
-      m_encBac->codeAttributerResidualHaar(signResidualQuantvalue[1], iscolor, 1, reslayer, 2,
-                                           1 == 0 && isDuplicatePoint, residualminusone, golombNum);
-      m_encBac->codeAttributerResidualHaar(signResidualQuantvalue[2], iscolor, 2, reslayer, 0,
-                                           2 == 0 && isDuplicatePoint, !residualminusone,
-                                           golombNum);
-      m_encBac->codeSign(signResidualQuantvalue[1]);
-      if (signResidualQuantvalue[2] != 0) {
-        m_encBac->codeSign(signResidualQuantvalue[2]);
-      }
-    }
-
-  } else {
-    m_encBac->codeAttributerResidualHaar(signResidualQuantvalue[0], iscolor, 0, reslayer, 1,
-                                         0 == 0 && isDuplicatePoint, residualminusone, golombNum);
-    m_encBac->codeAttributerResidualHaar(signResidualQuantvalue[1], iscolor, 1, reslayer, 1,
-                                         1 == 0 && isDuplicatePoint, !residualminusone, golombNum);
-    m_encBac->codeAttributerResidualHaar(signResidualQuantvalue[2], iscolor, 2, reslayer, 2,
-                                         2 == 0 && isDuplicatePoint, !residualminusone, golombNum);
-    m_encBac->codeSign(signResidualQuantvalue[0]);
-    if (signResidualQuantvalue[1] != 0) {
-      m_encBac->codeSign(signResidualQuantvalue[1]);
-    }
-    if (signResidualQuantvalue[2] != 0) {
-      m_encBac->codeSign(signResidualQuantvalue[2]);
-    }
-  }
-}
-
 // new
 void TEncAttribute::multiReflectancePredictingResidual() {
   const SequenceParameterSet& sps = m_hls->sps;
@@ -2448,29 +2345,40 @@ void TEncAttribute::multiReflectancePredictingResidual() {
   const int voxelCount = int(pointCloudRec.getNumPoint());
   // Reorder
   std::vector<pointCodeWithIndex> pointCloudCode(voxelCount);
-  reOrder(pointCloudRec.positions(), aps.refReordermode, pointCloudCode, voxelCount, aps.axisBias);
-  m_hls->sps.reflThreshold =
-    (sps.reflQuantParam + abh.reflQPoffset) * aps.nearestPredParam1 + aps.nearestPredParam2;
-  // obtain reflectance predictor
-  int multil_ID_Group_Num = aps.multiAttriGroupNum[aps.multiAttriGroupID[multil_ID]];
+  reOrder(pointCloudRec.positions(), aps.reflReorderMode, pointCloudCode, voxelCount, aps.axisBias);
+
+  // Initialize reflectance predictor
+  int multil_ID_Group_Num = aps.multiAttriGroupNum[aps.multiAttrGroupID[multil_ID]];
   PC_REFL predictorRefl[5];
   PC_REFL recReflectance[5];
   std::vector<multiReflNeighborSet> neighborSet;
   int setlength = aps.maxNumOfNeighbours;
   neighborSet.resize(setlength);
   int setCount = 0;
+
+  // predict parameters
+  predictOptParams predictOptParams;
+  predictOptParams.colorQP = 0;
+  predictOptParams.maxNumOfNeighbours = aps.maxNumOfNeighbours;
+  predictOptParams.minNeighborDisFlag = 0;
+  predictOptParams.minNeighborDis = 0;
+  predictOptParams.reflThreshold = 0;
+  predictOptParams.predFixedPointFracBit = aps.predFixedPointFracBit;
+  predictOptParams.axisBias = aps.axisBias;
+  predictOptParams.reflCrossAttrTypePred = false;
+  predictOptParams.reflUpdateFlag = true;
+  predictOptParams.reflectanceDistWeight = {0, 0, 0};
+  predictOptParams.curReflWithCoef = 0;
+  predictOptParams.curColorWithCoef = {0, 0, 0};
+
   // runlength
   int run_length = 0;
-  const bool isGolomb = m_hls->aps.refGolombNum == 1 ? true : false;
   for (int curIndex = 0; curIndex < voxelCount; ++curIndex) {
     auto pointIndex = pointCloudCode[curIndex].index;
     PC_REFL& curReflectance = pointCloudRec.getReflectance(pointIndex, multil_ID);
     const PC_POS& curPosition = pointCloudRec[pointIndex];
-
-    getMultiReflectancePredictorFarthest(curIndex, curIndex, pointCloudRec, sps, aps,
-                                        pointCloudCode, setCount, neighborSet, predictorRefl,
-                                        multil_ID_Group_Num); 
-
+    getMultiReflectancePredictorFarthest(curIndex, curIndex, curPosition, setCount, neighborSet,
+                                         predictOptParams, predictorRefl, multil_ID_Group_Num);
     for (int multi_id = 0; multi_id < multil_ID_Group_Num; multi_id++) {
       recReflectance[multi_id] = pointCloudRec.getReflectance(pointIndex, multi_id + multil_ID);
     }
@@ -2486,10 +2394,6 @@ void TEncAttribute::multiReflectancePredictingResidual() {
     }
   }
   m_encBac->encodeRunlength(run_length);
-
-  m_encBac->codeSliceAttrEndCode();
-  if (frame_Id == frame_Count - 1 && m_hls->abh.sliceID == m_hls->frameHead.num_slice_minus_one)
-    m_encBac->codeSPSEndCode();
 }
 
 void TEncAttribute::multiReflectancePredictCode(PC_REFL* predictor, PC_REFL* currValue,
@@ -2497,8 +2401,7 @@ void TEncAttribute::multiReflectancePredictCode(PC_REFL* predictor, PC_REFL* cur
   const SequenceParameterSet& sps = m_hls->sps;
   const AttributeParameterSet& aps = m_hls->aps;
   const AttributeBrickHeader& abh = m_hls->abh;
-  const bool isGolomb = aps.refGolombNum == 1 ? true : false;
-  UInt golombNum = aps.refGolombNum;
+  UInt golombNum = aps.reflGolombNum;
   Int64 ClipMin = INT32_MIN;
   Int64 ClipMax = INT32_MAX;
   if (aps.reflOutputDepth < 16) {
@@ -2506,10 +2409,6 @@ void TEncAttribute::multiReflectancePredictCode(PC_REFL* predictor, PC_REFL* cur
     ClipMax = (1 << (aps.reflOutputDepth)) - 1;
   }
 
-  // Coefficient decorrelated
-  bool ccp = false;
-  if(false)//if (aps.crossComponentPred)
-    ccp = true;
   int64_t signResidualQuantvalue[10];
   int residualPrevComponent = 0;
   for (int multi_id = 0; multi_id < multil_ID_Group_Num; multi_id++) {
@@ -2519,18 +2418,15 @@ void TEncAttribute::multiReflectancePredictCode(PC_REFL* predictor, PC_REFL* cur
     int residualSign = delta < 0 ? -1 : 1;
     uint64_t absResidual = std::abs(delta);
     uint64_t residualQuant;
-    residualQuant = QuantizaResidual(absResidual, sps.reflQuantParam + abh.reflQPoffset, 1);
+    residualQuant = QuantizaResidual(absResidual, aps.reflQuantParam + abh.QpOffset, 1);
     int64_t signResidualQuant = residualSign * (int64_t)residualQuant;
     signResidualQuantvalue[multi_id] = signResidualQuant;
     // Local decode
     uint64_t inverseResidualQuant =
-      InverseQuantizeResidual(residualQuant, sps.reflQuantParam + abh.reflQPoffset);
+      InverseQuantizeResidual(residualQuant, aps.reflQuantParam + abh.QpOffset);
     int64_t recResidual = inverseResidualQuant * residualSign;
     currValue[multi_id] = TComClip((Int64)ClipMin, (Int64)ClipMax,
                                    recResidual + predictor[multi_id] + residualPrevComponent);
-    if (ccp && multi_id < (multil_ID_Group_Num - 1)) {
-      residualPrevComponent = (Int)currValue[multi_id] - (Int)predictor[multi_id];
-    }
   }
 
   // Entropy encode

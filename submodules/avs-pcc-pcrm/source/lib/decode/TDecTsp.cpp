@@ -53,13 +53,13 @@ int decodeTspLcu(TComPointCloud* pointCloudRec, UInt& numReconPoints, const TCom
   TComTspDecoder decoder(hls, decBac);
 
   int numPoints = decBac->decodePredTreeNumPtsInLcu();
-  UInt log2geomTreeMaxSizeMinus8 = hls->gps.log2geomTreeMaxSizeMinus8;
-  UInt geomTreeMaxSize = 1 << (log2geomTreeMaxSizeMinus8 + 8);
-  if (hls->aps.attributePresentFlag[1]) {
+  UInt geomMaxTreeSizeLog2Minus8 = hls->gps.geomMaxTreeSizeLog2Minus8;
+  UInt geomTreeMaxSize = 1 << (geomMaxTreeSizeLog2Minus8 + 8);
+  if (hls->aps.attributeDataPresentFlag[1]) {
     pointCloudRec->addReflectances();
   }
 
-  if (hls->aps.attributePresentFlag[0]) {
+  if (hls->aps.attributeDataPresentFlag[0]) {
     pointCloudRec->addColors();
   }
 

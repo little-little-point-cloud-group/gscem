@@ -36,75 +36,39 @@
 #include "common/HighLevelSyntax.h"
 #include "common/TComPointCloud.h"
 
-int64_t getDisNorm1(PC_POS& posA, PC_POS& posB, int axisBias);
-int64_t getDisNorm1(PC_POS& posA, PC_POS& posB, const vector<int>& distWeight);
+int64_t getDisNorm1(PC_POS& posA, PC_POS& posB, UInt axisBias);
+int64_t getDisNorm1(PC_POS& posA, PC_POS& posB, const V3<int64_t>& distWeight);
 
-PC_COL getColorPredictorFarthest(int curIndex, int minIdx, TComPointCloud& outputPointCloud,
-                                 const SequenceParameterSet& sps, const AttributeParameterSet& aps,
-                                 vector<pointCodeWithIndex>& pointCloudCode, int& subGroupCount,
-                                 vector<colorNeighborSet>& neighborSet);
+void calColorPredictor(const int64_t w1, const int64_t w2, const int64_t w3, const PC_COL& color1,
+                       const PC_COL& color2, const V3<int32_t>& lastcolor, PC_COL& predictorColor,
+                       int colorQP, int count);
+void calReflPredictor(const int64_t w1, const int64_t w2, const int64_t w3, const PC_REFL& refl1,
+                      const PC_REFL& refl2, const PC_REFL& refl3, PC_REFL& predictorRefl,
+                      int reflThreshold, UInt predFixedPointFracBit);
 
-PC_COL getColorPredictorFarthest(int curIndex, int minIdx, TComPointCloud& outputPointCloud,
-                                 const SequenceParameterSet& sps, const AttributeParameterSet& aps,
-                                 vector<pointCodeWithIndex>& pointCloudCode, int& subGroupCount,
-                                 vector<colorNeighborSet>& neighborSet, int64_t& minNeighborDis);
+void getColorPredictorFarthest(int curIndex, int minIdx, PC_POS curPos, int& subGroupCount,
+                               vector<neighborSet>& neighborSet, predictOptParams& params,
+                               PC_COL& predictorColor);
 
-PC_REFL getReflectancePredictorFarthest(int curIndex, int minIdx, TComPointCloud& outputPointCloud,
-                                        const SequenceParameterSet& sps,
-                                        const AttributeParameterSet& aps,
-                                        vector<pointCodeWithIndex>& pointCloudCode, int& subGroupCount, vector<reflNeighborSet>& neighborSet);
-PC_REFL getReflectancePredictorFarthest(int curIndex, int minIdx, TComPointCloud& outputPointCloud,
-                                        const SequenceParameterSet& sps,
-                                        const AttributeParameterSet& aps,
-                                        vector<pointCodeWithIndex>& pointCloudCode, int& subGroupCount, vector<reflNeighborSet>& neighborSet,
-                                        const vector<int>& distWeight);
+void getReflPredictorFarthest(int curIndex, int minIdx, PC_POS curPos, int& subGroupCount,
+                              vector<neighborSet>& neighborSet, predictOptParams& params,
+                              PC_REFL& predictorRefl);
 
-PC_REFL getReflectancePredictorNoUpdate(int curIndex, int minIdx, TComPointCloud& outputPointCloud,
-                                        const SequenceParameterSet& sps,
-                                        const AttributeParameterSet& aps,
-                                        const vector<pointCodeWithIndex>& pointCloudCode,
-                                        int& subGroupCount, vector<colorNeighborSet> neighborSet,
-                                        vector<reflWithCoefNeighborSet> reflWithCoefNeighborSet,
-                                        vector<reflNeighborSet> reflbuffer, const vector<int>& distWeight);
+void getReflPredictorFarthestDual(int curIndex, int minIdx, PC_POS curPos, int& subGroupCount,
+                                  vector<neighborSet>& neighborSet, predictOptParams& params,
+                                  PC_REFL& predictorRefl);
 
-PC_COL getColorPredictorFromReflectance(
-  int curIndex, int minIdx, TComPointCloud& outputPointCloud, const SequenceParameterSet& sps,
-  const AttributeParameterSet& aps, vector<pointCodeWithIndex>& pointCloudCode, int& subGroupCount,
-  vector<colorNeighborSet>& neighborSet, vector<reflWithCoefNeighborSet>& reflWithCoefNeighborSet,
-  const uint64_t curReflWithCoef);
+void getAttributePredictorFarthest(int curIndex, int minIdx, PC_POS curPos, int& subGroupCount,
+                                   vector<neighborSet>& neighborSet, predictOptParams& params,
+                                   pair<PC_COL, PC_REFL>& predictorAttr);
 
-PC_COL getColorPredictorFromReflectance(int curIndex, int minIdx, TComPointCloud& outputPointCloud,
-                                 const SequenceParameterSet& sps, const AttributeParameterSet& aps,
-                                 vector<pointCodeWithIndex>& pointCloudCode, int& subGroupCount,
-                                 vector<colorNeighborSet>& neighborSet,
-                                 vector<reflWithCoefNeighborSet>& reflWithCoefNeighborSet,
-                                        const uint64_t curReflWithCoef, int64_t& minNeighborDis);
+void calculateReflTrend(const PC_POS& curPosition, const PC_POS& prePosition,
+                        const PC_REFL& curReflectance, const PC_REFL& preReflectance,
+                        UInt reflectanceDistCoef, V3<int64_t>& reflectanceRes,
+                        V3<int64_t>& reflResNum, V3<int64_t>& reflectanceDistWeight, int groupSize);
 
-PC_COL getColorPredictorNoUpdate(int curIndex, int minIdx, TComPointCloud& outputPointCloud,
-                                 const SequenceParameterSet& sps, const AttributeParameterSet& aps,
-                                 const vector<pointCodeWithIndex>& pointCloudCode, int& subGroupCount,
-                                 vector<reflNeighborSet> neighborSet,
-                                 vector<colorWithCoefNeighborSet> colorWithCoefNeighborSet,
-                                 vector<colorNeighborSet> reflbuffer);
-
-PC_REFL getReflectancePredictorFromColor(int curIndex, int minIdx, TComPointCloud& outputPointCloud,
-                                  const SequenceParameterSet& sps, const AttributeParameterSet& aps,
-                                  vector<pointCodeWithIndex>& pointCloudCode, int& subGroupCount,
-                                  vector<reflNeighborSet>& neighborSet,
-                                  vector<colorWithCoefNeighborSet>& colorWithCoefNeighborSet,
-                                  V3<int64_t> curColorWithCoef, const vector<int>& distWeight);
-  
-pair<PC_COL, PC_REFL>
-  getAttributePredictorFarthest(int curIndex, int minIdx, TComPointCloud& outputPointCloud,
-                                const SequenceParameterSet& sps, const AttributeParameterSet& aps,
-                                vector<pointCodeWithIndex>& pointCloudCode, int& subGroupCount,
-                                vector<attrNeighborSet>& neighborSet);
-
-void calculateReflTrend(const PC_POS& curPosition, const PC_POS& prePosition, const PC_REFL& curReflectance,
-    const PC_REFL& preReflectance, uint64_t reflectanceDistCoef, vector<int64_t>& reflectanceRes,
-    vector<int64_t>& reflResNum, vector<int>& reflectanceDistWeight, int groupSize);
-
-Void getMultiReflectancePredictorFarthest(
-  int curIndex, int minIdx, TComPointCloud& outputPointCloud, const SequenceParameterSet& sps,
-  const AttributeParameterSet& aps, vector<pointCodeWithIndex>& pointCloudCode, int& subGroupCount,
-  vector<multiReflNeighborSet>& neighborSet, PC_REFL* predRef, const int multil_ID_Group_Num);
+Void getMultiReflectancePredictorFarthest(int curIndex, int minIdx, PC_POS curPos,
+                                          int& subGroupCount,
+                                          vector<multiReflNeighborSet>& neighborSet,
+                                          predictOptParams& params, PC_REFL* predRef,
+                                          const int multil_ID_Group_Num);

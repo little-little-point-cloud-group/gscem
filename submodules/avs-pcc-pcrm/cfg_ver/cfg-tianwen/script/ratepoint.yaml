@@ -4,151 +4,335 @@ limitlossyG:
   cat1-vox15plus:
     r1:
       geom_quant_step: 512
+      geom_quant_step_significand: 512
+      geom_quant_step_exponent: 0
     r2:
       geom_quant_step: 256
+      geom_quant_step_significand: 256
+      geom_quant_step_exponent: 0
     r3:
       geom_quant_step: 64
+      geom_quant_step_significand: 64
+      geom_quant_step_exponent: 0
     r4:
       geom_quant_step: 32
+      geom_quant_step_significand: 32
+      geom_quant_step_exponent: 0
     r5:
       geom_quant_step: 8
+      geom_quant_step_significand: 8
+      geom_quant_step_exponent: 0
     r6:
       geom_quant_step: 4
+      geom_quant_step_significand: 4
+      geom_quant_step_exponent: 0
   cat1-vox14:
     r1:
       geom_quant_step: 256
+      geom_quant_step_significand: 256
+      geom_quant_step_exponent: 0
     r2:
       geom_quant_step: 128
+      geom_quant_step_significand: 128
+      geom_quant_step_exponent: 0
     r3:
       geom_quant_step: 64
+      geom_quant_step_significand: 64
+      geom_quant_step_exponent: 0
     r4:
       geom_quant_step: 16
+      geom_quant_step_significand: 16
+      geom_quant_step_exponent: 0
     r5:
       geom_quant_step: 8
+      geom_quant_step_significand: 8
+      geom_quant_step_exponent: 0
     r6:
       geom_quant_step: 4
+      geom_quant_step_significand: 4
+      geom_quant_step_exponent: 0
   cat1-vox13:
     r1:
       geom_quant_step: 64
+      geom_quant_step_significand: 64
+      geom_quant_step_exponent: 0
     r2:
       geom_quant_step: 32
+      geom_quant_step_significand: 32
+      geom_quant_step_exponent: 0
     r3:
       geom_quant_step: 16
+      geom_quant_step_significand: 16
+      geom_quant_step_exponent: 0
     r4:
       geom_quant_step: 8
+      geom_quant_step_significand: 8
+      geom_quant_step_exponent: 0
     r5:
       geom_quant_step: 4
+      geom_quant_step_significand: 4
+      geom_quant_step_exponent: 0
     r6:
       geom_quant_step: 2
+      geom_quant_step_significand: 2
+      geom_quant_step_exponent: 0
   cat1-vox12:
     r1:
       geom_quant_step: 32
+      geom_quant_step_significand: 32
+      geom_quant_step_exponent: 0
     r2:
       geom_quant_step: 16
+      geom_quant_step_significand: 16
+      geom_quant_step_exponent: 0
     r3:
       geom_quant_step: 8
+      geom_quant_step_significand: 8
+      geom_quant_step_exponent: 0
     r4:
       geom_quant_step: 4
+      geom_quant_step_significand: 4
+      geom_quant_step_exponent: 0
     r5:
       geom_quant_step: 2
+      geom_quant_step_significand: 2
+      geom_quant_step_exponent: 0
     r6:
       geom_quant_step: 1.33333
+      geom_quant_step_significand: 699049
+      geom_quant_step_exponent: 19
   cat1-vox11:
     r1:
       geom_quant_step: 16
+      geom_quant_step_significand: 16
+      geom_quant_step_exponent: 0
     r2:
       geom_quant_step: 8
+      geom_quant_step_significand: 8
+      geom_quant_step_exponent: 0
     r3:
       geom_quant_step: 4
+      geom_quant_step_significand: 4
+      geom_quant_step_exponent: 0
     r4:
       geom_quant_step: 2
+      geom_quant_step_significand: 2
+      geom_quant_step_exponent: 0
     r5:
       geom_quant_step: 1.33333
+      geom_quant_step_significand: 699049
+      geom_quant_step_exponent: 19
     r6:
       geom_quant_step: 1.14286
+      geom_quant_step_significand: 149797
+      geom_quant_step_exponent: 17
   cat1-vox10:
     r1:
       geom_quant_step: 8
+      geom_quant_step_significand: 8
+      geom_quant_step_exponent: 0
     r2:
       geom_quant_step: 4
+      geom_quant_step_significand: 4
+      geom_quant_step_exponent: 0
     r3:
       geom_quant_step: 2
+      geom_quant_step_significand: 2
+      geom_quant_step_exponent: 0
     r4:
       geom_quant_step: 1.33333
+      geom_quant_step_significand: 699049
+      geom_quant_step_exponent: 19
     r5:
       geom_quant_step: 1.14286
+      geom_quant_step_significand: 149797
+      geom_quant_step_exponent: 17
     r6:
       geom_quant_step: 1.06667
+      geom_quant_step_significand: 1118485
+      geom_quant_step_exponent: 20
   cat3:
     r1:
       geom_quant_step: 16
+      geom_quant_step_significand: 16
+      geom_quant_step_exponent: 0
     r2:
       geom_quant_step: 8
+      geom_quant_step_significand: 8
+      geom_quant_step_exponent: 0
     r3:
       geom_quant_step: 4
+      geom_quant_step_significand: 4
+      geom_quant_step_exponent: 0
     r4:
       geom_quant_step: 2
+      geom_quant_step_significand: 2
+      geom_quant_step_exponent: 0
     r5:
       geom_quant_step: 1.33333
+      geom_quant_step_significand: 699049
+      geom_quant_step_exponent: 19
     r6:
       geom_quant_step: 1.14286
-  cat2-frame:
+      geom_quant_step_significand: 149797
+      geom_quant_step_exponent: 17
+  cat2-frame-f:
     r1:
       geom_quant_step: 512
+      geom_quant_step_significand: 512
+      geom_quant_step_exponent: 0
     r2:
       geom_quant_step: 256
+      geom_quant_step_significand: 256
+      geom_quant_step_exponent: 0
     r3:
       geom_quant_step: 64
+      geom_quant_step_significand: 64
+      geom_quant_step_exponent: 0
     r4:
       geom_quant_step: 32
+      geom_quant_step_significand: 32
+      geom_quant_step_exponent: 0
     r5:
       geom_quant_step: 8
+      geom_quant_step_significand: 8
+      geom_quant_step_exponent: 0
     r6:
       geom_quant_step: 4
+      geom_quant_step_significand: 4
+      geom_quant_step_exponent: 0
+  cat2-frame-l:
+    r1:
+      geom_quant_step: 512
+      geom_quant_step_significand: 512
+      geom_quant_step_exponent: 0
+    r2:
+      geom_quant_step: 256
+      geom_quant_step_significand: 256
+      geom_quant_step_exponent: 0
+    r3:
+      geom_quant_step: 64
+      geom_quant_step_significand: 64
+      geom_quant_step_exponent: 0
+    r4:
+      geom_quant_step: 32
+      geom_quant_step_significand: 32
+      geom_quant_step_exponent: 0
+    r5:
+      geom_quant_step: 8
+      geom_quant_step_significand: 8
+      geom_quant_step_exponent: 0
+    r6:
+      geom_quant_step: 4
+      geom_quant_step_significand: 4
+      geom_quant_step_exponent: 0
   cat1-A:
     r1:
       geom_quant_step: 512
+      geom_quant_step_significand: 512
+      geom_quant_step_exponent: 0
     r2:
       geom_quant_step: 256
+      geom_quant_step_significand: 256
+      geom_quant_step_exponent: 0
     r3:
       geom_quant_step: 64
+      geom_quant_step_significand: 64
+      geom_quant_step_exponent: 0
     r4:
       geom_quant_step: 32
+      geom_quant_step_significand: 32
+      geom_quant_step_exponent: 0
     r5:
       geom_quant_step: 8
+      geom_quant_step_significand: 8
+      geom_quant_step_exponent: 0
     r6:
       geom_quant_step: 4
-
+      geom_quant_step_significand: 4
+      geom_quant_step_exponent: 0
+  tianwen:
+    r1:
+      geom_quant_step: 512
+      geom_quant_step_significand: 512
+      geom_quant_step_exponent: 0
+    r2:
+      geom_quant_step: 256
+      geom_quant_step_significand: 256
+      geom_quant_step_exponent: 0
+    r3:
+      geom_quant_step: 64
+      geom_quant_step_significand: 64
+      geom_quant_step_exponent: 0
+    r4:
+      geom_quant_step: 32
+      geom_quant_step_significand: 32
+      geom_quant_step_exponent: 0
+    r5:
+      geom_quant_step: 8
+      geom_quant_step_significand: 8
+      geom_quant_step_exponent: 0
+    r6:
+      geom_quant_step: 4
+      geom_quant_step_significand: 4
+      geom_quant_step_exponent: 0
 
 losslessG:
   cat3:
     '':
       geom_quant_step: 1
-  cat2-frame:
+      geom_quant_step_significand: 1
+      geom_quant_step_exponent: 0
+  cat2-frame-f:
     '':
       geom_quant_step: 1
+      geom_quant_step_significand: 1
+      geom_quant_step_exponent: 0
+  cat2-frame-l:
+    '':
+      geom_quant_step: 1
+      geom_quant_step_significand: 1
+      geom_quant_step_exponent: 0
   cat1-A:
     '':
       geom_quant_step: 1
+      geom_quant_step_significand: 1
+      geom_quant_step_exponent: 0
   cat1-vox10:
     '':
       geom_quant_step: 1
+      geom_quant_step_significand: 1
+      geom_quant_step_exponent: 0
   cat1-vox11:
     '':
       geom_quant_step: 1
+      geom_quant_step_significand: 1
+      geom_quant_step_exponent: 0
   cat1-vox12:
     '':
       geom_quant_step: 1
+      geom_quant_step_significand: 1
+      geom_quant_step_exponent: 0
   cat1-vox13:
     '':
       geom_quant_step: 1
+      geom_quant_step_significand: 1
+      geom_quant_step_exponent: 0
   cat1-vox14:
     '':
       geom_quant_step: 1
+      geom_quant_step_significand: 1
+      geom_quant_step_exponent: 0
   cat1-vox15plus:
     '':
       geom_quant_step: 1
-
+      geom_quant_step_significand: 1
+      geom_quant_step_exponent: 0
+  tianwen:
+    '':
+      geom_quant_step: 1
+      geom_quant_step_significand: 1
+      geom_quant_step_exponent: 0
 
 limitlossyA:
   cat1-A:
@@ -167,7 +351,23 @@ limitlossyA:
     r5:
       color_quant_param: 8
       refl_quant_param: 16
-  cat2-frame:
+  cat2-frame-f:
+    r1:
+      color_quant_param: 40
+      refl_quant_param: 40
+    r2:
+      color_quant_param: 32
+      refl_quant_param: 32
+    r3:
+      color_quant_param: 24
+      refl_quant_param: 24
+    r4:
+      color_quant_param: 16
+      refl_quant_param: 16
+    r5:
+      color_quant_param: 8
+      refl_quant_param: 8
+  cat2-frame-l:
     r1:
       color_quant_param: 40
       refl_quant_param: 40
@@ -295,7 +495,22 @@ limitlossyA:
     r5:
       color_quant_param: 8
       refl_quant_param: 16
-      
+  tianwen:
+    r1:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r2:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r3:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r4:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r5:
+      color_quant_param: 8
+      refl_quant_param: 16      
    
 lossyA:
   cat1-A:
@@ -317,7 +532,26 @@ lossyA:
     r6:
       color_quant_param: 8
       refl_quant_param: 16
-  cat2-frame:
+  cat2-frame-f:
+    r1:
+      color_quant_param: 48
+      refl_quant_param: 48
+    r2:
+      color_quant_param: 40
+      refl_quant_param: 40
+    r3:
+      color_quant_param: 32
+      refl_quant_param: 32
+    r4:
+      color_quant_param: 24
+      refl_quant_param: 24
+    r5:
+      color_quant_param: 16
+      refl_quant_param: 16
+    r6:
+      color_quant_param: 8
+      refl_quant_param: 8
+  cat2-frame-l:
     r1:
       color_quant_param: 48
       refl_quant_param: 48
@@ -469,7 +703,25 @@ lossyA:
     r6:
       color_quant_param: 8
       refl_quant_param: 16
-
+  tianwen:
+    r1:
+      color_quant_param: 48
+      refl_quant_param: 56
+    r2:
+      color_quant_param: 40
+      refl_quant_param: 48
+    r3:
+      color_quant_param: 32
+      refl_quant_param: 40
+    r4:
+      color_quant_param: 24
+      refl_quant_param: 32
+    r5:
+      color_quant_param: 16
+      refl_quant_param: 24
+    r6:
+      color_quant_param: 8
+      refl_quant_param: 16
 
 
 losslessA:
@@ -477,7 +729,11 @@ losslessA:
     '':
       color_quant_param: 0
       refl_quant_param: 0
-  cat2-frame:
+  cat2-frame-f:
+    '':
+      color_quant_param: 0
+      refl_quant_param: 0
+  cat2-frame-l:
     '':
       color_quant_param: 0
       refl_quant_param: 0
@@ -506,6 +762,10 @@ losslessA:
       color_quant_param: 0
       refl_quant_param: 0
   cat1-vox15plus:
+    '':
+      color_quant_param: 0
+      refl_quant_param: 0
+  tianwen:
     '':
       color_quant_param: 0
       refl_quant_param: 0

@@ -40,6 +40,7 @@
 #include "common/TComBufferChunk.h"
 #include "common/TComOccupancyMap.h"
 #include "common/contributors.h"
+#include "common/FXPoint.h"
 
 #define CHECK_ALL_CTX 0
 
@@ -57,72 +58,68 @@ private:
   aec_t aec;
   aec_t* p_aec;
   geom_ctx_set_t m_ctxBackup;  // use to store the context for later restoration
-
-  // adaptive expGolomb parameter
-  vector<int> golombK = {0, 0, 0};  //Y U V 
-  int64_t golombkForValUpper = 0;
-  int64_t golombkForValLower = 0;
-
-  int Group_size_shift = 1;
-  int Group_size = 1;
   uint8_t memoryChannel[1024];
   uint8_t temp[1024];
-  vector<vector<int64_t>> ExpGolombInputGroup = {{}, {}, {}};  //Y U V 
+
+  // adaptive expGolomb parameter
+  vector<int> golombK = {0, 0, 0};  //Y U V
+  int64_t golombkForValUpper = 0;
+  int64_t golombkForValLower = 0;
+  int Group_size_log2 = 1;
+  int Group_size = 1;
+  vector<vector<int64_t>> ExpGolombInputGroup = {{}, {}, {}};  //Y U V
   vector<int64_t> inputGroupSum = {0, 0, 0};
 
 public:
   ///< decoding syntax
   Void parseSPS(SequenceParameterSet& sps);
   Void parseGPS(GeometryParameterSet& gps);
-  Void parseGBH(SequenceParameterSet& sps,GeometryParameterSet& gps, GeometryBrickHeader& gbh);
-  Void parseSliceGeomEndCode();
-  Void parseSliceAttrEndCode();
-  Void parseSPSEndCode();
+  Void parseGBH(SequenceParameterSet& sps, GeometryParameterSet& gps, GeometryBrickHeader& gbh);
   Void parseAPS(AttributeParameterSet& aps, SequenceParameterSet& sps);
-  Void parseFrameHeader(FrameHeader& frameHead);
-  Void parseABH(AttributeBrickHeader& abh, const AttributeParameterSet& aps,
-                const SequenceParameterSet& sps);
+  Void parseFrameHeader(FrameHeader& frameheader);
+  Void parseABH(AttributeBrickHeader& abh, AttributeParameterSet& aps,
+	            UInt attrIdx);
+  Void parseUserData();
+  Void getSingleAttrAPs(AttributeParameterSet& aps, const int& attrIdx, const int& multilIdx);
+  Bool decodeTerminationFlag();
+
+  ///< octree related syntax
   UInt decodeOccupancyCode(const TComOctreePartitionParams& params, TComGeomContext& geomCtx,
-                            bool& preNodePlanarEligible, const UInt contextMode);
-  UInt decodeOccUsingMemoryChannel(TComOctreePartitionParams& params,
-                                               TComGeomContext& geomCtx,
-                                               bool& preNodePlanarEligible);
+                           bool& preNodePlanarEligible, const UInt contextMode);
+  UInt decodeOccUsingMemoryChannel(TComOctreePartitionParams& params, TComGeomContext& geomCtx,
+                                   bool& preNodePlanarEligible);
   Bool decodeSinglePointFlag();
   V3<UInt> decodeSinglePointIndex(V3<UInt> nodeSizeLog2);
   UInt decodeDuplicateNumber();
 
-  // <predtree/tsp related syntax
+  ///< predtree/tsp related syntax
   UInt decodeGeomTreeType();
-  bool decodeKOctreeDepthflag();
+  Bool decodeKOctreeDepthflag();
   V3<int32_t> decodePredTreeResidual(const V3<int32_t>& cur, const V3<int32_t>& pred,
                                      const V3<int32_t>& m);
   UInt decodePredTreeNumPtsInLcu();
-  UInt parseRunlengthGroup();
-  Bool decodeTerminationFlag();
+
+  ///< attribute related syntax
   Int parseRunlength();
   Int parseExpGolombRunlength(int k, context_t* p_ctxPrefix, context_t* p_ctxSufffix);
-  Int parseExpGolomb(int k, context_t* p_ctxPrefix, context_t* p_ctxSufffix);
   Int parseExpGolombN(int k, context_t* p_ctxPrefix, context_t* p_ctxSufffix);
+  Void setColorGolombKandBound(const UInt& groupSizeLog2, const UInt& GolombNum);
   Int parseExpGolombAdp(const int k, const int colorType, const int ctx_id);
-  Int parseExpGolombRefl(int k, context_t* p_ctxPrefix, context_t* p_ctxSufffix);
   UInt64 parseExpGolombReflN(int k, context_t* p_ctxPrefix, context_t* p_ctxSufffix);
-
-  Void setGolombGroupSize(const UInt& groupSizeShift);
-  Void setColorGolombKandBound(const UInt& GolombNum);
-
   int64_t parseAttr(const bool& isColor, const int& colorType, const int ctx_id = 0,
-                const bool isDuplicatePoint = false, const bool residualminusone = false,
-                const UInt& golombNum = 1, const int b0 = 0);
-  void parseSign(int64_t& delta);
-  Int parseAttrHaar(const bool& isColor,const int& colorType, const bool reslayer=false, const int ctx_id = 0, const bool isDuplicatePoint = false,
-                    const bool residualminusone = false, const UInt& golombNum = 1);  
+                    const bool isDuplicatePoint = false, const bool residualminusone = false,
+                    const UInt& golombNum = 1, const int b0 = 0);
+  Void parseSign(int64_t& delta);
+  Int parseAttrHaar(const bool& isColor, const int& colorType, const bool reslayer = false,
+                    const int ctx_id = 0, const bool isDuplicatePoint = false,
+                    const bool residualminusone = false, const UInt& golombNum = 1);
   Int parseRefl(const int ctx_id = 0, const bool isDuplicatePoint = false,
                 const bool residualminusone = false, const UInt& golombNum = 3);
   Int parseColor(const int ctx_id = 0, const bool isDuplicatePoint = false,
                  const bool residualminusone = false);
-  Int parseAttrequaltwo0();
-  Int parseAttrequalone0();
-  Int parseAttrequal0();
+  Int parseAttrequaltwo();
+  Int parseAttrequalone();
+
   TDecBacTop();
   ~TDecBacTop();
   Void reset();
@@ -130,13 +127,13 @@ public:
   Void initBac();
   Void setBitstreamBuffer(TComBufferChunk& buffer, const bool& initDulatAttribute = false);
 
-  void saveContext() {
+  Void saveContext() {
     m_ctxBackup = p_aec->geometry_syn_ctx;
     for (int i = 0; i < 1024; i++)
       temp[i] = memoryChannel[i];
   }
 
-  void restoreContext() {
+  Void restoreContext() {
     p_aec->geometry_syn_ctx = m_ctxBackup;
     for (int i = 0; i < 1024; i++)
       memoryChannel[i] = temp[i];

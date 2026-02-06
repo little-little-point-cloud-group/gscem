@@ -71,21 +71,20 @@ public:
 private:
   Void initFifoWithRootNode(queue<TComOctreeNode>& fifo);
   Void breadthFirstOctreeNode(const TComOctreeNode& currentNode, TComOctreePartitionParams& params,
-                               queue<TComOctreeNode>& fifo, codeBinOfIDCM& infOfIDCM,
-                               int& currentOccupancy, bool& preNodePlanarEligible,
-                               int& numdcmPoints, int& numSubnodes, bool& DcmEligibleKOctreeDepth);
+                              queue<TComOctreeNode>& fifo, codeBinOfIDCM& infOfIDCM,
+                              int& currentOccupancy, bool& preNodePlanarEligible, int& numdcmPoints,
+                              int& numSubnodes, bool& DcmEligibleKOctreeDepth);
   Bool handleSingleMode(const TComOctreeNode& currentNode, const V3<UInt>& nodeSizeLog2,
-                        const Bool singleModeFlagParent, UInt& occupancyCode,
-                        const V3<UInt>& childSizeLog2);
+                        UInt& occupancyCode, const V3<UInt>& childSizeLog2);
   Void encodeLeafNode(UInt& childPointStartIdx, const UInt& childNum);
   Void initChildNode(const TComOctreeNode& currentNode, TComOctreeNode& childNode,
                      const V3<UInt>& childSizeLog2, const int childIdx, UInt& startChildIdx,
                      const std::array<int, 8>& childrenCount, const UInt8 occupancyCode,
                      Bool whetherParentNodeIDCMEligible);
-  Bool singlePointMode(const TComOctreeNode& currentNode,
-                                     TComOctreePartitionParams& params, codeBinOfIDCM& infOfIDCM,
-                                     UInt& occupancyCode, bool& whetherCurrentNodeIDCMEligible,
-                                     bool& currentNodeNeedPopcnt, bool currentMode);
+  Bool singlePointMode(const TComOctreeNode& currentNode, TComOctreePartitionParams& params,
+                       codeBinOfIDCM& infOfIDCM, UInt& occupancyCode,
+                       bool& whetherCurrentNodeIDCMEligible, bool& currentNodeNeedPopcnt,
+                       bool currentMode);
   ///<Swap point and Attribute
   template<typename iterator, typename ValueOp, std::size_t neighborCnt>
   void octreeDivision(iterator begin, iterator end, std::array<int, neighborCnt>& neighborCounts,
@@ -96,7 +95,7 @@ private:
     std::array<iterator, neighborCnt> ptrsGeometry = {{begin}};
     for (int idx = 1; idx < neighborCnt; ++idx)
       ptrsGeometry[idx] = std::next(ptrsGeometry[idx - 1], neighborCounts[idx - 1]);
-    iterator originGeomEnd = begin;   
+    iterator originGeomEnd = begin;
 
     std::unique_ptr<std::array<std::vector<PC_COL>::iterator, neighborCnt>> ptrsColors;
     std::unique_ptr<std::array<std::vector<PC_REFL>::iterator, neighborCnt>> ptrsRefls;
@@ -116,10 +115,10 @@ private:
       ptrsRefls = std::unique_ptr<std::array<std::vector<PC_REFL>::iterator, neighborCnt>>(
         new std::array<std::vector<PC_REFL>::iterator, neighborCnt>);
       (*ptrsRefls)[0] = m_pointCloudOrg->getReflectances().begin() + childIdxBegin * numMulti_refl;
-      for (int idx = 1; idx < neighborCnt; ++idx){
+      for (int idx = 1; idx < neighborCnt; ++idx) {
         (*ptrsRefls)[idx] =
           std::next((*ptrsRefls)[idx - 1], neighborCounts[idx - 1] * numMulti_refl);
-      }  
+      }
     }
     for (int i = 0; i < neighborCnt; ++i) {
       std::advance(originGeomEnd, neighborCounts[i]);
@@ -142,7 +141,7 @@ private:
         }
         ++ptrsGeometry[radix];
       }
-    }  
+    }
   }
   Void treePartition(const TComOctreeNode& currentNode, const V3<UInt>& childNodeSizeLog2,
                      const UInt& occupancySkip, std::array<int, 8>& neighborCounts);

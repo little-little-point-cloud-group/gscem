@@ -3,8 +3,8 @@
 bridge_1mm:
   peakvalue: 30000
   category: cat1-A
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -13,25 +13,28 @@ bridge_1mm:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-9
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   refl_output_depth: 16
   refl_init_golomb_offset: 3
-  axis_bias: 4
+  pred_fixed_point_frac_bit: 0
+  axis_bias_minus1: 3
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  max_transform_number    : 0
-  ref_reorder_mode: 1
-  ref_group_predict: 0
+  transform_segment_size  : 0
+  trans_res_layer: 1
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
+  refl_init_pred_trans_ratio    : 8
   deadZone_Len    : 0
-  ref_init_Pred_Trans_Ratio    : 8
-  refl_QP_offset: 0
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  multi_attr_group_id: 0
   
 double_T_section_1mm:
   peakvalue: 30000
   category: cat1-A
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -40,25 +43,28 @@ double_T_section_1mm:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-9
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   refl_output_depth: 16
   refl_init_golomb_offset: 3
-  axis_bias: 4
+  pred_fixed_point_frac_bit: 0
+  axis_bias_minus1: 3
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  max_transform_number    : 0
-  ref_reorder_mode: 1
-  ref_group_predict: 0
+  transform_segment_size  : 0
+  trans_res_layer: 1
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
+  refl_init_pred_trans_ratio    : 8
   deadZone_Len    : 0
-  ref_init_Pred_Trans_Ratio    : 8
-  refl_QP_offset: 0
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  multi_attr_group_id: 0
   
 intersection1_1mm:
   peakvalue: 30000
   category: cat1-A
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -67,25 +73,28 @@ intersection1_1mm:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-9
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   refl_output_depth: 16
   refl_init_golomb_offset: 3
-  axis_bias: 4
+  pred_fixed_point_frac_bit: 0
+  axis_bias_minus1: 3
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  max_transform_number    : 0
-  ref_reorder_mode: 1
-  ref_group_predict: 0
+  transform_segment_size  : 0
+  trans_res_layer: 1
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
+  refl_init_pred_trans_ratio    : 8
   deadZone_Len    : 0
-  ref_init_Pred_Trans_Ratio    : 8
-  refl_QP_offset: 0
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  multi_attr_group_id: 0
   
 intersection2_1mm:
   peakvalue: 30000
   category: cat1-A
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -94,25 +103,28 @@ intersection2_1mm:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-9
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   refl_output_depth: 16
   refl_init_golomb_offset: 3
-  axis_bias: 4
+  pred_fixed_point_frac_bit: 0
+  axis_bias_minus1: 3
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  max_transform_number    : 0
-  ref_reorder_mode: 1
-  ref_group_predict: 0
+  transform_segment_size  : 0
+  trans_res_layer: 1
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
+  refl_init_pred_trans_ratio    : 8
   deadZone_Len    : 0
-  ref_init_Pred_Trans_Ratio    : 8
-  refl_QP_offset: 0
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  multi_attr_group_id: 0
   
 straight_road_1mm:
   peakvalue: 30000
   category: cat1-A
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -121,25 +133,28 @@ straight_road_1mm:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-9
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   refl_output_depth: 16
   refl_init_golomb_offset: 3
-  axis_bias: 4
+  pred_fixed_point_frac_bit: 0
+  axis_bias_minus1: 3
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  max_transform_number    : 0
-  ref_reorder_mode: 1
-  ref_group_predict: 0
+  transform_segment_size  : 0
+  trans_res_layer: 1
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
+  refl_init_pred_trans_ratio    : 8
   deadZone_Len    : 0
-  ref_init_Pred_Trans_Ratio    : 8
-  refl_QP_offset: 0
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  multi_attr_group_id: 0
   
 T_section_1mm:
   peakvalue: 30000
   category: cat1-A
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -148,17 +163,20 @@ T_section_1mm:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-9
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   refl_output_depth: 16
   refl_init_golomb_offset: 3
-  axis_bias: 4
+  pred_fixed_point_frac_bit: 0
+  axis_bias_minus1: 3
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  max_transform_number    : 0
-  ref_reorder_mode: 1
-  ref_group_predict: 0
+  transform_segment_size  : 0
+  trans_res_layer: 1
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
+  refl_init_pred_trans_ratio    : 8
   deadZone_Len    : 0
-  ref_init_Pred_Trans_Ratio    : 8
-  refl_QP_offset: 0
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  multi_attr_group_id: 0
   

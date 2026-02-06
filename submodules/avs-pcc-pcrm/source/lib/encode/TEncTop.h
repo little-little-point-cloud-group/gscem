@@ -46,8 +46,7 @@
 /**
  * Class EncoderStatistics
  */
-class EncoderStatistics 
-{
+class EncoderStatistics {
 public:
   UInt64 geomBits = 0;
   UInt64 colorBits = 0;
@@ -61,6 +60,7 @@ public:
   Double attrUserTime = 0.0;
   Double totalUserTime = 0.0;
   UInt64 numReconPoints = 0;
+ 
 
   void operator+=(const EncoderStatistics& other) {
     geomBits += other.geomBits;
@@ -90,12 +90,12 @@ private:
   TComPointCloud m_pointCloudQuant;  ///< quantized point cloud
   TComPointCloud m_pointCloudRecon;  ///< output point cloud
 
-  TEncGeometry m_geomEncoder;    ///< geometry encoder
-  TEncAttribute m_attrEncoder;   ///< attribute encoder
-  TEncBacTop m_encBac;           ///< AVS3 binary arithmetic encoder
-  TEncBacTop m_encBacDual;       ///< AVS3 binary arithmetic encoder
-  TComBufferChunk m_bufferChunk; ///< bitstream buffer chunk
-  ofstream m_bitstreamFile;      ///< file bitstream
+  TEncGeometry m_geomEncoder;     ///< geometry encoder
+  TEncAttribute m_attrEncoder;    ///< attribute encoder
+  TEncBacTop m_encBac;            ///< AVS3 binary arithmetic encoder
+  TEncBacTop m_encBacDual;        ///< AVS3 binary arithmetic encoder
+  TComBufferChunk m_bufferChunk;  ///< bitstream buffer chunk
+  ofstream m_bitstreamFile;       ///< file bitstream
 
   int m_frame_ID;
   int m_frame_count;
@@ -128,8 +128,9 @@ public:
     std::strcpy(numofStartFrame, m_inputFileName.substr(numStartPos, numDigits).c_str());
 #pragma warning(pop)
     m_startFrame = atoi(numofStartFrame);
-    if(m_inputFileName.substr(numStartPos-3, 3).compare("vox") == 0 || m_inputFileName.substr(numStartPos-3, 3).compare("VOX") == 0){
-        m_startFrame = 1;
+    if (m_inputFileName.substr(numStartPos - 3, 3).compare("vox") == 0 ||
+        m_inputFileName.substr(numStartPos - 3, 3).compare("VOX") == 0) {
+      m_startFrame = 1;
     }
     delete[] numofStartFrame;
   }
@@ -148,7 +149,7 @@ public:
     return (numDigits);
   }
   // update m_inputFileName & m_bitstreamFileName & m_reconFileName based on file number
-  void updateIOFileName(Int i_frameNum, Int numDigits) {
+  void updateIOFileName(Int i_frameNum, Int numDigits, Bool splitBinFlag) {
     assert(numDigits > 0);
 
     char* c_frameNum = new char[numDigits + 1];
@@ -156,16 +157,18 @@ public:
 
     if (m_inputFileName.length() > 0)
       m_inputFileName.replace(m_inputFileName.find_last_of('.') - numDigits, numDigits, c_frameNum);
-    if (m_bitstreamFileName.length() > 0)
-      m_bitstreamFileName.replace(m_bitstreamFileName.find_last_of('.') - numDigits, numDigits,
-                                  c_frameNum);
+
     if (m_reconFileName.length() > 0)
       m_reconFileName.replace(m_reconFileName.find_last_of('.') - numDigits, numDigits, c_frameNum);
+
+    if (splitBinFlag && m_bitstreamFileName.length() > 0)
+      m_bitstreamFileName.replace(m_bitstreamFileName.find_last_of('.') - numDigits, numDigits,
+                                  c_frameNum);
 
     delete[] c_frameNum;
   }
   // reset m_bitstreamFileName & m_reconFileName based on file number
-  void resetBitstream_Recon_FileName(Int i_frameNum, Int numDigits) {
+  void resetBitstream_Recon_FileName(Int i_frameNum, Int numDigits, Bool splitBinFlag) {
     if (m_numOfFrames <= 1)
       return;
 
@@ -174,14 +177,15 @@ public:
 
     string add;
     assert(numDigits > 0);
-    if (m_bitstreamFileName.length() > 0) {
-      add = "-" + string(c_frameNum);
-      m_bitstreamFileName.insert(m_bitstreamFileName.find_last_of('.'), add);
-    }
 
     if (m_reconFileName.length() > 0) {
       add = "-" + string(c_frameNum);
       m_reconFileName.insert(m_reconFileName.find_last_of('.'), add);
+    }
+
+    if (splitBinFlag && m_bitstreamFileName.length() > 0) {
+      add = "-" + string(c_frameNum);
+      m_bitstreamFileName.insert(m_bitstreamFileName.find_last_of('.'), add);
     }
 
     delete[] c_frameNum;
@@ -199,27 +203,19 @@ public:
 
 private:
   Void initParameters();
-  Void initFrameParameters(FrameHeader& frameHead);
+  Void initFrameParameters(FrameHeader& frameHeader);
   Void compressAndEncodePartition();
   Void geomPreprocessAndQuantization(UInt& geoNumPoint, const Float& qs, Double& userTimeRecolor);
-  Void geomPreprocessAndQuantizationRetainingDuplicatePoints(const Float& qs);
-  Void geomPostprocessingAndDequantization(const Float& qs);
+  Void geomPostprocessingAndDequantization();
   Void compressAndEncodeAttribute();
   Void compressAndEncodeColor();
   Void compressAndEncodeReflectance();
   Void fastRecolor(const std::pair<const PC_POS, std::vector<int>> it, const Int& uniquePointNumber,
                    const Float& qs);
-  Void SliceDevisionByMortonCode(int slicenum, vector<TComPointCloud>& pointCloudPartitionList);
   Void addToReconstructionCloud(TComPointCloud* reconstructionCloud);
-  Void sliceDevisionByHistZ(const TComPointCloud pointCloudOrg,
-                            vector<TComPointCloud>& pointCloudPartitionList, Int numOfSlice,
-                            const Float& geomQs, Int numDigits);
   Void SliceDevisionByPointNum(vector<TComPointCloud>& pointCloudPartitionList,
                                UInt maxPointNumOfSlicesLog2);
-  Void pointCloudPack(TComPointCloud& pointCloudRecon, const TComPointCloud& pointCloudAdd);
-  Void histogramZ(PC_POS posMin, PC_POS posMax, const TComPointCloud pc, vector<int32_t>& groundZ);
-  Void groundSlices(vector<TComPointCloud>& groundList, int32_t dis, int32_t groundZMin,
-                    const TComPointCloud pointCloudRes);
+
 };  ///< END CLASS TEccTop
 
 ///< \}

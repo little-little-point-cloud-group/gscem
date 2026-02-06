@@ -70,9 +70,9 @@ bool TMetricCfg::parseCfg(Int argc, TChar* argv[]) {
     (m_showHausdorff,      true,       "hau", "show_hausdorff",      "if show hausdorff and hausdorffPSNR. 1: on, 0: off")
   ;
   // clang-format on
-
+  //AttributeParameterSet aps;
   parser.initParameters();                            ///< set the default parameters
-  parser.parseParameters(argc, (const TChar**)argv);  ///< parsing
+  parser.parseParameters(argc, (const TChar**)argv, nullptr);  ///< parsing
   parser.printInvalidParameters(cout);                ///< print warnings
 
   if (isHelp || argc == 1) {  ///< print help info

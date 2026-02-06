@@ -1,0 +1,181 @@
+C1-losslessG-lossyA-ai:
+  encoder:
+    ascii_write_flag        : 1
+    profile_id              : '{}'
+    level_id                : '{}'
+    frame_rate_code         : '{}'
+    attr_present_flag       : 1
+    color_transform_flag    : 0
+    slice_flag              : 1
+    slice_point_max_numlg2  : 20
+    geom_quant_step         : '{}'
+    geom_quant_step_significand: '{}'
+    geom_quant_step_exponent: '{}'
+    save_state_flag         : 0
+    lcu_dependency_flag     : 0
+    geom_lcu_nzlg2          : '{}'
+    geom_lcu_node_depth     : '{}'
+    geom_tree_type          : '{}'
+    geom_tree_sort_mode     : '{}'
+    geom_tree_density_low   : '{}'
+    geom_tree_density_high  : '{}'
+    geom_max_tree_size_log2_minus8: '{}'
+    geom_remove_dup_flag    : 0
+    geom_im_qtbt_flag       : '{}'
+    geom_im_qtbt_k          : '{}'
+    geom_im_qtbt_m          : '{}'
+    occupancy_search_range_log2: 8
+    geom_planar_eligible    : '{}'
+    color_quant_param       : '{}'
+    refl_quant_param        : '{}'
+    cross_comp_pred         : 0
+    nearest_pred_param1     : '{}'
+    nearest_pred_param2     : '{}'
+    axis_bias_minus1        : '{}'
+    color_output_depth      : '{}'
+    refl_output_depth       : '{}'
+    color_init_golomb_offset: '{}'
+    refl_init_golomb_offset : '{}'
+    chroma_qp_offset_cb     : 0
+    chroma_qp_offset_cr     : 0
+    qp_offset_dc            : '{}'
+    qp_offset_ac            : '{}'
+    chroma_qp_offset_dc     : '{}'
+    chroma_qp_offset_ac     : '{}'
+    transform               : '{}'
+    transform_segment_size  : '{}'
+    refl_max_transform_number: '{}'
+    color_max_transform_number: '{}'
+    max_number_neighbours_log2_minus7: '{}'
+    max_number_coefficients_log2_minus8: '{}'
+    coeff_length_control_log2_minus8: '{}'
+    color_reorder_mode      : '{}'
+    refl_reorder_mode       : '{}'
+    refl_group_predict      : '{}'
+    pred_fixed_point_frac_bit: '{}'
+    attr_trans_qp_delta     : '{}'
+    attr_encode_order       : '{}'
+    cross_attr_type_pred    : '{}'
+    cross_attr_type_pred_param1 : '{}'
+    cross_attr_type_pred_param2 : '{}'
+    deadZone_Len            : '{}'
+    color_init_pred_trans_ratio: '{}'
+    refl_init_pred_trans_ratio: '{}'
+    color_qp_adjust_flag    : '{}' 
+    color_qp_adjust_scalar  : '{}'   
+    k_frac_bit              : '{}'
+    golomb_group_size_log2  : 4
+    pred_dist_weight_group_size_log2: '{}'
+    qp_offset               : '{}'
+    multi_attr_group_id     : '{}'
+    metrics_enable          : 1
+    symmetry                : 1
+    cal_color               : 1
+    cal_reflectance         : 1
+    duplicate_mode          : 1
+    multineighbour_mode     : 1
+    show_hausdorff          : 1
+    peakvalue               : '{}'
+
+  decoder:
+    ascii_write_flag        : 1
+    color_transform_flag    : 0
+
+  pcerror:
+    symmetry                : 1
+    cal_color               : 1
+    cal_reflectance         : 1
+    duplicate_mode          : 1
+    multineighbour_mode     : 1
+    show_hausdorff          : 1
+    peakvalue               : '{}'
+    refl_output_depth       : '{}'
+
+C2-losslessG-losslessA-ai:
+  encoder:
+    ascii_write_flag        : 1
+    profile_id              : '{}'
+    level_id                : '{}'
+    frame_rate_code         : '{}'
+    attr_present_flag       : 1
+    color_transform_flag    : 0
+    slice_flag              : 1
+    slice_point_max_numlg2  : 20
+    geom_quant_step         : '{}'
+    geom_quant_step_significand: '{}'
+    geom_quant_step_exponent: '{}'
+    save_state_flag         : 0
+    lcu_dependency_flag     : 0
+    geom_lcu_nzlg2          : '{}'
+    geom_lcu_node_depth     : '{}'
+    geom_tree_type          : '{}'
+    geom_tree_sort_mode     : '{}'
+    geom_tree_density_low   : '{}'
+    geom_tree_density_high  : '{}'
+    geom_max_tree_size_log2_minus8: '{}'
+    geom_remove_dup_flag    : 0
+    geom_im_qtbt_flag       : 1
+    geom_im_qtbt_k          : '{}'
+    geom_im_qtbt_m          : '{}'
+    occupancy_search_range_log2: 8
+    geom_planar_eligible    : '{}'
+    color_quant_param       : '{}'
+    refl_quant_param        : '{}'
+    cross_comp_pred         : 1
+    nearest_pred_param1     : '{}'
+    nearest_pred_param2     : '{}'
+    axis_bias_minus1        : '{}'
+    color_output_depth      : '{}'
+    refl_output_depth       : '{}'
+    color_init_golomb_offset: '{}'
+    refl_init_golomb_offset : '{}'
+    chroma_qp_offset_cb     : 0
+    chroma_qp_offset_cr     : 0
+    transform               : '{}'
+    transform_segment_size  : '{}'
+    trans_res_layer         : '{}'
+    max_number_neighbours_log2_minus7: '{}'
+    max_number_coefficients_log2_minus8: '{}'
+    coeff_length_control_log2_minus8: '{}'
+    color_reorder_mode      : '{}'
+    refl_reorder_mode       : '{}'
+    refl_group_predict      : '{}'
+    pred_fixed_point_frac_bit: '{}'
+    attr_trans_qp_delta     : '{}'
+    attr_encode_order       : '{}'
+    cross_attr_type_pred    : '{}'
+    cross_attr_type_pred_param1: '{}'
+    cross_attr_type_pred_param2: '{}'
+    deadZone_Len            : '{}'
+    color_init_pred_trans_ratio: '{}'
+    refl_init_pred_trans_ratio: '{}'
+    golomb_group_size_log2  : 4
+    pred_dist_weight_group_size_log2: '{}'
+    color_qp_adjust_flag    : '{}' 
+    color_qp_adjust_scalar  : '{}'   
+    k_frac_bit              : '{}'
+    multi_attr_group_id     : '{}'
+    metrics_enable          : 1
+    symmetry                : 1
+    cal_color               : 1
+    cal_reflectance         : 1
+    cal_lossless            : 1
+    duplicate_mode          : 1
+    multineighbour_mode     : 1
+    show_hausdorff          : 1
+    peakvalue               : '{}'
+
+  decoder:
+    ascii_write_flag        : 1
+    color_transform_flag    : 0
+
+  pcerror:
+    symmetry                : 1
+    cal_color               : 1
+    cal_reflectance         : 1
+    cal_lossless            : 1
+    duplicate_mode          : 1
+    multineighbour_mode     : 1
+    show_hausdorff          : 1
+    peakvalue               : '{}'
+    refl_output_depth       : '{}'

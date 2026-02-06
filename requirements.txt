@@ -3,4 +3,3 @@ numpy
 plyfile
 icecream
 pandas
-openpyxl

@@ -1,0 +1,88 @@
+{
+    "scenes": {
+        "bartender": {
+            "category": "cat1",
+            "frame": "frame000.ply"
+        },
+        "cinema": {
+            "category": "cat1",
+            "frame": "frame000.ply"
+        },
+        "photo": {
+            "category": "cat1",
+            "frame": "frame000.ply"
+        },
+        "toy": {
+            "category": "cat1",
+            "frame": "frame000.ply"
+        },
+        "bicycle": {
+            "category": "cat2",
+            "frame": "frame000.ply"
+        },
+        "garden": {
+            "category": "cat2",
+            "frame": "frame000.ply"
+        },
+        "alley": {
+            "category": "cat2",
+            "frame": "frame000.ply"
+        },
+        "rocket": {
+            "category": "cat2",
+            "frame": "frame000.ply"
+        }
+    },
+    "quant_fn": {
+        "cat1": {
+            "fn_geom": "linear",
+            "fn_dc": "linear",
+            "fn_ac": "linear",
+            "fn_opacity": "linear",
+            "fn_scale": "linear",
+            "fn_rotation": "linear"
+        },
+        "cat2": {
+            "fn_geom": "linear",
+            "fn_dc": "linear",
+            "fn_ac": "linear",
+            "fn_opacity": "linear",
+            "fn_scale": "linear",
+            "fn_rotation": "linear"
+        }
+    },
+    "ratepoint_per_cond": {
+        "C1-losslessG-lossyA-ai": [
+            "r1",
+            "r2",
+            "r3",
+            "r4",
+            "r5"
+        ]
+    },
+    "PCRM_methods": {
+        "predict": "predict"
+    },
+    "quant_bits": {
+        "cat1": {
+            "bits_geom": 18,
+            "bits_dc": 13,
+            "bits_ac": 12,
+            "bits_opacity": 13,
+            "bits_scale": 13,
+            "bits_rotation": 14
+        },
+        "cat2": {
+            "bits_geom": 18,
+            "bits_dc": 12,
+            "bits_ac": 12,
+            "bits_opacity": 12,
+            "bits_scale": 12,
+            "bits_rotation": 14
+        }
+    },
+    "color_space_conversion":{
+        "cat1": true,
+        "cat2": true
+    }
+}

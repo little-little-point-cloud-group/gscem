@@ -62,10 +62,14 @@ def gen_cfg(condition,sequences_filename,folder_name):
     seqs = yaml.load(f_sequence, Loader=yaml.Loader)
     f_sequence.close()
 
+    f_profilelevel = open('profilelevel.yaml')
+    pls = yaml.load(f_profilelevel, Loader=yaml.Loader)
+    f_profilelevel.close()
     for seq_name in seqs:
         seq = seqs[seq_name]
         rps_geom = rps[token[1]][seq['category']]
         rps_attr = rps[token[2]][seq['category']]
+        profile_level = pls[seq['category']]
 
         for r in rps_attr:
             dir = '{}/{}/{}/{}'.format(folder_name,condition, seq_name, r)
@@ -88,6 +92,9 @@ def gen_cfg(condition,sequences_filename,folder_name):
             for key in seq:
                 if key in data_r and data_r[key] == '{}':
                     data_r[key] = seq[key]
+            for key in profile_level:
+                if key in data_r and data_r[key] == '{}':
+                    data_r[key] = profile_level[key]
 
             # remove empty arguments
             for key in list(data_r.keys()):

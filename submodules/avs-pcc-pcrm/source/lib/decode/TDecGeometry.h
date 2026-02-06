@@ -73,16 +73,14 @@ private:
                        bool& whetherCurrentNodeIDCMEligible, bool& currentNodeNeedPopcnt,
                        bool currentMode);
   Void breadthFirstOctreeNode(const TComOctreeNode& currentNode, TComOctreePartitionParams& params,
-                               queue<TComOctreeNode>& fifo, codeBinOfIDCM& infOfIDCM,
-                               int& currentOccupancy, bool& eligible,
-                               bool& DcmEligibleKOctreeDepth);
+                              queue<TComOctreeNode>& fifo, codeBinOfIDCM& infOfIDCM,
+                              int& currentOccupancy, bool& eligible, bool& DcmEligibleKOctreeDepth);
   Bool handleSingleMode(const TComOctreeNode& currentNode, const V3<UInt> nodeSizeLog2,
-                        const V3<UInt> childSizeLog2, const Bool singleModeFlagParent,
-                        UInt& occupancyCode);
+                        const V3<UInt> childSizeLog2, UInt& occupancyCode);
   Void decodeLeafNode(const TComOctreeNode& currentNode, const Int x, const Int y, const Int z);
   Void breadthFirstOctreeLcu(const TComOctreeNode& node, TComOctreePartitionParams params,
                              Bool saveStateFlag);
-  UInt decodeOccupancyCode(const TComOctreePartitionParams& params, TComGeomContext& geomCtx);
+
 };  ///< END CLASS TDecGeometry
 
 ///< \}

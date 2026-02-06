@@ -90,8 +90,7 @@ UInt8 TComOccupancyMap::getOccupancy(const Int32 x, const Int32 y, const Int32 z
 }
 
 Void TComOccupancyMap::insert(const Int32 x, const Int32 y, const Int32 z,
-                              const UInt8 OcuupancymapSizelog2,
-                              const UInt8 occupancyCode) {
+                              const UInt8 OcuupancymapSizelog2, const UInt8 occupancyCode) {
   assert(x >= 0 && y >= 0 && z >= 0);
   m_map->insert(x, y, z, OcuupancymapSizelog2, occupancyCode);
 }

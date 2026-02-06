@@ -3,8 +3,8 @@
 bridge_1mm:
   peakvalue: 30000
   category: cat1-A
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -13,25 +13,27 @@ bridge_1mm:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-9
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   refl_output_depth: 16
   refl_init_golomb_offset: 3
-  axis_bias: 4
+  pred_fixed_point_frac_bit: 0
+  axis_bias_minus1: 3
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  max_transform_number    : 0
-  ref_reorder_mode: 1
-  ref_group_predict: 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
   deadZone_Len    : 0
-  ref_init_Pred_Trans_Ratio    : 8
-  refl_QP_offset: 0
+  refl_init_pred_trans_ratio    : 8
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  multi_attr_group_id: 0
   
 double_T_section_1mm:
   peakvalue: 30000
   category: cat1-A
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -40,25 +42,27 @@ double_T_section_1mm:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-9
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   refl_output_depth: 16
   refl_init_golomb_offset: 3
-  axis_bias: 4
+  pred_fixed_point_frac_bit: 0
+  axis_bias_minus1: 3
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  max_transform_number    : 0
-  ref_reorder_mode: 1
-  ref_group_predict: 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
   deadZone_Len    : 0
-  ref_init_Pred_Trans_Ratio    : 8
-  refl_QP_offset: 0
+  refl_init_pred_trans_ratio    : 8
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  multi_attr_group_id: 0
   
 intersection1_1mm:
   peakvalue: 30000
   category: cat1-A
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -67,25 +71,27 @@ intersection1_1mm:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-9
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   refl_output_depth: 16
   refl_init_golomb_offset: 3
-  axis_bias: 4
+  pred_fixed_point_frac_bit: 0
+  axis_bias_minus1: 3
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  max_transform_number    : 0
-  ref_reorder_mode: 1
-  ref_group_predict: 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
   deadZone_Len    : 0
-  ref_init_Pred_Trans_Ratio    : 8
-  refl_QP_offset: 0
+  refl_init_pred_trans_ratio    : 8
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  multi_attr_group_id: 0
   
 intersection2_1mm:
   peakvalue: 30000
   category: cat1-A
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -94,25 +100,27 @@ intersection2_1mm:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-9
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   refl_output_depth: 16
   refl_init_golomb_offset: 3
-  axis_bias: 4
+  pred_fixed_point_frac_bit: 0
+  axis_bias_minus1: 3
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  max_transform_number    : 0
-  ref_reorder_mode: 1
-  ref_group_predict: 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
   deadZone_Len    : 0
-  ref_init_Pred_Trans_Ratio    : 8
-  refl_QP_offset: 0
+  refl_init_pred_trans_ratio    : 8
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  multi_attr_group_id: 0
   
 straight_road_1mm:
   peakvalue: 30000
   category: cat1-A
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -121,25 +129,27 @@ straight_road_1mm:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-9
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   refl_output_depth: 16
   refl_init_golomb_offset: 3
-  axis_bias: 4
+  pred_fixed_point_frac_bit: 0
+  axis_bias_minus1: 3
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  max_transform_number    : 0
-  ref_reorder_mode: 1
-  ref_group_predict: 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
   deadZone_Len    : 0
-  ref_init_Pred_Trans_Ratio    : 8
-  refl_QP_offset: 0
+  refl_init_pred_trans_ratio    : 8
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  multi_attr_group_id: 0
   
 T_section_1mm:
   peakvalue: 30000
   category: cat1-A
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -148,25 +158,27 @@ T_section_1mm:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-9
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   refl_output_depth: 16
   refl_init_golomb_offset: 3
-  axis_bias: 4
+  pred_fixed_point_frac_bit: 0
+  axis_bias_minus1: 3
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  max_transform_number    : 0
-  ref_reorder_mode: 1
-  ref_group_predict: 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
   deadZone_Len    : 0
-  ref_init_Pred_Trans_Ratio    : 8
-  refl_QP_offset: 0
+  refl_init_pred_trans_ratio    : 8
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  multi_attr_group_id: 0
   
 Ford_01_AVS_1mm:
   peakvalue: 30000
-  category: cat2-frame
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  category: cat2-frame-f
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -175,29 +187,31 @@ Ford_01_AVS_1mm:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-12
   geom_tree_density_high: 1e-7
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   refl_output_depth: 8
   refl_init_golomb_offset: 0
-  axis_bias: 2
+  pred_fixed_point_frac_bit: 0
+  axis_bias_minus1: 3
   nearest_pred_param1: 3
   nearest_pred_param2: 30
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  max_transform_number    : 4
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  ref_reorder_mode: 1
-  ref_group_predict: 1
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  refl_reorder_mode: 1
   deadZone_Len    : 2
-  ref_init_Pred_Trans_Ratio    : -5
-  refl_QP_offset: 0
+  refl_init_pred_trans_ratio    : -5
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  multi_attr_group_id: 0
   
 Ford_02_AVS_1mm:
   peakvalue: 30000
-  category: cat2-frame
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  category: cat2-frame-f
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -206,29 +220,31 @@ Ford_02_AVS_1mm:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-12
   geom_tree_density_high: 1e-7
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   refl_output_depth: 8
   refl_init_golomb_offset: 0
-  axis_bias: 2
+  pred_fixed_point_frac_bit: 0
+  axis_bias_minus1: 3
   nearest_pred_param1: 3
   nearest_pred_param2: 30
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  max_transform_number    : 4
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  ref_reorder_mode: 1
-  ref_group_predict: 1
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  refl_reorder_mode: 1
   deadZone_Len    : 2
-  ref_init_Pred_Trans_Ratio    : -5
-  refl_QP_offset: 0
+  refl_init_pred_trans_ratio    : -5
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  multi_attr_group_id: 0
   
 Ford_03_AVS_1mm:
   peakvalue: 30000
-  category: cat2-frame
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  category: cat2-frame-f
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_node_depth: 2
@@ -236,29 +252,31 @@ Ford_03_AVS_1mm:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-12
   geom_tree_density_high: 1e-7
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   refl_output_depth: 8
   refl_init_golomb_offset: 0
-  axis_bias: 2
+  pred_fixed_point_frac_bit: 0
+  axis_bias_minus1: 3
   nearest_pred_param1: 3
   nearest_pred_param2: 30
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  max_transform_number    : 4
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  ref_reorder_mode: 1
-  ref_group_predict: 1
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  refl_reorder_mode: 1
   deadZone_Len    : 2
-  ref_init_Pred_Trans_Ratio    : -5
-  refl_QP_offset: 0
+  refl_init_pred_trans_ratio    : -5
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  multi_attr_group_id: 0
   
 Livox_01_all_in_one_1mm:
   peakvalue: 30000
-  category: cat2-frame
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  category: cat2-frame-l
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_node_depth: 2
@@ -266,29 +284,31 @@ Livox_01_all_in_one_1mm:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-12
   geom_tree_density_high: 1e-7
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   refl_output_depth: 8
   refl_init_golomb_offset: 0
-  axis_bias: 2
+  pred_fixed_point_frac_bit: 0
+  axis_bias_minus1: 3
   nearest_pred_param1: 3
   nearest_pred_param2: 30
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  max_transform_number    : 4
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  ref_reorder_mode: 1
-  ref_group_predict: 1
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  refl_reorder_mode: 1
   deadZone_Len    : 2
-  ref_init_Pred_Trans_Ratio    : -5
-  refl_QP_offset: 0
+  refl_init_pred_trans_ratio    : -5
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  multi_attr_group_id: 0
   
 Livox_02_all_in_one_1mm:
   peakvalue: 30000
-  category: cat2-frame
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  category: cat2-frame-l
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_node_depth: 2
@@ -296,29 +316,31 @@ Livox_02_all_in_one_1mm:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-12
   geom_tree_density_high: 1e-7
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   refl_output_depth: 8
   refl_init_golomb_offset: 0
-  axis_bias: 2
+  pred_fixed_point_frac_bit: 0
+  axis_bias_minus1: 3
   nearest_pred_param1: 3
   nearest_pred_param2: 30
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  max_transform_number    : 4
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  ref_reorder_mode: 1
-  ref_group_predict: 1
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  refl_reorder_mode: 1
   deadZone_Len    : 2
-  ref_init_Pred_Trans_Ratio    : -5
-  refl_QP_offset: 0
+  refl_init_pred_trans_ratio    : -5
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  multi_attr_group_id: 0
   
 basketball_player_vox11:
   peakvalue: 2047
   category: cat3
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -327,29 +349,32 @@ basketball_player_vox11:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 0
   geom_tree_density_high: 0
-  log2_geom_tree_max_size_minus8: 0
+  geom_max_tree_size_log2_minus8: 0
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 dancer_vox11:
   peakvalue: 2047
   category: cat3
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -358,29 +383,32 @@ dancer_vox11:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 0
   geom_tree_density_high: 0
-  log2_geom_tree_max_size_minus8: 0
+  geom_max_tree_size_log2_minus8: 0
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 exercise_vox11:
   peakvalue: 2047
   category: cat3
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -389,29 +417,32 @@ exercise_vox11:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 0
   geom_tree_density_high: 0
-  log2_geom_tree_max_size_minus8: 0
+  geom_max_tree_size_log2_minus8: 0
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 model_vox11:
   peakvalue: 2047
   category: cat3
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -420,29 +451,32 @@ model_vox11:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 0
   geom_tree_density_high: 0
-  log2_geom_tree_max_size_minus8: 0
+  geom_max_tree_size_log2_minus8: 0
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 Ignatius_vox11:
   peakvalue: 2047
   category: cat1-vox11
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -451,28 +485,32 @@ Ignatius_vox11:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0  
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0  
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 chair_vox12:
   peakvalue: 4095
   category: cat1-vox12
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -481,28 +519,32 @@ chair_vox12:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 machine_vox12:
   peakvalue: 4095
   category: cat1-vox12
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -511,28 +553,32 @@ machine_vox12:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 vessel4_vox12:
   peakvalue: 4095
   category: cat1-vox12
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -541,28 +587,32 @@ vessel4_vox12:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 bicycle_vox13:
   peakvalue: 8191
   category: cat1-vox13
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -571,28 +621,32 @@ bicycle_vox13:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 building_vox13:
   peakvalue: 8191
   category: cat1-vox13
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -601,28 +655,32 @@ building_vox13:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 clock1_vox13:
   peakvalue: 8191
   category: cat1-vox13
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -631,28 +689,32 @@ clock1_vox13:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 candlestick_vox13:
   peakvalue: 8191
   category: cat1-vox13
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -661,28 +723,32 @@ candlestick_vox13:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 shoes_vox13:
   peakvalue: 8191
   category: cat1-vox13
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -691,28 +757,32 @@ shoes_vox13:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 apollo_vox14:
   peakvalue: 16383
   category: cat1-vox14
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -721,28 +791,32 @@ apollo_vox14:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 casket_vox14:
   peakvalue: 16383
   category: cat1-vox14
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -751,28 +825,32 @@ casket_vox14:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 mosquito_vox14:
   peakvalue: 16383
   category: cat1-vox14
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -781,28 +859,32 @@ mosquito_vox14:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 violin1_vox14:
   peakvalue: 16383
   category: cat1-vox14
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -811,28 +893,32 @@ violin1_vox14:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 Truck_vox14:
   peakvalue: 16383
   category: cat1-vox14
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -841,28 +927,32 @@ Truck_vox14:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 caiman_vox15:
   peakvalue: 32767
   category: cat1-vox15plus
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -871,28 +961,32 @@ caiman_vox15:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 puppet_vox15:
   peakvalue: 32767
   category: cat1-vox15plus
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -901,28 +995,32 @@ puppet_vox15:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 QQdog_vox15:
   peakvalue: 32767
   category: cat1-vox15plus
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -931,29 +1029,32 @@ QQdog_vox15:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 Courthouse_vox16:
   peakvalue: 65535
   category: cat1-vox15plus
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -962,29 +1063,32 @@ Courthouse_vox16:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 Church_vox16:
   peakvalue: 65535
   category: cat1-vox15plus
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -993,29 +1097,32 @@ Church_vox16:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 stanford_area_2_vox20:
   peakvalue: 1048575
   category: cat1-vox15plus
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -1024,28 +1131,32 @@ stanford_area_2_vox20:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 stanford_area_4_vox20:
   peakvalue: 1048575
   category: cat1-vox15plus
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -1054,28 +1165,32 @@ stanford_area_4_vox20:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-10
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 4
+  geom_max_tree_size_log2_minus8: 4
   attr_adapt_pred: 0
   color_output_depth: 8
   color_init_golomb_offset: 0
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 1
+  color_init_pred_trans_ratio    : 2
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
-  Qp_Offset_DC         : 0
-  Qp_Offset_AC         : 0
-  chroma_Qp_Offset_DC  : 0
-  chroma_Qp_Offset_AC  : 0
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  qp_offset_dc         : 0
+  qp_offset_ac         : 0
+  chroma_qp_offset_dc  : 0
+  chroma_qp_offset_ac  : 0
   color_reorder_mode: 1
-
+  deadZone_Len    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 13
+  
 pcl_room_vox14:
   peakvalue: 16383
   category: cat1-vox14
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -1084,28 +1199,37 @@ pcl_room_vox14:
   geom_tree_sort_mode: 0
   geom_tree_density_low: 0
   geom_tree_density_high: 0
-  log2_geom_tree_max_size_minus8: 0
+  geom_max_tree_size_log2_minus8: 0
   color_output_depth: 8
   refl_output_depth: 16
   color_init_golomb_offset: 0
   refl_init_golomb_offset: 5
+  pred_fixed_point_frac_bit: 0
   max_num_of_predict_neighbours: 3
+  axis_bias_minus1: 0
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
   max_transform_number    : 2
   color_reorder_mode: 1
-  ref_reorder_mode: 1
-  ref_group_predict: 0
+  refl_reorder_mode: 1
   deadZone_Len    : 2
-  ref_init_Pred_Trans_Ratio    : 2
-  refl_QP_offset: 0
+  color_init_pred_trans_ratio    : 2
+  refl_init_pred_trans_ratio    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  cross_attr_type_pred: 1
+  cross_attr_type_pred_param1: 3277
+  cross_attr_type_pred_param2: 1258291
+  k_frac_bit   : 13
+  attr_encode_order: 1
+  multi_attr_group_id: 0
   
 pcl_hawk_vox11:
   peakvalue: 2047
   category: cat1-vox11
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -1114,29 +1238,38 @@ pcl_hawk_vox11:
   geom_tree_sort_mode: 0
   geom_tree_density_low: 0
   geom_tree_density_high: 0
-  log2_geom_tree_max_size_minus8: 0
+  geom_max_tree_size_log2_minus8: 0
   attr_adapt_pred: 0
   color_output_depth: 8
   refl_output_depth: 16
   color_init_golomb_offset: 0
   refl_init_golomb_offset: 5
+  pred_fixed_point_frac_bit: 0
   max_num_of_predict_neighbours: 3
+  axis_bias_minus1: 0
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
   max_transform_number    : 2
   color_reorder_mode: 1
-  ref_reorder_mode: 1
-  ref_group_predict: 0
+  refl_reorder_mode: 1
   deadZone_Len    : 2
-  ref_init_Pred_Trans_Ratio    : 2
-  refl_QP_offset: 0
+  color_init_pred_trans_ratio    : 2
+  refl_init_pred_trans_ratio    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  cross_attr_type_pred: 1
+  cross_attr_type_pred_param1: 3277
+  cross_attr_type_pred_param2: 1258291
+  k_frac_bit   : 13
+  attr_encode_order: 1
+  multi_attr_group_id: 0
   
 pcl_sofa_vox10:
   peakvalue: 1023
   category: cat1-vox10
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -1145,29 +1278,38 @@ pcl_sofa_vox10:
   geom_tree_sort_mode: 0
   geom_tree_density_low: 0
   geom_tree_density_high: 0
-  log2_geom_tree_max_size_minus8: 0
+  geom_max_tree_size_log2_minus8: 0
   attr_adapt_pred: 0
   color_output_depth: 8
   refl_output_depth: 16
   color_init_golomb_offset: 0
   refl_init_golomb_offset: 5
+  pred_fixed_point_frac_bit: 0
   max_num_of_predict_neighbours: 3
+  axis_bias_minus1: 0
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
   max_transform_number    : 2
   color_reorder_mode: 1
-  ref_reorder_mode: 1
-  ref_group_predict: 0
+  refl_reorder_mode: 1
   deadZone_Len    : 2
-  ref_init_Pred_Trans_Ratio    : 2
-  refl_QP_offset: 0
+  color_init_pred_trans_ratio    : 2
+  refl_init_pred_trans_ratio    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  cross_attr_type_pred: 1
+  cross_attr_type_pred_param1: 3277
+  cross_attr_type_pred_param2: 1258291
+  k_frac_bit   : 13
+  attr_encode_order: 1
+  multi_attr_group_id: 0
   
 pcl_papi_vox11:
   peakvalue: 2047
   category: cat1-vox11
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 1
   geom_lcu_nzlg2: 0
@@ -1176,22 +1318,30 @@ pcl_papi_vox11:
   geom_tree_sort_mode: 0
   geom_tree_density_low: 0
   geom_tree_density_high: 0
-  log2_geom_tree_max_size_minus8: 0
+  geom_max_tree_size_log2_minus8: 0
   attr_adapt_pred: 0
   color_output_depth: 8
   refl_output_depth: 16
   color_init_golomb_offset: 0
   refl_init_golomb_offset: 5
+  pred_fixed_point_frac_bit: 0
   max_num_of_predict_neighbours: 3
+  axis_bias_minus1: 0
   transform: 1
-  log2_max_number_coefficients_minus8 : 0
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
   max_transform_number    : 2
   color_reorder_mode: 1
-  ref_reorder_mode: 1
-  ref_group_predict: 0
+  refl_reorder_mode: 1
   deadZone_Len    : 2
-  ref_init_Pred_Trans_Ratio    : 2
-  refl_QP_offset: 0
+  color_init_pred_trans_ratio    : 2
+  refl_init_pred_trans_ratio    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  cross_attr_type_pred: 1
+  cross_attr_type_pred_param1: 3277
+  cross_attr_type_pred_param2: 1258291
+  k_frac_bit   : 13
+  attr_encode_order: 1
+  multi_attr_group_id: 0
 ...

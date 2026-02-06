@@ -1,0 +1,16 @@
+attribute: refl
+multi_attr_params_set_idx: 0
+refl_output_depth: 32
+pred_fixed_point_frac_bit: 30
+multi_attr_params_set_idx: 1
+refl_output_depth: 32
+pred_fixed_point_frac_bit: 30
+multi_attr_params_set_idx: 2
+refl_output_depth: 32
+pred_fixed_point_frac_bit: 30
+transform: 0
+transform_segment_size: 5
+attribute: color
+multi_attr_params_set_idx: 0
+transform: 1
+transform_segment_size: 5

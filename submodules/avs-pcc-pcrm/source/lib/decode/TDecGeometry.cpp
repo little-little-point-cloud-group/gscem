@@ -87,12 +87,12 @@ Void TDecGeometry::decodeAndDecompress() {
     TComOctreeNode& currentNode = fifo.front();
 
     //< start LCU-based coding, within an LCU, breadth first coding is used.
-    if (partitionParams.nodeSizeLog2.max() < m_hls->gps.lcuNodeSizeLog2) {
+    if (partitionParams.nodeSizeLog2.max() < m_hls->frameheader.lcuNodeSizeLog2) {
       if (m_hls->gps.saveStateFlag && !contextSaved) {
         m_decBac->saveContext();
         contextSaved = true;
       }
-      if (!m_hls->gps.saveStateFlag && m_hls->gps.lcu_dependency_flag) {
+      if (!m_hls->gps.saveStateFlag && m_hls->gps.lcuDependencyFlag) {
         m_historyMap[0] = unique_ptr<TComOccupancyMap>(new TComOccupancyMap());
         m_historyMap[1] = unique_ptr<TComOccupancyMap>(new TComOccupancyMap());
         m_decBac->LcuReset();
@@ -112,7 +112,7 @@ Void TDecGeometry::decodeAndDecompress() {
       if (contextSaved) {
         m_decBac->restoreContext();
       }
-      if (!m_hls->gps.saveStateFlag && m_hls->gps.lcu_dependency_flag) {
+      if (!m_hls->gps.saveStateFlag && m_hls->gps.lcuDependencyFlag) {
         m_historyMap[0].release();
         m_historyMap[1].release();
       }
@@ -133,7 +133,6 @@ Void TDecGeometry::decodeAndDecompress() {
     }
   }
   pcRec.setNumPoint(m_numReconPoints);
-  m_decBac->parseSliceGeomEndCode();
   return;
 }
 
@@ -175,13 +174,13 @@ Void TDecGeometry::breadthFirstOctreeNode(const TComOctreeNode& currentNode,
   }
   if (!singlePointFlag) {
     TComGeomContext geomCtx;
-    getContextInforFast(m_historyMap, params, currentNode, geomCtx, m_hls->gbh.geom_context_mode,
-                        m_hls->gps.OccupancymapSizelog2, preNodePlanarEligible);
-    if (m_hls->gbh.geom_context_mode == 1) {
+    getContextInforFast(m_historyMap, params, currentNode, geomCtx, m_hls->gbh.contextMode,
+                        m_hls->gps.occupancySearchRangeLog2, preNodePlanarEligible);
+    if (m_hls->gbh.contextMode == 1) {
       occupancyCode = m_decBac->decodeOccUsingMemoryChannel(params, geomCtx, preNodePlanarEligible);
     } else {
       occupancyCode = m_decBac->decodeOccupancyCode(params, geomCtx, preNodePlanarEligible,
-                                                    m_hls->gbh.geom_context_mode);
+                                                    m_hls->gbh.contextMode);
     }
 
     if (currentNodeNeedPopcnt) {
@@ -215,7 +214,7 @@ Void TDecGeometry::breadthFirstOctreeNode(const TComOctreeNode& currentNode,
     }
   }
   currentOccupancy = occupancyCode;
-  updateContextInfor(m_historyMap[1], params, currentNode, m_hls->gps.OccupancymapSizelog2,
+  updateContextInfor(m_historyMap[1], params, currentNode, m_hls->gps.occupancySearchRangeLog2,
                      occupancyCode);
 }
 
@@ -229,8 +228,8 @@ Bool TDecGeometry::singlePointMode(const TComOctreeNode& currentNode,
   UInt8& nodeIdxOfIDCM = infOfIDCM.nodeIdxOfIDCM;
   UInt8& theTrueNumOf_IDCM_InLastTenNode = infOfIDCM.theTrueNumOf_IDCM_InLastTenNode;
   if (currentMode == 0) {
-    singlePointFlag = handleSingleMode(currentNode, params.nodeSizeLog2, params.childSizeLog2,
-                                       params.singleModeFlagParent, occupancyCode);
+    singlePointFlag =
+      handleSingleMode(currentNode, params.nodeSizeLog2, params.childSizeLog2, occupancyCode);
     nodeIdxOfIDCM++;
     if (singlePointFlag) {
       theTrueNumOf_IDCM_InLastTenNode++;
@@ -247,8 +246,8 @@ Bool TDecGeometry::singlePointMode(const TComOctreeNode& currentNode,
     if (nodeIdxOfIDCM == 5) {
       nodeIdxOfIDCM = 0;
       if (oneChildNumInPreNode >= 4) {
-        singlePointFlag = handleSingleMode(currentNode, params.nodeSizeLog2, params.childSizeLog2,
-                                           params.singleModeFlagParent, occupancyCode);
+        singlePointFlag =
+          handleSingleMode(currentNode, params.nodeSizeLog2, params.childSizeLog2, occupancyCode);
         nextNodeMode = !singlePointFlag;
         whetherCurrentNodeIDCMEligible = true;
       }
@@ -260,8 +259,7 @@ Bool TDecGeometry::singlePointMode(const TComOctreeNode& currentNode,
 }
 
 Bool TDecGeometry::handleSingleMode(const TComOctreeNode& currentNode, const V3<UInt> nodeSizeLog2,
-                                    const V3<UInt> childSizeLog2, const Bool singleModeFlagParent,
-                                    UInt& occupancyCode) {
+                                    const V3<UInt> childSizeLog2, UInt& occupancyCode) {
   Bool singlePointFlagInferred = false;
   if (currentNode.parentNodeIDCMEligible) {
     // if parent node has only one occupied child, current node is not single

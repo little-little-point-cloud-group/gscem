@@ -11,7 +11,7 @@
 ### cmake
 
 #### make file
-- cmake ../source -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+- cmake ../source -DCMAKE_BUILD_TYPE=Release
 
 #### VS2019
 - cmake ../source -G "Visual Studio 16 2019" -A x64
@@ -67,7 +67,7 @@ A set of configuration file templates compliant with the current Common Test Con
 
 To generate the configuration files, run the `gen_cfg.py` script:
 ```console
-avs-pcc-pcem/cfg/script$ python ./gen_cfg.py
+avs-pcc-pcrm/cfg/script$ python ./gen_cfg.py
 ```
 
 ## MultiAttribute coding function
@@ -103,10 +103,11 @@ ascii_write_flag        : 1       # recon ply write mode. 1: ascii, 0: binary
 transform_color         : 0       # apply color transfor. 1: yes  2: no  
 ```
 Note that:
-1. When PCEM is supposed to encode/decode multi-frames, the file name of input ply for encoder and bitstream file for decoder should be set in the following format  
+1. When PCRM is supposed to encode/decode multi-frames, the file name of input ply for encoder and bitstream file for decoder should be set in the following format  
    input　　　:　　*basename_input* + *start_number* + ".ply"  
    In order to facilitate getting the file number, the last character of the *basename_input* should not be the number among '0'~'9'.  
-   Moreover, the only requirement is that the *start_number* should be the first frame number wanted to be encoded or decoded.  
+   Moreover, the only requirement is that the *start_number* should be the first frame number wanted to be encoded or decoded. 
+   For each sequence, only one bitstream file will be generated.  
 
 2. The reconstructed files will be named as follow:
 
@@ -118,7 +119,7 @@ Note that:
 　　-2) Multi-frames  (*frames_to_be_coded* > 1):
 
 　　　recon　　　　:"xxx.ply"　　　-->　　　"xxx" + "-" + *frame_number* + ".ply"
-　　　bitstream　　:"yyy.bin"　　　-->　　　"yyy" + "-" + *frame_number* + ".bin"
+　　　bitstream　　:"yyy.bin"　　　-->　　　"yyy" + "-" + *start_number* + ".bin"
 
 　　　where 
 
@@ -132,7 +133,7 @@ making use of the configuration file `cfg/C1-limitlossyG-lossyA-ai/Livox_01_all_
 and storing the intermediate results in the output directory `output/`.
 
 ```console
-avs-pcc-pcem$ ./avs-pcc-encoder -c cfg/C1-limitlossyG-lossyA-ai/Livox_01_all_in_one_1mm/r1/encoder.cfg \
+avs-pcc-pcrm$ ./avs-pcc-encoder -c cfg/cfg_predict/C1-limitlossyG-lossyA-ai/Livox_01_all_in_one_1mm/r1/encoder.cfg \
     -i dataset/Livox_01_all_1mm-0000.ply \
     -b output/Livox_01_all_1mm-0000.bin \
     -r output/C1-limitlossyG-lossyA-ai_r1_Livox_01_all_1mm_enc.ply \
@@ -140,14 +141,13 @@ avs-pcc-pcem$ ./avs-pcc-encoder -c cfg/C1-limitlossyG-lossyA-ai/Livox_01_all_in_
     -mdf output/Livox_01_all_1mm.txt \
     > output/C1-limitlossyG-lossyA-ai_r1_Livox_01_all_1mm_enc.log
 
-avs-pcc-pcem$ ./avs-pcc-decoder -c cfg/C1-limitlossyG-lossyA-ai/Livox_01_all_in_one_1mm/r1/decoder.cfg \
+avs-pcc-pcrm$ ./avs-pcc-decoder -c cfg/cfg_predict/C1-limitlossyG-lossyA-ai/Livox_01_all_in_one_1mm/r1/decoder.cfg \
     -b output/Livox_01_all_1mm-0000.bin \
     -r output/C1-limitlossyG-lossyA-ai_r1_Livox_01_all_1mm_dec.ply \
-    -ftbc 1 \
     -mdf output/Livox_01_all_1mm.txt \
     > output/C1-limitlossyG-lossyA-ai_r1_Livox_01_all_1mm_dec.log
 
-avs-pcc-pcem$ ./avs-pcc-pc_evalue -c cfg/C1-limitlossyG-lossyA-ai/Livox_01_all_in_one_1mm/r1/pcerror.cfg \
+avs-pcc-pcrm$ ./avs-pcc-pc_evalue -c cfg/cfg_predict/C1-limitlossyG-lossyA-ai/Livox_01_all_in_one_1mm/r1/pcerror.cfg \
     -f1 dataset/Livox_01_all_1mm-0000.ply \
     -f2 output/C1-limitlossyG-lossyA-ai_r1_Livox_01_all_1mm_dec.ply\
     -ftbc 1 \

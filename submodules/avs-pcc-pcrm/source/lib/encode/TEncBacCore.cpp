@@ -60,11 +60,9 @@ TEncBacCore::TEncBacCore()
   : range(0)
   , code(0)
   , left_bits(0)
-  , stacked_ff(0)
   , pending_byte(0)
   , is_pending_byte(0)
-  , bitcounter(0)
-  , is_bitcount(0) {}
+  , stacked_ff(0) {}
 
 Void TEncBacCore::enc_sbac_init() {
   range = 0x1FF;
@@ -97,8 +95,8 @@ Void TEncBacCore::init_geometry_contexts(aec_t* p_aec) {
 Void TEncBacCore::init_attribute_contexts(aec_t* p_aec, const bool& initDulatAttribute) {
   const uint16_t lg_pmps = ((QUARTER << LG_PMPS_SHIFTNO) - 1);
   //<attribute context initlization
-  uint16_t* d = (uint16_t*)&p_aec->attribute_ctx_set;
   uint16_t v = MAKE_CONTEXT(lg_pmps, 0, 0);
+  uint16_t* d = (uint16_t*)&p_aec->attribute_ctx_set;
   int ctx_cnt = sizeof(attr_ctx_set_t) / sizeof(uint16_t);
 
   while (ctx_cnt-- != 0) {
@@ -201,10 +199,9 @@ Void TEncBacCore::bitstr_flush_bits(aec_t* p_aec) {
 Void TEncBacCore::bitstt_put_one_bit_and_remainder(aec_t* p_aec, const int b) {
   uint32_t N = 1 + p_aec->i_bits_to_follow;  // 总共输出的比特数
 
-  if (
-    N >
-    p_aec
-      ->num_left_flush_bits) { /* 编码的比特数超过当前码流字节中剩余的比特数
+  if (N >
+      p_aec
+        ->num_left_flush_bits) { /* 编码的比特数超过当前码流字节中剩余的比特数
                                     */
     int header_bits = p_aec->num_left_flush_bits;  // 当前码流最后一个字节剩余位的数量
     uint32_t header_byte = (1 << (header_bits - 1)) - (!b);  // 剩余位的填充值
@@ -475,17 +472,6 @@ Void TEncBacCore::sbac_write_unary_sym_ep(UInt32 sym, COM_BS* bs, aec_t* p_aec) 
       biari_encode_symbol_eq_prob_aec(p_aec, sym ? 0 : 1);
     } while (sym--);
   }
-}
-
-Void TEncBacCore::sbac_write_ue_ep(COM_BS* bs, UInt64 val, aec_t* p_aec) {
-  Int len = 0;
-  val++;
-  for (UInt64 nn = val >> 1; nn != 0; len++)
-    nn >>= 1;
-  for (Int i = 0; i < len; i++)
-    biari_encode_symbol_eq_prob_aec(p_aec, 0);
-  for (UInt64 m = 1ULL << len; m; m >>= 1)
-    biari_encode_symbol_eq_prob_aec(p_aec, !!(val & m));
 }
 
 //////////////////////////////////////////////////////////////////////////

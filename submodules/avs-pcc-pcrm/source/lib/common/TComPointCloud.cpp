@@ -88,6 +88,7 @@ Bool TComPointCloud::readFromFile(const string& fileName, const Bool geomOnly) {
   Bool isStart = false;
   Bool isVertex = false;
   Bool isAscii = true;
+  Bool inputAttrOrder = false;
   vector<AttributeReader> attributes;
   Int attrType = 0;
   unordered_map<string, int> multiAttrDataSize;  ///<This is used for multi attribute dataset
@@ -157,6 +158,9 @@ Bool TComPointCloud::readFromFile(const string& fileName, const Bool geomOnly) {
         ++attrIdx;
 
       attrType |= attr.setAttrType(propName);
+	  if (attrType == 71) {
+		  inputAttrOrder = true; // reflectance first
+	  }
       attributes.push_back(attr);
     } else if (tokens[0] == "end_header") {
       break;  ///< finish reading ply header
@@ -185,21 +189,35 @@ Bool TComPointCloud::readFromFile(const string& fileName, const Bool geomOnly) {
     this->addReflectances();
   }
   if (!isAscii) {
-    if ((attrType & AttributeReader::AttributeType::AT_COL)) {
-      m_numMulti_color = std::max(multiAttrDataSize["red"], multiAttrDataSize["r"]);
-      m_color.resize(m_numPoint * m_numMulti_color);
-    }
-    if ((attrType & AttributeReader::AttributeType::AT_REFLE)) {
-      m_numMulti_refl =
-        std::max(std::max(multiAttrDataSize["reflectance"], multiAttrDataSize["refl"]),
-                 multiAttrDataSize["refc"]);
-      m_refl.resize(m_numPoint * m_numMulti_refl);
-    }
+	  if (inputAttrOrder) {
+		  if ((attrType & AttributeReader::AttributeType::AT_REFLE)) {
+			  m_numMulti_refl =
+				  std::max(std::max(multiAttrDataSize["reflectance"], multiAttrDataSize["refl"]),
+					  multiAttrDataSize["refc"]);
+			  m_refl.resize(m_numPoint * m_numMulti_refl);
+		  }
+		  if ((attrType & AttributeReader::AttributeType::AT_COL)) {
+			  m_numMulti_color = std::max(multiAttrDataSize["red"], multiAttrDataSize["r"]);
+			  m_color.resize(m_numPoint * m_numMulti_color);
+		  }
+	  }
+	  else {
+		  if ((attrType & AttributeReader::AttributeType::AT_COL)) {
+			  m_numMulti_color = std::max(multiAttrDataSize["red"], multiAttrDataSize["r"]);
+			  m_color.resize(m_numPoint * m_numMulti_color);
+		  }
+		  if ((attrType & AttributeReader::AttributeType::AT_REFLE)) {
+			  m_numMulti_refl =
+				  std::max(std::max(multiAttrDataSize["reflectance"], multiAttrDataSize["refl"]),
+					  multiAttrDataSize["refc"]);
+			  m_refl.resize(m_numPoint * m_numMulti_refl);
+		  }
+	  }
     for (auto& attr : attributes) {
       attr.setMultiAttrTarget();
     }
   }
-    
+
   ///< read ply data
   TSize numPointFromeFile = 0;
   TSize numAttributes = attributes.size();
@@ -217,34 +235,61 @@ Bool TComPointCloud::readFromFile(const string& fileName, const Bool geomOnly) {
         Double data = atof(tokens[idx].c_str());
         m_pos[numPointFromeFile][idx] = data;
       }
-      //<color
-      if ((attrType & AttributeReader::AttributeType::AT_COL)) {
-        m_numMulti_color = std::max(multiAttrDataSize["red"], multiAttrDataSize["r"]);
-        m_color.resize(m_numMulti_color * m_numPoint);
-        for (int multilIdx = 0; multilIdx < m_numMulti_color; ++multilIdx)
-          for (int idx = 0; idx < 3; ++idx) {
-            UInt8 data = atoi(tokens[beginIdx].c_str());
-            int attrIdx = colorToIdx.at(attributes[beginIdx].propName);
-            m_color[numPointFromeFile * m_numMulti_color + multilIdx][attrIdx] = data;
-            ++beginIdx;
-          }
-      }
-      //<reflectances
-      if ((attrType & AttributeReader::AttributeType::AT_REFLE)) {
-        m_numMulti_refl =
-          std::max(std::max(multiAttrDataSize["reflectance"], multiAttrDataSize["refl"]),
-                   multiAttrDataSize["refc"]);
-        m_refl.resize(m_numMulti_refl * m_numPoint);
-        for (int multilIdx = 0; multilIdx < m_numMulti_refl; ++multilIdx) {
-          PC_REFL data = atoi(tokens[beginIdx++].c_str());
-          m_refl[numPointFromeFile * m_numMulti_refl + multilIdx] = data;
-        }
-      }
+	  if (inputAttrOrder) {
+		  //<reflectances
+		  if ((attrType & AttributeReader::AttributeType::AT_REFLE)) {
+			  m_numMulti_refl =
+				  std::max(std::max(multiAttrDataSize["reflectance"], multiAttrDataSize["refl"]),
+					  multiAttrDataSize["refc"]);
+			  m_refl.resize(m_numMulti_refl * m_numPoint);
+			  for (int multilIdx = 0; multilIdx < m_numMulti_refl; ++multilIdx) {
+				  PC_REFL data = atoi(tokens[beginIdx++].c_str());
+				  m_refl[numPointFromeFile * m_numMulti_refl + multilIdx] = data;
+			  }
+		  }
+		  //<color
+		  if ((attrType & AttributeReader::AttributeType::AT_COL)) {
+			  m_numMulti_color = std::max(multiAttrDataSize["red"], multiAttrDataSize["r"]);
+			  m_color.resize(m_numMulti_color * m_numPoint);
+			  for (int multilIdx = 0; multilIdx < m_numMulti_color; ++multilIdx)
+				  for (int idx = 0; idx < 3; ++idx) {
+					  UInt8 data = atoi(tokens[beginIdx].c_str());
+					  int attrIdx = colorToIdx.at(attributes[beginIdx].propName);
+					  m_color[numPointFromeFile * m_numMulti_color + multilIdx][attrIdx] = data;
+					  ++beginIdx;
+				  }
+		  }
+	  }
+	  else {
+		  //<color
+		  if ((attrType & AttributeReader::AttributeType::AT_COL)) {
+			  m_numMulti_color = std::max(multiAttrDataSize["red"], multiAttrDataSize["r"]);
+			  m_color.resize(m_numMulti_color * m_numPoint);
+			  for (int multilIdx = 0; multilIdx < m_numMulti_color; ++multilIdx)
+				  for (int idx = 0; idx < 3; ++idx) {
+					  UInt8 data = atoi(tokens[beginIdx].c_str());
+					  int attrIdx = colorToIdx.at(attributes[beginIdx].propName);
+					  m_color[numPointFromeFile * m_numMulti_color + multilIdx][attrIdx] = data;
+					  ++beginIdx;
+				  }
+		  }
+		  //<reflectances
+		  if ((attrType & AttributeReader::AttributeType::AT_REFLE)) {
+			  m_numMulti_refl =
+				  std::max(std::max(multiAttrDataSize["reflectance"], multiAttrDataSize["refl"]),
+					  multiAttrDataSize["refc"]);
+			  m_refl.resize(m_numMulti_refl * m_numPoint);
+			  for (int multilIdx = 0; multilIdx < m_numMulti_refl; ++multilIdx) {
+				  PC_REFL data = atoi(tokens[beginIdx++].c_str());
+				  m_refl[numPointFromeFile * m_numMulti_refl + multilIdx] = data;
+			  }
+		  }
+	  }
+
     } else {
       for (Int i = 0; i < numAttributes; i++) {
-        attributes[i].readMultiAttrFromBinary(plyFile,numPointFromeFile,m_color,m_refl);
+        attributes[i].readMultiAttrFromBinary(plyFile, numPointFromeFile, m_color, m_refl, geomOnly);
       }
-        
     }
 
     numPointFromeFile++;
@@ -254,7 +299,6 @@ Bool TComPointCloud::readFromFile(const string& fileName, const Bool geomOnly) {
   plyFile.close();
   return true;
 }
-
 
 Bool TComPointCloud::writeToFile(const string& fileName, const Bool isAscii) const {
   std::ofstream plyFile(fileName, ofstream::out | ofstream::binary);
@@ -283,9 +327,9 @@ Bool TComPointCloud::writeToFile(const string& fileName, const Bool isAscii) con
     plyFile << "property uchar green" << endl;
     plyFile << "property uchar blue" << endl;
     for (int multiIdx = 0; multiIdx < m_numMulti_color - 1; ++multiIdx) {
-      plyFile << "property uchar red" << multiIdx << endl;
-      plyFile << "property uchar green" << multiIdx << endl;
-      plyFile << "property uchar blue" << multiIdx << endl;
+      plyFile << "property uchar red" << multiIdx + 1 << endl;
+      plyFile << "property uchar green" << multiIdx + 1 << endl;
+      plyFile << "property uchar blue" << multiIdx + 1 << endl;
     }
   }
   if (m_refl.size() > 0) {
@@ -301,14 +345,14 @@ Bool TComPointCloud::writeToFile(const string& fileName, const Bool isAscii) con
     plyFile << fixed << setprecision(6);
     for (TSize i = 0; i < m_numPoint; i++) {
       plyFile << m_pos[i];
-      if (m_color.size() > 0){
+      if (m_color.size() > 0) {
         for (int multiIdx = 0; multiIdx < m_numMulti_color; ++multiIdx)
           plyFile << ' ' << static_cast<int>(m_color[i * m_numMulti_color + multiIdx][0]) << ' '
                   << static_cast<int>(m_color[i * m_numMulti_color + multiIdx][1]) << ' '
                   << static_cast<int>(m_color[i * m_numMulti_color + multiIdx][2]);
       }
-        
-      if (m_refl.size() > 0){
+
+      if (m_refl.size() > 0) {
         for (int multiIdx = 0; multiIdx < m_numMulti_refl; ++multiIdx)
           plyFile << ' ' << m_refl[i * m_numMulti_refl + multiIdx];
       }
@@ -362,14 +406,14 @@ Void TComPointCloud::computeColorRes(UInt& colorGolombNum, UInt outputDepth,
   colorGolombNum = kthIndex[index - 1];
 }
 
-Void TComPointCloud::computeReflRes(UInt& refGolombNum, UInt outputDepth,
+Void TComPointCloud::computeReflRes(UInt& reflGolombNum, UInt outputDepth,
                                     UInt& attrQuantParam) const {
   int index = outputDepth - (attrQuantParam / 8);
   index = std::max(index, 1);
-  if (index > 13) {  
-    refGolombNum = 7;
+  if (index > 13) {
+    reflGolombNum = 7;
   } else {
-    refGolombNum = kthIndex[index - 1];
+    reflGolombNum = kthIndex[index - 1];
   }
 }
 
@@ -449,7 +493,7 @@ PC_REFL& TComPointCloud::getReflectance(const TSize index, const TSize& multilId
 const vector<PC_REFL>& TComPointCloud::getReflectances() const {
   return m_refl;
 }
-vector <PC_REFL>& TComPointCloud::getReflectances() {
+vector<PC_REFL>& TComPointCloud::getReflectances() {
   return m_refl;
 }
 Void TComPointCloud::getMultiReflectances(const TSize index, vector<PC_REFL>& reflectances) {
@@ -511,15 +555,17 @@ Void TComPointCloud::addColors() {
 Void TComPointCloud::removeColors() {
   m_color.resize(0);
 }
-Void TComPointCloud::init(const size_t size, bool WithColor, bool WithRef) {
+
+Void TComPointCloud::init(const size_t size, size_t numMultiColor, size_t numMultiRefl,
+                          bool WithColor, bool WithRef) {
   setNumPoint(size);
   if (WithColor == true) {
-    addColors();
+    setNumMultilColor(numMultiColor);
   } else {
     removeColors();
   }
   if (WithRef == true) {
-    addReflectances();
+    setNumMultilRefl(numMultiRefl);
   } else {
     removeReflectances();
   }
@@ -527,32 +573,29 @@ Void TComPointCloud::init(const size_t size, bool WithColor, bool WithRef) {
 
 Void TComPointCloud::convertRGBToYUV() {
   for (auto& color : m_color) {
-      const uint8_t r = color[0];
-      const uint8_t g = color[1];
-      const uint8_t b = color[2];
-      const double y = TComClip(0., 255., std::round(0.212600 * r + 0.715200 * g + 0.072200 * b));
-      const double u =
-        TComClip(0., 255., std::round(-0.114572 * r - 0.385428 * g + 0.5 * b + 128.0));
-      const double v =
-        TComClip(0., 255., std::round(0.5 * r - 0.454153 * g - 0.045847 * b + 128.0));
-      color[0] = static_cast<uint8_t>(y);
-      color[1] = static_cast<uint8_t>(u);
-      color[2] = static_cast<uint8_t>(v);
+    const uint8_t r = color[0];
+    const uint8_t g = color[1];
+    const uint8_t b = color[2];
+    const double y = TComClip(0., 255., std::round(0.212600 * r + 0.715200 * g + 0.072200 * b));
+    const double u = TComClip(0., 255., std::round(-0.114572 * r - 0.385428 * g + 0.5 * b + 128.0));
+    const double v = TComClip(0., 255., std::round(0.5 * r - 0.454153 * g - 0.045847 * b + 128.0));
+    color[0] = static_cast<uint8_t>(y);
+    color[1] = static_cast<uint8_t>(u);
+    color[2] = static_cast<uint8_t>(v);
   }
 }
 
 Void TComPointCloud::convertYUVToRGB() {
   for (auto& color : m_color) {
-      const double y1 = color[0];
-      const double u1 = color[1] - 128.0;
-      const double v1 = color[2] - 128.0;
-      const double r = TComClip(0.0, 255.0, round(y1 + 1.57480 * v1));
-      const double g = TComClip(0.0, 255.0, round(y1 - 0.18733 * u1 - 0.46813 * v1));
-      const double b = TComClip(0.0, 255.0, round(y1 + 1.85563 * u1));
-      color[0] = static_cast<uint8_t>(r);
-      color[1] = static_cast<uint8_t>(g);
-      color[2] = static_cast<uint8_t>(b);
-
+    const double y1 = color[0];
+    const double u1 = color[1] - 128.0;
+    const double v1 = color[2] - 128.0;
+    const double r = TComClip(0.0, 255.0, round(y1 + 1.57480 * v1));
+    const double g = TComClip(0.0, 255.0, round(y1 - 0.18733 * u1 - 0.46813 * v1));
+    const double b = TComClip(0.0, 255.0, round(y1 + 1.85563 * u1));
+    color[0] = static_cast<uint8_t>(r);
+    color[1] = static_cast<uint8_t>(g);
+    color[2] = static_cast<uint8_t>(b);
   }
 }
 
@@ -682,7 +725,7 @@ bool TComReflectanceTransfer(const TComPointCloud& pointCloudOrg, double geomQua
   pointCloudRec.addReflectances();
   pc_evalue::KdTree kdtreeOrg(pointCloudOrg.positions(), 10);
   pc_evalue::KdTree kdtreeRec(pointCloudRec.positions(), 10);
-  std::vector < std::vector<std::vector<PC_REFL>>> referReflectances1;
+  std::vector<std::vector<std::vector<PC_REFL>>> referReflectances1;
 
   // For each point of the origin point cloud,
   // find its nearest neighbor in the reconstructed cloud
@@ -762,8 +805,7 @@ bool TComReflectanceTransfer(const TComPointCloud& pointCloudOrg, double geomQua
         pointCloudRec.setReflectance(i, reflectanceAvg, multiIdx);
       } else {
         double avgAttr = 0.0;
-        for (const auto reflectance :
-             referReflectances1[i][multiIdx]) {
+        for (const auto reflectance : referReflectances1[i][multiIdx]) {
           avgAttr += reflectance;
         }
         avgAttr = TComClip(double(std::numeric_limits<PC_REFL>::min()),
@@ -776,7 +818,7 @@ bool TComReflectanceTransfer(const TComPointCloud& pointCloudOrg, double geomQua
   return true;
 }
 
-int recolour(const TComPointCloud& pointCloudOrg, float geomQuanStep, V3<int> quanOffset,
+int recolor(const TComPointCloud& pointCloudOrg, float geomQuanStep, V3<int> quanOffset,
              TComPointCloud* pointCloudRec) {
   PC_VC3 doubleQuanOffset;
   for (int k = 0; k < 3; k++)

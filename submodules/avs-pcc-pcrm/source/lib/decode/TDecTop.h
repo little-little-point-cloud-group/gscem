@@ -52,10 +52,10 @@ private:
   TComPointCloud m_pointCloudRecon;  ///< output point cloud
 
   TDecGeometry m_geomDecoder;   ///< geometry decoder
+  TDecAttribute m_attrDecoder;  ///< attribute decoder
   TDecBacTop m_decBac;          ///< AVS3 binary arithmetic decoder
   TDecBacTop m_decBacDual;      ///< AVS3 binary arithmetic decoder
-  TDecAttribute m_attrDecoder;  ///< attribute decoder
-  int m_frameID;
+  TComBufferChunk m_bufferChunk;///< bitstream buffer chunk
   int multiID;
 
 public:
@@ -63,12 +63,11 @@ public:
   ~TDecTop() = default;
 
   Int decode();  ///< main decoding function
-  Void getSingleAttrAPs(const SequenceParameterSet& sps, AttributeParameterSet& aps,
-                        const int& attrIdx, const int& multilIdx);
+
   Void getMultiAttriGroupNum(AttributeParameterSet& aps);
-  Int getFrameNum() {
-    return m_numOfFrames;
-  }  // get m_numOfFrames
+  //Int getFrameNum() {
+  //  return m_numOfFrames;
+  //}  // get m_numOfFrames
   Int getstartFrame() {
     return m_startFrame;
   }  // get m_startFrame
@@ -100,29 +99,41 @@ public:
     }
     return (numDigits);
   }
-  // update m_bitstreamFileName & m_reconFileName based on file number
-  void updateIOFileName(Int i_frameNum, Int numDigits) {
+
+  // update m_bitstreamFileName 
+  void updateBinFileName(Int i_frameNum, Int numDigits, UInt m_numOfBins) {
     assert(numDigits > 0);
 
     char* c_frameNum = new char[numDigits + 1];
     snprintf(c_frameNum, numDigits + 1, "%0*d", numDigits, i_frameNum);
 
-    if (m_bitstreamFileName.length() > 0)
+    if (m_numOfBins > 1 && m_bitstreamFileName.length() > 0)
       m_bitstreamFileName.replace(m_bitstreamFileName.find_last_of('.') - numDigits, numDigits,
                                   c_frameNum);
+
+    delete[] c_frameNum;
+  }
+
+    // update m_reconFileName
+  void updateReconFileName(Int i_frameNum, Int numDigits, UInt m_numOfBins) {
+    assert(numDigits > 0);
+
+    char* c_frameNum = new char[numDigits + 1];
+    snprintf(c_frameNum, numDigits + 1, "%0*d", numDigits, i_frameNum);
+
     if (m_reconFileName.length() > 0)
       m_reconFileName.replace(m_reconFileName.find_last_of('.') - numDigits, numDigits, c_frameNum);
 
     delete[] c_frameNum;
   }
+
   // reset m_reconFileName based on file number
   void resetReconFileName(Int i_frameNum, Int numDigits) {
-    if (m_numOfFrames <= 1)
+    if (numDigits == 0)
       return;
     char* c_frameNum = new char[numDigits + 1];
     snprintf(c_frameNum, numDigits + 1, "%0*d", numDigits, i_frameNum);
     if (m_reconFileName.length() > 0) {
-      assert(numDigits > 0);
       string add = "-" + string(c_frameNum);
       m_reconFileName.insert(m_reconFileName.find_last_of('.'), add);
     }
@@ -141,7 +152,7 @@ public:
 
 private:
   Void decompressAndDecodePartition();
-  Void geomPostprocessingAndDequantization(const Float& qs);
+  Void geomPostprocessingAndDequantization();
   Void decompressAttribute();
   Void decompressColor();
   Void decompressReflectance();

@@ -1,0 +1,15 @@
+.DS_Store
+.vscode/
+cfg/__pycache__
+*.code-workspace
+data/
+build
+cfg/cfg_predict
+cfg/cfg_transform
+submodules/*
+!scripts/prep_data.sh
+!scripts/launch.sh
+!submodules/mpeg-gsc-tools/
+!submodules/mpeg-gsc-metrics/
+!submodules/avs-pcc-pcrm/
+!submodules/README.md

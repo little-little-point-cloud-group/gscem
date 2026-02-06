@@ -1,0 +1,231 @@
+bartender:
+  peakvalue: 30000
+  category: cat1
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
+  geom_im_qtbt_m: 0
+  geom_planar_eligible: 0
+  geom_lcu_nzlg2: 0
+  geom_lcu_node_depth: 3
+  geom_tree_type: 1
+  geom_tree_sort_mode: 1
+  geom_tree_density_low: 1e-9
+  geom_tree_density_high: 1e-8
+  geom_max_tree_size_log2_minus8: 3
+  refl_output_depth: 32
+  refl_init_golomb_offset: 3
+  pred_fixed_point_frac_bit: 30
+  axis_bias_minus1: 0
+  transform: 1
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
+  deadZone_Len    : 0
+  refl_init_pred_trans_ratio    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 6
+  multi_attr_group_id: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55
+  
+cinema:
+  peakvalue: 30000
+  category: cat1
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
+  geom_im_qtbt_m: 0
+  geom_planar_eligible: 0
+  geom_lcu_nzlg2: 0
+  geom_lcu_node_depth: 3
+  geom_tree_type: 1
+  geom_tree_sort_mode: 1
+  geom_tree_density_low: 1e-9
+  geom_tree_density_high: 1e-8
+  geom_max_tree_size_log2_minus8: 3
+  refl_output_depth: 32
+  refl_init_golomb_offset: 3
+  pred_fixed_point_frac_bit: 30
+  axis_bias_minus1: 0
+  transform: 1
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
+  deadZone_Len    : 0
+  refl_init_pred_trans_ratio    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 6
+  multi_attr_group_id: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55
+  
+photo:
+  peakvalue: 30000
+  category: cat1
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
+  geom_im_qtbt_m: 0
+  geom_planar_eligible: 0
+  geom_lcu_nzlg2: 0
+  geom_lcu_node_depth: 3
+  geom_tree_type: 1
+  geom_tree_sort_mode: 1
+  geom_tree_density_low: 1e-9
+  geom_tree_density_high: 1e-8
+  geom_max_tree_size_log2_minus8: 3
+  refl_output_depth: 32
+  refl_init_golomb_offset: 3
+  pred_fixed_point_frac_bit: 30
+  axis_bias_minus1: 0
+  transform: 1
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
+  deadZone_Len    : 0
+  refl_init_pred_trans_ratio    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 6
+  multi_attr_group_id: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55
+  
+toy:
+  peakvalue: 30000
+  category: cat1
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
+  geom_im_qtbt_m: 0
+  geom_planar_eligible: 0
+  geom_lcu_nzlg2: 0
+  geom_lcu_node_depth: 3
+  geom_tree_type: 1
+  geom_tree_sort_mode: 1
+  geom_tree_density_low: 1e-9
+  geom_tree_density_high: 1e-8
+  geom_max_tree_size_log2_minus8: 3
+  refl_output_depth: 32
+  refl_init_golomb_offset: 3
+  pred_fixed_point_frac_bit: 30
+  axis_bias_minus1: 0
+  transform: 1
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
+  deadZone_Len    : 0
+  refl_init_pred_trans_ratio    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 6
+  multi_attr_group_id: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55
+  
+bicycle:
+  peakvalue: 30000
+  category: cat2
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
+  geom_im_qtbt_m: 0
+  geom_planar_eligible: 0
+  geom_lcu_nzlg2: 0
+  geom_lcu_node_depth: 3
+  geom_tree_type: 1
+  geom_tree_sort_mode: 1
+  geom_tree_density_low: 1e-9
+  geom_tree_density_high: 1e-8
+  geom_max_tree_size_log2_minus8: 3
+  refl_output_depth: 32
+  refl_init_golomb_offset: 3
+  pred_fixed_point_frac_bit: 30
+  axis_bias_minus1: 0
+  transform: 1
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
+  deadZone_Len    : 0
+  refl_init_pred_trans_ratio    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 6
+  multi_attr_group_id: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55
+  
+garden:
+  peakvalue: 30000
+  category: cat2
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
+  geom_im_qtbt_m: 0
+  geom_planar_eligible: 0
+  geom_lcu_nzlg2: 0
+  geom_lcu_node_depth: 3
+  geom_tree_type: 1
+  geom_tree_sort_mode: 1
+  geom_tree_density_low: 1e-9
+  geom_tree_density_high: 1e-8
+  geom_max_tree_size_log2_minus8: 3
+  refl_output_depth: 32
+  refl_init_golomb_offset: 3
+  pred_fixed_point_frac_bit: 30
+  axis_bias_minus1: 0
+  transform: 1
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
+  deadZone_Len    : 0
+  refl_init_pred_trans_ratio    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 6
+  multi_attr_group_id: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55
+  
+alley:
+  peakvalue: 30000
+  category: cat2
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
+  geom_im_qtbt_m: 0
+  geom_planar_eligible: 0
+  geom_lcu_nzlg2: 0
+  geom_lcu_node_depth: 3
+  geom_tree_type: 1
+  geom_tree_sort_mode: 1
+  geom_tree_density_low: 1e-9
+  geom_tree_density_high: 1e-8
+  geom_max_tree_size_log2_minus8: 3
+  refl_output_depth: 32
+  refl_init_golomb_offset: 3
+  pred_fixed_point_frac_bit: 30
+  axis_bias_minus1: 0
+  transform: 1
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
+  deadZone_Len    : 0
+  refl_init_pred_trans_ratio    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 6
+  multi_attr_group_id: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55
+  
+rocket:
+  peakvalue: 30000
+  category: cat2
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
+  geom_im_qtbt_m: 0
+  geom_planar_eligible: 0
+  geom_lcu_nzlg2: 0
+  geom_lcu_node_depth: 3
+  geom_tree_type: 1
+  geom_tree_sort_mode: 1
+  geom_tree_density_low: 1e-9
+  geom_tree_density_high: 1e-8
+  geom_max_tree_size_log2_minus8: 3
+  refl_output_depth: 32
+  refl_init_golomb_offset: 3
+  pred_fixed_point_frac_bit: 30
+  axis_bias_minus1: 0
+  transform: 1
+  transform_segment_size  : 0
+  coeff_length_control_log2_minus8: 9
+  refl_reorder_mode: 1
+  deadZone_Len    : 0
+  refl_init_pred_trans_ratio    : 2
+  qp_offset: 0
+  attr_trans_qp_delta: 32
+  k_frac_bit   : 6
+  multi_attr_group_id: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55

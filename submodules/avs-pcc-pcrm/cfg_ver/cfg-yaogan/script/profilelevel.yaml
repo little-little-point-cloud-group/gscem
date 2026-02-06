@@ -1,0 +1,51 @@
+cat1-vox15plus:
+  profile_id              : 2
+  level_id                : 4
+  frame_rate_code         : 0
+  
+cat1-vox14:
+  profile_id              : 2
+  level_id                : 4
+  frame_rate_code         : 0
+
+cat1-vox13:
+  profile_id              : 2
+  level_id                : 4
+  frame_rate_code         : 0
+
+cat1-vox12:
+  profile_id              : 2
+  level_id                : 4
+  frame_rate_code         : 0
+
+cat1-vox11:
+  profile_id              : 2
+  level_id                : 4
+  frame_rate_code         : 0
+
+cat1-vox10:
+  profile_id              : 2
+  level_id                : 4
+  frame_rate_code         : 0
+
+cat1-A:
+  profile_id              : 2
+  level_id                : 4
+  frame_rate_code         : 0
+
+cat2-frame-f:
+  profile_id              : 2
+  level_id                : 1
+  frame_rate_code         : 1
+
+cat2-frame-l:
+  profile_id              : 2
+  level_id                : 2
+  frame_rate_code         : 2
+
+cat3:
+  profile_id              : 2
+  level_id                : 5
+  frame_rate_code         : 3
+
+...

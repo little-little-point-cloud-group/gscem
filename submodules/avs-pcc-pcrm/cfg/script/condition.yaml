@@ -3,10 +3,18 @@
 C1-limitlossyG-lossyA-ai:
   encoder:
     ascii_write_flag        : 1
+    split_bin_flag          : 0
+    profile_id              : '{}'
+    level_id                : '{}'
+    frame_rate_code         : '{}'
+    attr_present_flag       : 1
     color_transform_flag    : 1
     slice_flag              : 1
-    slice_division_mode     : '{}'
     slice_point_max_numlg2  : 20
+    geom_quant_step         : '{}'
+    geom_quant_step_significand: '{}'
+    geom_quant_step_exponent: '{}'
+    save_state_flag         : 0
     lcu_dependency_flag     : 0
     geom_lcu_nzlg2          : '{}'
     geom_lcu_node_depth     : '{}'
@@ -14,40 +22,55 @@ C1-limitlossyG-lossyA-ai:
     geom_tree_sort_mode     : '{}'
     geom_tree_density_low   : '{}'
     geom_tree_density_high  : '{}'
-    log2_geom_tree_max_size_minus8: '{}'
+    geom_max_tree_size_log2_minus8: '{}'
     geom_remove_dup_flag    : 1
-    geom_quant_step         : '{}'
+    geom_im_qtbt_flag       : '{}'
     geom_im_qtbt_k          : '{}'
     geom_im_qtbt_m          : '{}'
-    geom_ocmap_search_range_edge_log2    : 8
+    occupancy_search_range_log2: 8
     geom_planar_eligible    : '{}'
     color_quant_param       : '{}'
     refl_quant_param        : '{}'
+    cross_comp_pred         : 0
     nearest_pred_param1     : '{}'
     nearest_pred_param2     : '{}'
-    axis_bias               : '{}'
+    axis_bias_minus1        : '{}'
     color_output_depth      : '{}'
     refl_output_depth       : '{}'
     color_init_golomb_offset: '{}'
     refl_init_golomb_offset : '{}'
     chroma_qp_offset_cb     : 0
     chroma_qp_offset_cr     : 0
-    Qp_Offset_DC            : '{}'
-    Qp_Offset_AC            : '{}'
-    chroma_Qp_Offset_DC     : '{}'
-    chroma_Qp_Offset_AC     : '{}'
+    qp_offset_dc            : '{}'
+    qp_offset_ac            : '{}'
+    chroma_qp_offset_dc     : '{}'
+    chroma_qp_offset_ac     : '{}'
     transform               : '{}'
-    refl_max_transform_number    : '{}'
-    color_max_transform_number    : '{}'
-    log2_max_number_coefficients_minus8 : '{}'
-    log2_coeff_length_control_minus8: '{}'
+    transform_segment_size  : '{}'
+    refl_max_transform_number: '{}'
+    color_max_transform_number: '{}'
+    max_number_neighbours_log2_minus7: '{}'
+    max_number_coefficients_log2_minus8: '{}'
+    coeff_length_control_log2_minus8: '{}'
     color_reorder_mode      : '{}'
-    ref_reorder_mode        : '{}'
-    ref_group_predict       : '{}'
+    refl_reorder_mode       : '{}'
+    refl_group_predict      : '{}'
+    pred_fixed_point_frac_bit: '{}'
+    attr_trans_qp_delta     : '{}'
     attr_encode_order       : '{}'
     cross_attr_type_pred    : '{}'
     cross_attr_type_pred_param1 : '{}'
     cross_attr_type_pred_param2 : '{}'
+    deadZone_Len            : '{}'
+    color_init_pred_trans_ratio: '{}'
+    refl_init_pred_trans_ratio: '{}'
+    color_qp_adjust_flag    : '{}' 
+    color_qp_adjust_scalar  : '{}'   
+    k_frac_bit              : '{}'
+    golomb_group_size_log2  : 4
+    pred_dist_weight_group_size_log2: '{}'
+    qp_offset               : '{}'
+    multi_attr_group_id     : '{}'
     metrics_enable          : 1
     symmetry                : 1
     cal_color               : 1
@@ -56,15 +79,14 @@ C1-limitlossyG-lossyA-ai:
     multineighbour_mode     : 1
     show_hausdorff          : 1
     peakvalue               : '{}'
-    deadZone_Len            : '{}'
-    ref_init_Pred_Trans_Ratio   : '{}'
-    log2_golomb_group_size  : 4
-    log2_pred_dist_weight_group_size: '{}'
-    refl_QP_offset: '{}'
-    
+    geom_target_bpp         : 0
+    attr_target_bpp         : 0
+
   decoder:
     ascii_write_flag        : 1
     color_transform_flag    : 1
+    bins_to_be_decoded      : 1
+
 
   pcerror:
     symmetry                : 1
@@ -80,10 +102,18 @@ C1-limitlossyG-lossyA-ai:
 C2-losslessG-lossyA-ai:
   encoder:
     ascii_write_flag        : 1
+    split_bin_flag          : 0
+    profile_id              : '{}'
+    level_id                : '{}'
+    frame_rate_code         : '{}'
+    attr_present_flag       : 1
     color_transform_flag    : 1
     slice_flag              : 1
-    slice_division_mode     : '{}'
     slice_point_max_numlg2  : 20
+    geom_quant_step         : '{}'
+    geom_quant_step_significand: '{}'
+    geom_quant_step_exponent: '{}'
+    save_state_flag         : 0
     lcu_dependency_flag     : 0
     geom_lcu_nzlg2          : '{}'
     geom_lcu_node_depth     : '{}'
@@ -91,41 +121,56 @@ C2-losslessG-lossyA-ai:
     geom_tree_sort_mode     : '{}'
     geom_tree_density_low   : '{}'
     geom_tree_density_high  : '{}'
-    log2_geom_tree_max_size_minus8: '{}'
+    geom_max_tree_size_log2_minus8: '{}'
     geom_remove_dup_flag    : 0
-    geom_quant_step         : '{}'
+    geom_im_qtbt_flag       : 1
     geom_im_qtbt_k          : '{}'
     geom_im_qtbt_m          : '{}'
-    geom_ocmap_search_range_edge_log2    : 8
-    geom_planar_eligible          : '{}'
+    occupancy_search_range_log2: 8
+    geom_planar_eligible    : '{}'
     color_quant_param       : '{}'
     refl_quant_param        : '{}'
+    cross_comp_pred         : 0
     nearest_pred_param1     : '{}'
     nearest_pred_param2     : '{}'
-    axis_bias               : '{}'
+    axis_bias_minus1        : '{}'
     color_output_depth      : '{}'
     refl_output_depth       : '{}'
     color_init_golomb_offset: '{}'
     refl_init_golomb_offset : '{}'
     chroma_qp_offset_cb     : 0
     chroma_qp_offset_cr     : 0
-    Qp_Offset_DC            : '{}'
-    Qp_Offset_AC            : '{}'
-    chroma_Qp_Offset_DC     : '{}'
-    chroma_Qp_Offset_AC     : '{}'
+    qp_offset_dc            : '{}'
+    qp_offset_ac            : '{}'
+    chroma_qp_offset_dc     : '{}'
+    chroma_qp_offset_ac     : '{}'
     transform               : '{}'
-    refl_max_transform_number    : '{}'
-    color_max_transform_number    : '{}'
-    log2_max_number_coefficients_minus8 : '{}'
-    log2_coeff_length_control_minus8: '{}'
+    transform_segment_size  : '{}'
+    refl_max_transform_number: '{}'
+    color_max_transform_number: '{}'
+    max_number_neighbours_log2_minus7: '{}'
+    max_number_coefficients_log2_minus8: '{}'
+    coeff_length_control_log2_minus8: '{}'
     coeff_length_control    : '{}'
     color_reorder_mode      : '{}'
-    ref_reorder_mode        : '{}'
-    ref_group_predict       : '{}'
+    refl_reorder_mode       : '{}'
+    refl_group_predict      : '{}'
+    pred_fixed_point_frac_bit: '{}'
+    attr_trans_qp_delta     : '{}'
     attr_encode_order       : '{}'
     cross_attr_type_pred    : '{}'
-    cross_attr_type_pred_param1 : '{}'
-    cross_attr_type_pred_param2 : '{}'
+    cross_attr_type_pred_param1: '{}'
+    cross_attr_type_pred_param2: '{}'
+    deadZone_Len            : '{}'
+    color_init_pred_trans_ratio: '{}'
+    refl_init_pred_trans_ratio: '{}'
+    golomb_group_size_log2  : 4
+    pred_dist_weight_group_size_log2: '{}'
+    color_qp_adjust_flag    : '{}' 
+    color_qp_adjust_scalar  : '{}'   
+    k_frac_bit              : '{}'
+    qp_offset               : '{}'
+    multi_attr_group_id     : '{}'
     metrics_enable          : 1
     symmetry                : 1
     cal_color               : 1
@@ -134,15 +179,11 @@ C2-losslessG-lossyA-ai:
     multineighbour_mode     : 1
     show_hausdorff          : 1
     peakvalue               : '{}'
-    deadZone_Len            : '{}'
-    ref_init_Pred_Trans_Ratio   : '{}'
-    log2_golomb_group_size  : 4
-    log2_pred_dist_weight_group_size: '{}'
-    refl_QP_offset: '{}'
-    
+
   decoder:
     ascii_write_flag        : 1
     color_transform_flag    : 1
+    bins_to_be_decoded      : 1
 
   pcerror:
     symmetry                : 1
@@ -158,10 +199,18 @@ C2-losslessG-lossyA-ai:
 C3-losslessG-limitlossyA-ai:
   encoder:
     ascii_write_flag        : 1
+    split_bin_flag          : 0
+    profile_id              : '{}'
+    level_id                : '{}'
+    frame_rate_code         : '{}'
+    attr_present_flag       : 1
     color_transform_flag    : 0
     slice_flag              : 1
-    slice_division_mode     : '{}'
     slice_point_max_numlg2  : 20
+    geom_quant_step         : '{}'
+    geom_quant_step_significand: '{}'
+    geom_quant_step_exponent: '{}'
+    save_state_flag         : 0
     lcu_dependency_flag     : 0
     geom_lcu_nzlg2          : '{}'
     geom_lcu_node_depth     : '{}'
@@ -169,18 +218,19 @@ C3-losslessG-limitlossyA-ai:
     geom_tree_sort_mode     : '{}'
     geom_tree_density_low   : '{}'
     geom_tree_density_high  : '{}'
-    log2_geom_tree_max_size_minus8: '{}'
+    geom_max_tree_size_log2_minus8: '{}'
     geom_remove_dup_flag    : 0
-    geom_quant_step         : '{}'
+    geom_im_qtbt_flag       : 1
     geom_im_qtbt_k          : '{}'
     geom_im_qtbt_m          : '{}'
-    geom_ocmap_search_range_edge_log2    : 8
-    geom_planar_eligible          : '{}'
+    occupancy_search_range_log2: 8
+    geom_planar_eligible    : '{}'
     color_quant_param       : '{}'
     refl_quant_param        : '{}'
+    cross_comp_pred         : 1
     nearest_pred_param1     : '{}'
     nearest_pred_param2     : '{}'
-    axis_bias               : '{}'
+    axis_bias_minus1        : '{}'
     color_output_depth      : '{}'
     refl_output_depth       : '{}'
     color_init_golomb_offset: '{}'
@@ -188,15 +238,30 @@ C3-losslessG-limitlossyA-ai:
     chroma_qp_offset_cb     : 0
     chroma_qp_offset_cr     : 0
     transform               : '{}'
-    log2_max_number_coefficients_minus8 : '{}'
-    log2_coeff_length_control_minus8: '{}'
+    transform_segment_size  : '{}'
+    trans_res_layer     : '{}'
+    max_number_neighbours_log2_minus7: '{}'
+    max_number_coefficients_log2_minus8: '{}'
+    coeff_length_control_log2_minus8: '{}'
     color_reorder_mode      : '{}'
-    ref_reorder_mode        : '{}'
-    ref_group_predict       : '{}'
+    refl_reorder_mode       : '{}'
+    refl_group_predict      : '{}'
+    pred_fixed_point_frac_bit: '{}'
+    attr_trans_qp_delta     : '{}'
     attr_encode_order       : '{}'
     cross_attr_type_pred    : '{}'
-    cross_attr_type_pred_param1 : '{}'
-    cross_attr_type_pred_param2 : '{}'
+    cross_attr_type_pred_param1: '{}'
+    cross_attr_type_pred_param2: '{}'
+    deadZone_Len            : '{}'
+    color_init_pred_trans_ratio: '{}'
+    refl_init_pred_trans_ratio: '{}'
+    golomb_group_size_log2  : 4
+    pred_dist_weight_group_size_log2: '{}'
+    color_qp_adjust_flag    : '{}' 
+    color_qp_adjust_scalar  : '{}'   
+    k_frac_bit              : '{}'
+    qp_offset               : '{}'
+    multi_attr_group_id     : '{}'
     metrics_enable          : 1
     symmetry                : 1
     cal_color               : 1
@@ -205,15 +270,11 @@ C3-losslessG-limitlossyA-ai:
     multineighbour_mode     : 1
     show_hausdorff          : 1
     peakvalue               : '{}'
-    deadZone_Len            : '{}'
-    ref_init_Pred_Trans_Ratio   : '{}'
-    log2_golomb_group_size  : 4
-    log2_pred_dist_weight_group_size: '{}'
-    refl_QP_offset: '{}'
-    
+
   decoder:
     ascii_write_flag        : 1
     color_transform_flag    : 0
+    bins_to_be_decoded      : 1
 
   pcerror:
     symmetry                : 1
@@ -229,10 +290,18 @@ C3-losslessG-limitlossyA-ai:
 C4-losslessG-losslessA-ai:
   encoder:
     ascii_write_flag        : 1
+    split_bin_flag          : 0
+    profile_id              : '{}'
+    level_id                : '{}'
+    frame_rate_code         : '{}'
+    attr_present_flag       : 1
     color_transform_flag    : 0
     slice_flag              : 1
-    slice_division_mode     : '{}'
     slice_point_max_numlg2  : 20
+    geom_quant_step         : '{}'
+    geom_quant_step_significand: '{}'
+    geom_quant_step_exponent: '{}'
+    save_state_flag         : 0
     lcu_dependency_flag     : 0
     geom_lcu_nzlg2          : '{}'
     geom_lcu_node_depth     : '{}'
@@ -240,18 +309,19 @@ C4-losslessG-losslessA-ai:
     geom_tree_sort_mode     : '{}'
     geom_tree_density_low   : '{}'
     geom_tree_density_high  : '{}'
-    log2_geom_tree_max_size_minus8: '{}'
+    geom_max_tree_size_log2_minus8: '{}'
     geom_remove_dup_flag    : 0
-    geom_quant_step         : '{}'
+    geom_im_qtbt_flag       : 1
     geom_im_qtbt_k          : '{}'
     geom_im_qtbt_m          : '{}'
-    geom_ocmap_search_range_edge_log2    : 8
-    geom_planar_eligible          : '{}'
+    occupancy_search_range_log2: 8
+    geom_planar_eligible    : '{}'
     color_quant_param       : '{}'
     refl_quant_param        : '{}'
+    cross_comp_pred         : 1
     nearest_pred_param1     : '{}'
     nearest_pred_param2     : '{}'
-    axis_bias               : '{}'
+    axis_bias_minus1        : '{}'
     color_output_depth      : '{}'
     refl_output_depth       : '{}'
     color_init_golomb_offset: '{}'
@@ -259,15 +329,29 @@ C4-losslessG-losslessA-ai:
     chroma_qp_offset_cb     : 0
     chroma_qp_offset_cr     : 0
     transform               : '{}'
-    log2_max_number_coefficients_minus8 : '{}'
-    log2_coeff_length_control_minus8: '{}'
+    transform_segment_size  : '{}'
+    trans_res_layer         : '{}'
+    max_number_neighbours_log2_minus7: '{}'
+    max_number_coefficients_log2_minus8: '{}'
+    coeff_length_control_log2_minus8: '{}'
     color_reorder_mode      : '{}'
-    ref_reorder_mode        : '{}'
-    ref_group_predict       : '{}'
+    refl_reorder_mode       : '{}'
+    refl_group_predict      : '{}'
+    pred_fixed_point_frac_bit: '{}'
+    attr_trans_qp_delta     : '{}'
     attr_encode_order       : '{}'
     cross_attr_type_pred    : '{}'
-    cross_attr_type_pred_param1 : '{}'
-    cross_attr_type_pred_param2 : '{}'
+    cross_attr_type_pred_param1: '{}'
+    cross_attr_type_pred_param2: '{}'
+    deadZone_Len            : '{}'
+    color_init_pred_trans_ratio: '{}'
+    refl_init_pred_trans_ratio: '{}'
+    golomb_group_size_log2  : 4
+    pred_dist_weight_group_size_log2: '{}'
+    color_qp_adjust_flag    : '{}' 
+    color_qp_adjust_scalar  : '{}'   
+    k_frac_bit              : '{}'
+    multi_attr_group_id     : '{}'
     metrics_enable          : 1
     symmetry                : 1
     cal_color               : 1
@@ -277,14 +361,11 @@ C4-losslessG-losslessA-ai:
     multineighbour_mode     : 1
     show_hausdorff          : 1
     peakvalue               : '{}'
-    deadZone_Len            : '{}'
-    ref_init_Pred_Trans_Ratio   : '{}' 
-    log2_golomb_group_size  : 4
-    log2_pred_dist_weight_group_size: '{}'
-    
+
   decoder:
     ascii_write_flag        : 1
     color_transform_flag    : 0
+    bins_to_be_decoded      : 1
 
   pcerror:
     symmetry                : 1

@@ -53,8 +53,6 @@ public:
   UInt32 stacked_ff;
   UInt32 pending_byte;
   UInt32 is_pending_byte;
-  UInt32 bitcounter;
-  UInt8 is_bitcount;
 
 public:
   TEncBacCore();
@@ -77,7 +75,6 @@ public:
   Void biari_encode_symbols_eq_prob_aec(aec_t* p_aec, uint32_t val, int len);
   Void enc_sbac_finish(COM_BS* bsw);
   Void sbac_write_unary_sym_ep(UInt32 sym, COM_BS* bs, aec_t* p_aec);
-  Void sbac_write_ue_ep(COM_BS* bs, UInt64 val, aec_t* p_aec);
 
   ///< bypass encoder
   Void com_bsw_init(COM_BS* bs, UInt8* buf, UInt8* buftmp, Int size, COM_BS_FN_FLUSH fn_flush);

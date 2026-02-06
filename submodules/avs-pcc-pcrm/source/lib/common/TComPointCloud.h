@@ -51,14 +51,29 @@ typedef Int32 PC_REFL;
 typedef V3<Double> PC_VC3;
 typedef V3<Int64> PC_POS_INT;
 
-struct colorNeighborSet {
-  PC_POS pos;
-  PC_COL color;
+struct predictOptParams {
+  int colorQP;
+  int maxNumOfNeighbours;
+  bool minNeighborDisFlag;
+  int64_t minNeighborDis;
+  Int reflThreshold;
+  UInt predFixedPointFracBit;
+  int axisBias;
+  bool colorCrossAttrTypePred;
+  bool colorUpdateFlag;
+  bool reflCrossAttrTypePred;
+  bool reflUpdateFlag;
+  V3<int64_t> reflectanceDistWeight;
+  int64_t curReflWithCoef;
+  V3<int64_t> curColorWithCoef;
 };
 
-struct reflNeighborSet {
+struct neighborSet {
   PC_POS pos;
   PC_REFL refl;
+  PC_COL color;
+  uint64_t reflWithCoef;
+  V3<int64_t> colorWithCoef;
 };
 
 struct multiReflNeighborSet {
@@ -70,16 +85,6 @@ struct attrNeighborSet {
   PC_POS pos;
   PC_REFL refl;
   PC_COL color;
-};
-
-struct reflWithCoefNeighborSet {
-  PC_REFL refl;
-  uint64_t reflWithCoef;
-};
-
-struct colorWithCoefNeighborSet {
-  PC_COL color;
-  V3<int64_t> colorWithCoef;
 };
 
 /**
@@ -106,7 +111,7 @@ private:
 public:
   TComPointCloud() = default;
   ~TComPointCloud() = default;
-  ///< common 
+  ///< common
   PC_POS& operator[](const TSize i);
   const PC_POS& operator[](const TSize i) const;
   const TSize& getNumPoint() const;
@@ -121,7 +126,8 @@ public:
   bool hasColors() const;
   void addColors();
   void removeColors();
-  Void init(const size_t size, bool WithColor, bool WithRef);
+  Void init(const size_t size, size_t numMultiColor, size_t numMultiRefl, bool WithColor,
+            bool WithRef);
   Void convertRGBToYUV();
   Void convertYUVToRGB();
   Bool readFromFile(const string& fileName, const Bool geomOnly = false);
@@ -132,13 +138,13 @@ public:
   Void computeLcuBoundingBox(PC_POS& boxMin, PC_POS& boxMax, UInt pointIdxBegin,
                              UInt pointIdxEnd) const;
   Void computeColorRes(UInt& colorGolombNum, UInt outputDepth, UInt& attrQuantParam) const;
-  Void computeReflRes(UInt& refGolombNum, UInt outputDepth, UInt& attrQuantParam) const;
+  Void computeReflRes(UInt& reflGolombNum, UInt outputDepth, UInt& attrQuantParam) const;
 
   PC_COL getColor(const TSize index, const TSize& multilIdx) const;
   PC_COL& getColor(const TSize index, const TSize& multilIdx);
   const vector<PC_COL>& getColors() const;
   vector<PC_COL>& getColors();
-  Void getMultiColors(const TSize index, vector<PC_COL>& colors); 
+  Void getMultiColors(const TSize index, vector<PC_COL>& colors);
   Void setColor(const TSize index, const V3<UInt8> color, const TSize& multilIdx);
   Void setMultiColors(const TSize index, const vector<PC_COL> colors);
   Void setColors(vector<PC_COL> colors);
@@ -201,10 +207,9 @@ private:
   Void* m_target;
   Int m_dataTypeTarget;
   UInt8 m_bytesTarget;
-  
+
   UInt8 m_bytesSource;
   TComPointCloud* m_pc;
-
 
 public:
   AttributeReader(TComPointCloud* pc)
@@ -267,7 +272,8 @@ public:
     if (m_target == nullptr)
       return;
 
-    switch (m_dataTypeTarget)  ///< target can only be double, int16, int32, uint16 or uint8 for now.
+    switch (
+      m_dataTypeTarget)  ///< target can only be double, int16, int32, uint16 or uint8 for now.
     {
     case DT_FLOAT64: {
       *(Double*)(m_target) = (Double)data;
@@ -398,161 +404,210 @@ public:
     m_target = (TChar*)m_target + m_bytesTarget;  ///< pointer move forward to next
   }
 
-  Void readMultiAttrFromBinary(istream& plyFile, const int& pointIndex,
-                               vector<PC_COL>& m_color,
-                               vector<PC_REFL>& m_refl) {
+  Void readMultiAttrFromBinary(istream& plyFile, const int& pointIndex, vector<PC_COL>& m_color,
+                               vector<PC_REFL>& m_refl, const Bool geomOnly) {
     switch (m_dataTypeSource) {
     case DT_FLOAT64: {
       Double t;
       plyFile.read((TChar*)(&t), m_bytesSource);
-      if (propName == "red" || propName == "r") {
-        m_color[pointIndex][0] = t;
-      } else if (propName == "green" || propName == "g") {
-        m_color[pointIndex][1] = t;
-      } else if (propName == "blue" || propName == "b") {
-        m_color[pointIndex][2] = t;
-      } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
-        m_refl[pointIndex] = t;
-      } else if (propName == "x" || propName == "y" || propName == "z")
-        setDataToTarget(t);
-      
+      if (geomOnly) {
+        if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      } else {
+        if (propName == "red" || propName == "r") {
+          m_color[pointIndex][0] = t;
+        } else if (propName == "green" || propName == "g") {
+          m_color[pointIndex][1] = t;
+        } else if (propName == "blue" || propName == "b") {
+          m_color[pointIndex][2] = t;
+        } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
+          m_refl[pointIndex] = t;
+        } else if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      }
+
       break;
     }
     case DT_FLOAT32: {
       Float t;
       plyFile.read((TChar*)(&t), m_bytesSource);
-      if (propName == "red" || propName == "r") {
-        m_color[pointIndex][0] = t;
-      } else if (propName == "green" || propName == "g") {
-        m_color[pointIndex][1] = t;
-      } else if (propName == "blue" || propName == "b") {
-        m_color[pointIndex][2] = t;
-      } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
-        m_refl[pointIndex] = t;
-      } else if (propName == "x" || propName == "y" || propName == "z")
-        setDataToTarget(t);
+      if (geomOnly) {
+        if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      } else {
+        if (propName == "red" || propName == "r") {
+          m_color[pointIndex][0] = t;
+        } else if (propName == "green" || propName == "g") {
+          m_color[pointIndex][1] = t;
+        } else if (propName == "blue" || propName == "b") {
+          m_color[pointIndex][2] = t;
+        } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
+          m_refl[pointIndex] = t;
+        } else if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      }
       break;
     }
     case DT_INT64: {
       Int64 t;
       plyFile.read((TChar*)(&t), m_bytesSource);
-      if (propName == "red" || propName == "r") {
-        m_color[pointIndex][0] = t;
-      } else if (propName == "green" || propName == "g") {
-        m_color[pointIndex][1] = t;
-      } else if (propName == "blue" || propName == "b") {
-        m_color[pointIndex][2] = t;
-      } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
-        m_refl[pointIndex] = t;
-      } else if (propName == "x" || propName == "y" || propName == "z")
-        setDataToTarget(t);
+      if (geomOnly) {
+        if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      } else {
+        if (propName == "red" || propName == "r") {
+          m_color[pointIndex][0] = t;
+        } else if (propName == "green" || propName == "g") {
+          m_color[pointIndex][1] = t;
+        } else if (propName == "blue" || propName == "b") {
+          m_color[pointIndex][2] = t;
+        } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
+          m_refl[pointIndex] = t;
+        } else if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      }
       break;
     }
     case DT_INT32: {
       Int32 t;
       plyFile.read((TChar*)(&t), m_bytesSource);
-      if (propName == "red" || propName == "r") {
-        m_color[pointIndex][0] = t;
-      } else if (propName == "green" || propName == "g") {
-        m_color[pointIndex][1] = t;
-      } else if (propName == "blue" || propName == "b") {
-        m_color[pointIndex][2] = t;
-      } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
-        m_refl[pointIndex] = t;
-      } else if (propName == "x" || propName == "y" || propName == "z")
-        setDataToTarget(t);
+      if (geomOnly) {
+        if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      } else {
+        if (propName == "red" || propName == "r") {
+          m_color[pointIndex][0] = t;
+        } else if (propName == "green" || propName == "g") {
+          m_color[pointIndex][1] = t;
+        } else if (propName == "blue" || propName == "b") {
+          m_color[pointIndex][2] = t;
+        } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
+          m_refl[pointIndex] = t;
+        } else if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      }
       break;
     }
     case DT_INT16: {
       Int16 t;
       plyFile.read((TChar*)(&t), m_bytesSource);
-      if (propName == "red" || propName == "r") {
-        m_color[pointIndex][0] = t;
-      } else if (propName == "green" || propName == "g") {
-        m_color[pointIndex][1] = t;
-      } else if (propName == "blue" || propName == "b") {
-        m_color[pointIndex][2] = t;
-      } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
-        m_refl[pointIndex] = t;
-      } else if (propName == "x" || propName == "y" || propName == "z")
-        setDataToTarget(t);
+      if (geomOnly) {
+        if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      } else {
+        if (propName == "red" || propName == "r") {
+          m_color[pointIndex][0] = t;
+        } else if (propName == "green" || propName == "g") {
+          m_color[pointIndex][1] = t;
+        } else if (propName == "blue" || propName == "b") {
+          m_color[pointIndex][2] = t;
+        } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
+          m_refl[pointIndex] = t;
+        } else if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      }
       break;
     }
     case DT_INT8: {
       Int8 t;
       plyFile.read((TChar*)(&t), m_bytesSource);
       setDataToTarget(t);
-      if (propName == "red" || propName == "r") {
-        m_color[pointIndex][0] = t;
-      } else if (propName == "green" || propName == "g") {
-        m_color[pointIndex][1] = t;
-      } else if (propName == "blue" || propName == "b") {
-        m_color[pointIndex][2] = t;
-      } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
-        m_refl[pointIndex] = t;
-      } else if (propName == "x" || propName == "y" || propName == "z")
-        setDataToTarget(t);
+      if (geomOnly) {
+        if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      } else {
+        if (propName == "red" || propName == "r") {
+          m_color[pointIndex][0] = t;
+        } else if (propName == "green" || propName == "g") {
+          m_color[pointIndex][1] = t;
+        } else if (propName == "blue" || propName == "b") {
+          m_color[pointIndex][2] = t;
+        } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
+          m_refl[pointIndex] = t;
+        } else if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      }
       break;
     }
     case DT_UINT64: {
       UInt64 t;
       plyFile.read((TChar*)(&t), m_bytesSource);
       setDataToTarget(t);
-      if (propName == "red" || propName == "r") {
-        m_color[pointIndex][0] = t;
-      } else if (propName == "green" || propName == "g") {
-        m_color[pointIndex][1] = t;
-      } else if (propName == "blue" || propName == "b") {
-        m_color[pointIndex][2] = t;
-      } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
-        m_refl[pointIndex] = t;
-      } else if (propName == "x" || propName == "y" || propName == "z")
-        setDataToTarget(t);
+      if (geomOnly) {
+        if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      } else {
+        if (propName == "red" || propName == "r") {
+          m_color[pointIndex][0] = t;
+        } else if (propName == "green" || propName == "g") {
+          m_color[pointIndex][1] = t;
+        } else if (propName == "blue" || propName == "b") {
+          m_color[pointIndex][2] = t;
+        } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
+          m_refl[pointIndex] = t;
+        } else if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      }
       break;
     }
     case DT_UINT32: {
       UInt32 t;
       plyFile.read((TChar*)(&t), m_bytesSource);
-      if (propName == "red" || propName == "r") {
-        m_color[pointIndex][0] = t;
-      } else if (propName == "green" || propName == "g") {
-        m_color[pointIndex][1] = t;
-      } else if (propName == "blue" || propName == "b") {
-        m_color[pointIndex][2] = t;
-      } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
-        m_refl[pointIndex] = t;
-      } else if (propName == "x" || propName == "y" || propName == "z")
-        setDataToTarget(t);
+      if (geomOnly) {
+        if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      } else {
+        if (propName == "red" || propName == "r") {
+          m_color[pointIndex][0] = t;
+        } else if (propName == "green" || propName == "g") {
+          m_color[pointIndex][1] = t;
+        } else if (propName == "blue" || propName == "b") {
+          m_color[pointIndex][2] = t;
+        } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
+          m_refl[pointIndex] = t;
+        } else if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      }
       break;
     }
     case DT_UINT16: {
       UInt16 t;
       plyFile.read((TChar*)(&t), m_bytesSource);
-      if (propName == "red" || propName == "r") {
-        m_color[pointIndex][0] = t;
-      } else if (propName == "green" || propName == "g") {
-        m_color[pointIndex][1] = t;
-      } else if (propName == "blue" || propName == "b") {
-        m_color[pointIndex][2] = t;
-      } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
-        m_refl[pointIndex] = t;
-      } else if (propName == "x" || propName == "y" || propName == "z")
-        setDataToTarget(t);
+      if (geomOnly) {
+        if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      } else {
+        if (propName == "red" || propName == "r") {
+          m_color[pointIndex][0] = t;
+        } else if (propName == "green" || propName == "g") {
+          m_color[pointIndex][1] = t;
+        } else if (propName == "blue" || propName == "b") {
+          m_color[pointIndex][2] = t;
+        } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
+          m_refl[pointIndex] = t;
+        } else if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      }
       break;
     }
     case DT_UINT8: {
       UInt8 t;
       plyFile.read((TChar*)(&t), m_bytesSource);
-      if (propName == "red" || propName == "r") {
-        m_color[pointIndex][0] = t;
-      } else if (propName == "green" || propName == "g") {
-        m_color[pointIndex][1] = t;
-      } else if (propName == "blue" || propName == "b") {
-        m_color[pointIndex][2] = t;
-      } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
-        m_refl[pointIndex] = t;
-      } else if (propName == "x" || propName == "y" || propName == "z")
-        setDataToTarget(t);
+      if (geomOnly) {
+        if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      } else {
+        if (propName == "red" || propName == "r") {
+          m_color[pointIndex][0] = t;
+        } else if (propName == "green" || propName == "g") {
+          m_color[pointIndex][1] = t;
+        } else if (propName == "blue" || propName == "b") {
+          m_color[pointIndex][2] = t;
+        } else if (propName == "reflectance" || propName == "refl" || propName == "refc") {
+          m_refl[pointIndex] = t;
+        } else if (propName == "x" || propName == "y" || propName == "z")
+          setDataToTarget(t);
+      }
       break;
     }
     default:
@@ -674,13 +729,22 @@ bool TComReflectanceTransfer(const TComPointCloud& pointCloudOrg, double geomQua
                              PC_VC3 quanOffset, TComPointCloud& pointCloudRec);
 
 ///< Recolour attributes based on a source/reference point cloud.
-int recolour(const TComPointCloud& pointCloudOrg, float geomQuanStep, V3<int> quanOffset,
-             TComPointCloud* pointCloudRec);
+int recolor(const TComPointCloud& pointCloudOrg, float geomQuanStep, V3<int> quanOffset,
+            TComPointCloud* pointCloudRec);
+
 struct quantizedQP {
   UInt attrQuantForLuma;
   UInt attrQuantForChromaCb;
   UInt attrQuantForChromaCr;
 };
+
+struct colorQuantShift {
+  Float colorOffsetParamLumaAc;
+  Float colorOffsetParamLumaDc;
+  Float colorOffsetParamChromaAc;
+  Float colorOffsetParamChromaDc;
+};
+
 inline UInt64 QuantizaResidual(
   const UInt64 residual, const UInt8 QP,
   const int deadzoneOffset = 0) {  /// abs(deadzoneOffset) <= 1 << (encoderShiftBit - 1)
@@ -884,39 +948,14 @@ public:
     indexescount = 0;
   }
 
-  void insertNeighor(const uint32_t predictIndex, const uint64_t weight, const uint64_t dist) {
-    if (dist < preditedNeighbors[maxNeighborCount - 1].dist) {
-      if (preditedNeighbors[2].dist == preditedNeighbors[1].dist) {
-        preditedNeighbors[indexescount].weight = preditedNeighbors[2].weight;
-        preditedNeighbors[indexescount++].predictorIndex = preditedNeighbors[2].predictorIndex;
-      } else {
-        indexescount = 3;
-      }
-
-      for (int i = 0; i < maxNeighborCount; i++) {
-        if (dist < preditedNeighbors[i].dist) {
-          for (int j = maxNeighborCount - 1; j > i; j--) {
-            std::swap(preditedNeighbors[j], preditedNeighbors[j - 1]);
-          }
-          preditedNeighbors[i].predictorIndex = predictIndex;
-          preditedNeighbors[i].weight = weight;
-          preditedNeighbors[i].dist = dist;
-
-          if (neighborsCount < maxNeighborCount)
-            ++neighborsCount;
-          break;
-        }
-      }
-    } else if (dist == preditedNeighbors[maxNeighborCount - 1].dist) {
-      preditedNeighbors[indexescount].weight = weight;
-      preditedNeighbors[indexescount++].predictorIndex = predictIndex;
-    }
-  }
-
   void insertNeighor(const uint32_t predictIndex, const uint64_t weight) {
     if (weight < preditedNeighbors[maxNeighborCount - 1].weight) {
-      if (preditedNeighbors[2].weight == preditedNeighbors[1].weight) {
-        preditedNeighbors[indexescount++].predictorIndex = preditedNeighbors[2].predictorIndex;
+      if (preditedNeighbors[2].weight == preditedNeighbors[1].weight &&
+          preditedNeighbors[2].weight != UINT64_MAX) {
+        if (indexescount < 16)
+          preditedNeighbors[indexescount++].predictorIndex = preditedNeighbors[2].predictorIndex;
+        else
+          ++indexescount;
       } else {
         indexescount = 3;
       }
@@ -933,38 +972,34 @@ public:
         }
       }
     } else if (weight == preditedNeighbors[maxNeighborCount - 1].weight) {
-      preditedNeighbors[indexescount++].predictorIndex = predictIndex;
+      if (indexescount < 16)
+        preditedNeighbors[indexescount++].predictorIndex = predictIndex;
+      else
+        ++indexescount;
     }
-  }
-  bool find(const uint32_t predictIndex) {
-    for (int i = 0; i < neighborsCount; i++)
-      if (preditedNeighbors[i].predictorIndex == predictIndex)
-        return true;
-    return false;
   }
   int getIndexesCount() {
     return indexescount;
   }
+  int getNeighborCount() {
+    return neighborsCount;
+  }
+
   NEIINFO getNeigbors(const int& NeighbourNum) const {
     return preditedNeighbors[NeighbourNum];
-  }
-  uint32_t getNeighCount() const {
-    return neighborsCount;
   }
 
 private:
   int indexescount;
   uint32_t neighborsCount;
   uint32_t maxNeighborCount;
-  NEIINFO preditedNeighbors[128];
+  NEIINFO preditedNeighbors[16];
 };
 void sortReconPoints(const TComPointCloud& pointCloudRecon, UInt lastNumReconPoints,
                      UInt currNumReconPoints, std::vector<pointCodeWithIndex>& mortonOrder);
 
 int32_t determineInitShiftBits(const uint32_t voxelCount,
                                const std::vector<pointCodeWithIndex>& pointCloudMorton);
-
-
 
 Void reOrder(const vector<PC_POS>& pointPos, const UInt& sortMode,
              std::vector<pointCodeWithIndex>& pointCloudCode, const int& voxelCount,

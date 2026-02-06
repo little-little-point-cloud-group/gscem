@@ -108,12 +108,12 @@ Int TEncGeometry::compressAndEncodeGeometry() {
     TComOctreeNode& currentNode = fifo.front();
 
     //< start LCU-based coding, within an LCU, breadth first coding is used.
-    if (partitionParams.nodeSizeLog2.max() < m_hls->gps.lcuNodeSizeLog2) {
+    if (partitionParams.nodeSizeLog2.max() < m_hls->frameheader.lcuNodeSizeLog2) {
       if (m_hls->gps.saveStateFlag && !contextSaved) {
         m_encBac->saveContext();
         contextSaved = true;
       }
-      if (!m_hls->gps.saveStateFlag && m_hls->gps.lcu_dependency_flag) {
+      if (!m_hls->gps.saveStateFlag && m_hls->gps.lcuDependencyFlag) {
         m_historyMap[0] = unique_ptr<TComOccupancyMap>(new TComOccupancyMap());
         m_historyMap[1] = unique_ptr<TComOccupancyMap>(new TComOccupancyMap());
         m_encBac->LcuReset();
@@ -141,8 +141,8 @@ Int TEncGeometry::compressAndEncodeGeometry() {
       } else {
         TreeEncoderParams encParams;
         encParams.sortMode = TreeEncoderParams::SortMode(m_hls->gps.geomTreeSortMode);
-        UInt log2geomTreeMaxSizeMinus8 = m_hls->gps.log2geomTreeMaxSizeMinus8;
-        encParams.maxPtsPerTree = 1 << (log2geomTreeMaxSizeMinus8 + 8);
+        UInt geomMaxTreeSizeLog2Minus8 = m_hls->gps.geomMaxTreeSizeLog2Minus8;
+        encParams.maxPtsPerTree = 1 << (geomMaxTreeSizeLog2Minus8 + 8);
         //TSP based predictive tree coding
         encodeTspLcu(m_pointCloudOrg, m_pointCloudRecon, m_numReconPoints, currentNode, m_hls,
                      m_encBac, partitionParams, encParams);
@@ -151,7 +151,7 @@ Int TEncGeometry::compressAndEncodeGeometry() {
       if (contextSaved) {
         m_encBac->restoreContext();
       }
-      if (!m_hls->gps.saveStateFlag && m_hls->gps.lcu_dependency_flag) {
+      if (!m_hls->gps.saveStateFlag && m_hls->gps.lcuDependencyFlag) {
         m_historyMap[0].release();
         m_historyMap[1].release();
       }
@@ -181,7 +181,6 @@ Int TEncGeometry::compressAndEncodeGeometry() {
   }
   pcRec.setNumPoint(m_numReconPoints);
 
-  m_encBac->codeSliceGeomEndCode();  ///< current slice geometry end code
   return 0;
 }
 
@@ -237,13 +236,13 @@ Void TEncGeometry::breadthFirstOctreeNode(const TComOctreeNode& currentNode,
       }
     }
     TComGeomContext geomCtx;
-    getContextInforFast(m_historyMap, params, currentNode, geomCtx, m_hls->gbh.geom_context_mode,
-                        m_hls->gps.OccupancymapSizelog2, preNodePlanarEligible);
-    if (m_hls->gbh.geom_context_mode == 1) {
+    getContextInforFast(m_historyMap, params, currentNode, geomCtx, m_hls->gbh.contextMode,
+                        m_hls->gps.occupancySearchRangeLog2, preNodePlanarEligible);
+    if (m_hls->gbh.contextMode == 1) {
       m_encBac->encodeOccUsingMemoryChannel(occupancyCode, params, geomCtx, preNodePlanarEligible);
     } else {
       m_encBac->encodeOccupancyCode(occupancyCode, params, geomCtx, preNodePlanarEligible,
-                                    m_hls->gbh.geom_context_mode);
+                                    m_hls->gbh.contextMode);
     }
 
     if ((currentNodeNeedPopcnt)) {
@@ -271,7 +270,7 @@ Void TEncGeometry::breadthFirstOctreeNode(const TComOctreeNode& currentNode,
     }
   }
   currentOccupancy = occupancyCode;
-  updateContextInfor(m_historyMap[1], params, currentNode, m_hls->gps.OccupancymapSizelog2,
+  updateContextInfor(m_historyMap[1], params, currentNode, m_hls->gps.occupancySearchRangeLog2,
                      occupancyCode);
 }
 
@@ -286,8 +285,7 @@ Bool TEncGeometry::singlePointMode(const TComOctreeNode& currentNode,
   UInt8& theTrueNumOf_IDCM_InLastTenNode = infOfIDCM.theTrueNumOf_IDCM_InLastTenNode;
   if (currentMode == 0) {
     singlePointFlag =
-      handleSingleMode(currentNode, params.nodeSizeLog2, params.singleModeFlagParent, occupancyCode,
-                       params.childSizeLog2);
+      handleSingleMode(currentNode, params.nodeSizeLog2, occupancyCode, params.childSizeLog2);
     nodeIdxOfIDCM++;
     if (singlePointFlag) {
       theTrueNumOf_IDCM_InLastTenNode++;
@@ -305,8 +303,7 @@ Bool TEncGeometry::singlePointMode(const TComOctreeNode& currentNode,
       nodeIdxOfIDCM = 0;
       if (oneChildNumInPreNode >= 4) {
         singlePointFlag =
-          handleSingleMode(currentNode, params.nodeSizeLog2, params.singleModeFlagParent,
-                           occupancyCode, params.childSizeLog2);
+          handleSingleMode(currentNode, params.nodeSizeLog2, occupancyCode, params.childSizeLog2);
         nextNodeMode = !singlePointFlag;
         whetherCurrentNodeIDCMEligible = true;
       }
@@ -318,8 +315,7 @@ Bool TEncGeometry::singlePointMode(const TComOctreeNode& currentNode,
 }
 
 Bool TEncGeometry::handleSingleMode(const TComOctreeNode& currentNode, const V3<UInt>& nodeSizeLog2,
-                                    const Bool singleModeFlagParent, UInt& occupancyCode,
-                                    const V3<UInt>& childSizeLog2) {
+                                    UInt& occupancyCode, const V3<UInt>& childSizeLog2) {
   Bool singlePointFlag = (currentNode.childIdxEnd - currentNode.childIdxBegin == 1);
 
   Bool singlePointFlagInferred = false;
@@ -402,32 +398,62 @@ Void TEncGeometry::encodeLeafNode(UInt& childPointStartIdx, const UInt& childNum
       UInt m_numReconStartIdx = m_numReconPoints;
       for (int idx = 0; idx < childNum; ++idx)
         pcRec[m_numReconPoints + idx] = pcOrg[idx + childPointStartIdx];
-      if (pcOrg.hasColors()) {
-        for (int multilIdx = 0; multilIdx < m_pointCloudOrg->getNumMultilColor(); ++multilIdx) {
-          vector<PC_COL> colors(childNum);
-          for (int idx = 0; idx < childNum; ++idx) {
-            const auto color0 = pcOrg.getColor(idx + childPointStartIdx, multilIdx);
-            colors[idx] = color0;
+      if (m_hls->aps.eligibleDupPointPred) {
+        if (pcOrg.hasColors()) {
+          for (int multilIdx = 0; multilIdx < m_pointCloudOrg->getNumMultilColor(); ++multilIdx) {
+            vector<PC_COL> colors(childNum);
+            for (int idx = 0; idx < childNum; ++idx) {
+              const auto color0 = pcOrg.getColor(idx + childPointStartIdx, multilIdx);
+              colors[idx] = color0;
+            }
+            std::sort(colors.begin(), colors.end());
+            for (int idx = 0; idx < childNum; ++idx) {
+              pcRec.setColor(m_numReconPoints + idx, colors[idx], multilIdx);
+            }
           }
-          std::sort(colors.begin(), colors.end());
-          for (int idx = 0; idx < childNum; ++idx) {
-            pcRec.setColor(m_numReconPoints + idx, colors[idx], multilIdx);
+        }
+        if (pcOrg.hasReflectances()) {
+          for (int multilIdx = 0; multilIdx < m_pointCloudOrg->getNumMultilRefl(); ++multilIdx) {
+            vector<PC_REFL> refls(childNum);
+            for (int idx = 0; idx < childNum; ++idx) {
+              const auto ref0 = pcOrg.getReflectance(idx + childPointStartIdx, multilIdx);
+              refls[idx] = ref0;
+            }
+            std::sort(refls.begin(), refls.end());
+            for (int idx = 0; idx < childNum; ++idx) {
+              pcRec.setReflectance(m_numReconPoints + idx, refls[idx], multilIdx);
+            }
+          }
+        }
+      } else {
+        if (pcOrg.hasColors()) {
+          for (int multilIdx = 0; multilIdx < m_pointCloudOrg->getNumMultilColor(); ++multilIdx) {
+            vector<PC_COL> colors(childNum);
+            for (int idx = 0; idx < childNum; ++idx) {
+              const auto color0 = pcOrg.getColor(idx + childPointStartIdx, multilIdx);
+              colors[idx] = color0;
+            }
+            std::sort(colors.begin(), colors.end());
+            for (int idx = 0; idx < childNum; ++idx) {
+              pcRec.setColor(m_numReconPoints + idx, colors[idx], multilIdx);
+            }
+          }
+        }
+        if (pcOrg.hasReflectances()) {
+          for (int multilIdx = 0; multilIdx < m_pointCloudOrg->getNumMultilRefl(); ++multilIdx) {
+            vector<PC_REFL> refls(childNum);
+            for (int idx = 0; idx < childNum; ++idx) {
+              const auto ref0 = pcOrg.getReflectance(idx + childPointStartIdx, multilIdx);
+              refls[idx] = ref0;
+            }
+            std::sort(refls.begin(), refls.end());
+            for (int idx = 0; idx < childNum; ++idx) {
+              pcRec.setReflectance(m_numReconPoints + idx, refls[idx], multilIdx);
+            }
           }
         }
       }
-      if (pcOrg.hasReflectances()) {
-        for (int multilIdx = 0; multilIdx < m_pointCloudOrg->getNumMultilRefl(); ++multilIdx) {
-          vector<PC_REFL> refls(childNum);
-          for (int idx = 0; idx < childNum; ++idx) {
-            const auto ref0 = pcOrg.getReflectance(idx + childPointStartIdx, multilIdx);
-            refls[idx] = ref0;
-          }
-          std::sort(refls.begin(), refls.end());
-          for (int idx = 0; idx < childNum; ++idx) {
-            pcRec.setReflectance(m_numReconPoints + idx, refls[idx], multilIdx);
-          }
-        }
-      }
+
       m_numReconPoints += childNum;
     } else {
       const auto& idx = childPointStartIdx;

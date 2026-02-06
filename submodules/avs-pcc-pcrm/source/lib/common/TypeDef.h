@@ -35,7 +35,7 @@
 
 #include "MacroTools.h"
 #include "contributors.h"
-
+#include <cstdint>
 ///< \in TLibCommon
 
 //////////////////////////////////////////////////////////////////////////
@@ -77,10 +77,11 @@ enum BufferChunkType {
   BCT_GBH,
   BCT_GEOM,
   BCT_APS,
-  BCT_ABH,
-  BCT_ATTR,
+  BCT_ABH_COL,
+  BCT_ABH_REFL,
   BCT_COL,
   BCT_REFL,
+  BCT_UDA,
   BCT_MAX,
 };
 

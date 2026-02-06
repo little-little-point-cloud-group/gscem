@@ -44,8 +44,8 @@ private:
   HighLevelSyntax* m_hls;             ///< pointer to high-level syntax parameters
   TDecBacTop* m_decBac;               ///< pointer to bac
   TDecBacTop* m_decBacDual;           ///< pointer to bac2
-  double m_colorTime;    ///< color decoding time
-  double m_reflTime;     ///< reflectance decoding time
+  double m_colorTime;                 ///< color decoding time
+  double m_reflTime;                  ///< reflectance decoding time
   int frame_Idx;
   int frame_count;
   int multil_ID;
@@ -62,19 +62,22 @@ public:
   }
 
   Void init(TComPointCloud* pointCloudRecon, HighLevelSyntax* hls, TDecBacTop* decBac,
-            const int& m_frameID, const int& m_numFrames, int multi_ID);
+            int multi_ID);
   Void initDual(TComPointCloud* pointCloudRecon, HighLevelSyntax* hls, TDecBacTop* decBac,
-                TDecBacTop* decBacDual, const int& m_frameID, const int& m_numFrames, int multi_ID);
+                TDecBacTop* decBacDual, int multi_ID);
+
   Void predictDecodeAttribute();
   Void transformDecodeAttribute();
   Void predictAndTransformDecodeAttribute();
 
   Void predictDecodeColor();
   Void transformDecodeColor();
+  Void transformDecodeColorFromReflectance();
   Void predictAndTransformDecodeColor();
 
   Void predictDecodeReflectance();
   Void transformDecodeReflectance();
+  Void transformDecodeReflectanceFromColor();
   Void predictAndTransformDecodeReflectance();
 
   Void predictDecodeMultiReflectance();
@@ -88,9 +91,7 @@ public:
   Void colorInversePredictResidual();
 
   Void colorInversePredictAndTransformMemControl();
-
   Void ReflectanceInversePredictAndTransformMemControl();
-
   Void AttributeInversePredictAndTransformMemControl();
 
   Void reflectanceInverseWaveletTransform();
@@ -104,30 +105,24 @@ public:
   void reflectanceReconstruction(const int64_t& predictor, const int64_t& codedValue,
                                  PC_REFL& reconValue);
 
-  void parseColorResidualCorrelationCode(V3<int64_t>& codedValue,
-                                         const bool isDuplicatePoint = false,
-                                         const UInt& golombNum = 1);
-
-  void parseColorResidualCorrelationCodeOS(V3<int64_t>& codedValue,
-                                           const bool isDuplicatePoint = false,
-                                           const UInt& golombNum = 1);
+  void parseColorResidualCorrelationCode(V3<int64_t>& codedValue, const bool& os,
+                                         const bool isDuplicatePoint, const UInt& golombNum);
 
   void colorReconstructionTrans(std::vector<pointCodeWithIndex>& pointCloudHilbert,
                                 std::vector<int>& transformPointIdx, int64_t transformBuf[][8],
                                 int64_t transformPredBuf[][8], const quantizedQP& colorQp,
-                                int& count, std::vector<colorNeighborSet>& neighborSet, bool colorQPAdjustFlag = false);
+                                int& count, std::vector<neighborSet>& neighborSet,
+                                bool colorQPAdjustFlag = false);
 
   void reflectanceReconstructionTrans(std::vector<pointCodeWithIndex>& pointCloudHilbert,
-                              std::vector<int>& transformPointIdx, int64_t transformBuf[1][8],
-                              int64_t transformPredBuf[1][8], std::vector<reflNeighborSet>& neighborSet, PC_REFL& lastref);
+                                      std::vector<int>& transformPointIdx,
+                                      int64_t transformBuf[1][8], int64_t transformPredBuf[1][8],
+                                      std::vector<neighborSet>& neighborSet, PC_REFL& lastref);
 
   void runlengthDecodeMemControl(int& pointCount, int* Coefficients, int& run_length,
                                  int lengthControl, bool& isLengthControl,
                                  const bool isColor = false);
 
-  void parseColorResidualCorrelationCodeHaar(V3<int64_t>& codedValue,const bool reslayer,
-                                             const bool isDuplicatePoint = false,
-                                             const UInt& golombNum = 1);
   void setCoeffIndex(int& groupCount, const vector<int>& numofGroupCount, const vector<int>& length,
                      int& dcIndex, int& acIndex, int& numofCoeff);
 };  ///< END CLASS TDecGeometry

@@ -48,141 +48,41 @@
 //////////////////////////////////////////////////////////////////////////
 
 Void TEncBacTop::codeSPS(const SequenceParameterSet& sps) {
-  UInt32 geomQuantStep_upper, geomQuantStep_lower;
-  Int geomBoundingBoxOrigin_x_upper, geomBoundingBoxOrigin_x_lower;
-  Int geomBoundingBoxOrigin_y_upper, geomBoundingBoxOrigin_y_lower;
-  Int geomBoundingBoxOrigin_z_upper, geomBoundingBoxOrigin_z_lower;
-  UInt geomBoundingBoxSize_w_upper, geomBoundingBoxSize_w_lower;
-  UInt geomBoundingBoxSize_h_upper, geomBoundingBoxSize_h_lower;
-  UInt geomBoundingBoxSize_d_upper, geomBoundingBoxSize_d_lower;
-
-  UInt spsStartCode_w_upper, spsStartCode_w_lower;
-
-  geomQuantStep_upper = (*(UInt32*)(&sps.geomQuantStep) >> 16) & 0xffff;
-  geomQuantStep_lower = (*(UInt32*)(&sps.geomQuantStep)) & 0xffff;
-  spsStartCode_w_upper = (pcc_sequence_start_code >> 16) & 0xffff;
-  spsStartCode_w_lower = pcc_sequence_start_code& 0xffff;
-
-  m_bac->com_bsw_write(&m_bitStream, spsStartCode_w_upper, 16);  ///< the start code of sps
-  m_bac->com_bsw_write(&m_bitStream, spsStartCode_w_lower, 16);  ///< the start code of sps
-
-  m_bac->com_bsw_write(&m_bitStream, sps.level, 8);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-
-  geomBoundingBoxOrigin_x_upper = (*(Int*)(&sps.geomBoundingBoxOrigin[0]) >> 16) & 0xffff;
-  geomBoundingBoxOrigin_x_lower = (*(Int*)(&sps.geomBoundingBoxOrigin[0])) & 0xffff;
-  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxOrigin_x_upper, 16);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxOrigin_x_lower, 16);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-
-  geomBoundingBoxOrigin_y_upper = (*(Int*)(&sps.geomBoundingBoxOrigin[1]) >> 16) & 0xffff;
-  geomBoundingBoxOrigin_y_lower = (*(Int*)(&sps.geomBoundingBoxOrigin[1])) & 0xffff;
-  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxOrigin_y_upper, 16);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxOrigin_y_lower, 16);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-
-  geomBoundingBoxOrigin_z_upper = (*(Int*)(&sps.geomBoundingBoxOrigin[2]) >> 16) & 0xffff;
-  geomBoundingBoxOrigin_z_lower = (*(Int*)(&sps.geomBoundingBoxOrigin[2])) & 0xffff;
-  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxOrigin_z_upper, 16);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxOrigin_z_lower, 16);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-
-  geomBoundingBoxSize_w_upper = (*(Int*)(&sps.geomBoundingBoxSize[0]) >> 16) & 0xffff;
-  geomBoundingBoxSize_w_lower = (*(Int*)(&sps.geomBoundingBoxSize[0])) & 0xffff;
-  m_bac->com_bsw_write_ue(&m_bitStream, geomBoundingBoxSize_w_upper);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-  m_bac->com_bsw_write_ue(&m_bitStream, geomBoundingBoxSize_w_lower);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-
-  geomBoundingBoxSize_h_upper = (*(Int*)(&sps.geomBoundingBoxSize[1]) >> 16) & 0xffff;
-  geomBoundingBoxSize_h_lower = (*(Int*)(&sps.geomBoundingBoxSize[1])) & 0xffff;
-  m_bac->com_bsw_write_ue(&m_bitStream, geomBoundingBoxSize_h_upper);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-  m_bac->com_bsw_write_ue(&m_bitStream, geomBoundingBoxSize_h_lower);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-
-  geomBoundingBoxSize_d_upper = (*(Int*)(&sps.geomBoundingBoxSize[2]) >> 16) & 0xffff;
-  geomBoundingBoxSize_d_lower = (*(Int*)(&sps.geomBoundingBoxSize[2])) & 0xffff;
-  m_bac->com_bsw_write_ue(&m_bitStream, geomBoundingBoxSize_d_upper);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-  m_bac->com_bsw_write_ue(&m_bitStream, geomBoundingBoxSize_d_lower);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-
-  m_bac->com_bsw_write(&m_bitStream, geomQuantStep_upper, 16);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-  m_bac->com_bsw_write(&m_bitStream, geomQuantStep_lower, 16);
-
+  m_bac->com_bsw_write(&m_bitStream, sps.profileId, 4);
+  m_bac->com_bsw_write(&m_bitStream, sps.levelId, 8);
+  m_bac->com_bsw_write(&m_bitStream, sps.frameRateCode, 4);
   m_bac->com_bsw_write1(&m_bitStream, sps.geomRemoveDuplicateFlag);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-
   // encoding attribute params
   m_bac->com_bsw_write1(&m_bitStream, sps.attrPresentFlag);
   if (sps.attrPresentFlag) {
-    m_bac->com_bsw_write_ue(&m_bitStream, sps.colorQuantParam);
-    m_bac->com_bsw_write_ue(&m_bitStream, sps.reflQuantParam);
-    m_bac->com_bsw_write(&m_bitStream, sps.maxNumAttrMinus1, 7);
-    m_bac->com_bsw_write1(&m_bitStream, sps.sps_multi_set_flag);
+    m_bac->com_bsw_write(&m_bitStream, sps.maxNumAttributesMinus1, 7);
+    m_bac->com_bsw_write1(&m_bitStream, sps.multiAttributesSetFlag);
   }
-
   m_bac->com_bsw_write_byte_align(&m_bitStream);
-
 }
 
 Void TEncBacTop::codeGPS(const GeometryParameterSet& gps) {
-  if (gps.lcuNodeSizeLog2 == 0)
-    m_bac->com_bsw_write_ue(&m_bitStream, 0);
-  else
-    m_bac->com_bsw_write_ue(&m_bitStream, gps.lcuNodeSizeLog2 - 1);
-  m_bac->com_bsw_write_ue(&m_bitStream, gps.log2geomTreeMaxSizeMinus8);
-  m_bac->com_bsw_write1(&m_bitStream, gps.im_qtbt_flag);
+  m_bac->com_bsw_write(&m_bitStream, gps.geomQuantStepSignificand, 21);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
+  m_bac->com_bsw_write(&m_bitStream, gps.geomQuantStepExponent, 5);
+  m_bac->com_bsw_write_ue(&m_bitStream, gps.geomMaxTreeSizeLog2Minus8);
+  m_bac->com_bsw_write1(&m_bitStream, gps.implicitGeomPartitionFlag);
   m_bac->com_bsw_write1(&m_bitStream, gps.singleModeFlag);
-  m_bac->com_bsw_write_ue(&m_bitStream, gps.OccupancymapSizelog2);
+  m_bac->com_bsw_write_ue(&m_bitStream, gps.occupancySearchRangeLog2);
   m_bac->com_bsw_write1(&m_bitStream, gps.saveStateFlag);
   if (!gps.saveStateFlag)
-    m_bac->com_bsw_write1(&m_bitStream, gps.lcu_dependency_flag);
+    m_bac->com_bsw_write1(&m_bitStream, gps.lcuDependencyFlag);
   m_bac->com_bsw_write_byte_align(&m_bitStream);
 }
 
-Void TEncBacTop::codeSPSEndCode() {
-  for (int32_t i = 0; i < 32; ++i) {
-    m_bac->biari_encode_symbol_eq_prob_aec(p_aec, (pcc_sequence_end_code >> i) & 1);
-  }
-  m_bitStream.cur = p_aec->p;
-}
-
-Void TEncBacTop::codeSliceGeomEndCode() {
-
-  for (int32_t i = 0; i < 32; ++i) {
-    m_bac->biari_encode_symbol_eq_prob_aec(p_aec, (slice_geometry_end_code >> i) & 1);
-  }
-  m_bitStream.cur = p_aec->p;
-  
-}
-
-Void TEncBacTop::codeSliceAttrEndCode() {
-  for (int32_t i = 0; i < 32; ++i) {
-    m_bac->biari_encode_symbol_eq_prob_aec(p_aec, (slice_attribute_end_code >> i) & 1);
-  }
-  m_bitStream.cur = p_aec->p;
-}
-
 Void TEncBacTop::codeGBH(const GeometryParameterSet& gps, const GeometryBrickHeader& gbh) {
-
-  UInt sliceGeomStartCode_w_upper, sliceGeomStartCode_w_lower;
-  sliceGeomStartCode_w_upper = (slice_geometry_start_code >> 16) & 0xffff;
-  sliceGeomStartCode_w_lower = slice_geometry_start_code & 0xffff;
-  m_bac->com_bsw_write(&m_bitStream, sliceGeomStartCode_w_upper,
-                       16);  ///< the start code of slice Geometry
-  m_bac->com_bsw_write(&m_bitStream, sliceGeomStartCode_w_lower,
-                       16);  ///< the start code of frame head
   m_bac->com_bsw_write_ue(&m_bitStream, gbh.sliceID);
-  m_bac->com_bsw_write1(&m_bitStream, gbh.geom_context_mode);
-  if (gps.im_qtbt_flag) {
-    m_bac->com_bsw_write_ue(&m_bitStream, gbh.im_qtbt_num_before_ot);
-    m_bac->com_bsw_write_ue(&m_bitStream, gbh.im_qtbt_min_size);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
+  m_bac->com_bsw_write1(&m_bitStream, gbh.contextMode);
+
+  if (gps.implicitGeomPartitionFlag) {
+    m_bac->com_bsw_write_ue(&m_bitStream, gbh.imQtbtNumBeforeOt);
+    m_bac->com_bsw_write_ue(&m_bitStream, gbh.imQtbtMinSize);
   }
   if (gps.singleModeFlag) {
     m_bac->com_bsw_write1(&m_bitStream, gbh.singleModeFlagInSlice);
@@ -192,13 +92,11 @@ Void TEncBacTop::codeGBH(const GeometryParameterSet& gps, const GeometryBrickHea
   Int geomBoundingBoxOrigin_x_upper, geomBoundingBoxOrigin_x_lower;
   Int geomBoundingBoxOrigin_y_upper, geomBoundingBoxOrigin_y_lower;
   Int geomBoundingBoxOrigin_z_upper, geomBoundingBoxOrigin_z_lower;
-  UInt nodeSizeLog2_x_upper, nodeSizeLog2_x_lower;
-  UInt nodeSizeLog2_y_upper, nodeSizeLog2_y_lower;
-  UInt nodeSizeLog2_z_upper, nodeSizeLog2_z_lower;
   UInt geomNumPoints_upper, geomNumPoints_lower;
 
   geomBoundingBoxOrigin_x_upper = (*(Int*)(&gbh.geomBoundingBoxOrigin[0]) >> 16) & 0xffff;
   geomBoundingBoxOrigin_x_lower = (*(Int*)(&gbh.geomBoundingBoxOrigin[0])) & 0xffff;
+  m_bac->com_bsw_write1(&m_bitStream, 1);
   m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxOrigin_x_upper, 16);
   m_bac->com_bsw_write1(&m_bitStream, 1);
   m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxOrigin_x_lower, 16);
@@ -218,70 +116,61 @@ Void TEncBacTop::codeGBH(const GeometryParameterSet& gps, const GeometryBrickHea
   m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxOrigin_z_lower, 16);
   m_bac->com_bsw_write1(&m_bitStream, 1);
 
-  nodeSizeLog2_x_upper = (*(Int*)(&gbh.nodeSizeLog2[0]) >> 16) & 0xffff;
-  nodeSizeLog2_x_lower = (*(Int*)(&gbh.nodeSizeLog2[0])) & 0xffff;
-  m_bac->com_bsw_write_ue(&m_bitStream, nodeSizeLog2_x_upper);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-  m_bac->com_bsw_write_ue(&m_bitStream, nodeSizeLog2_x_lower);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-
-  nodeSizeLog2_y_upper = (*(Int*)(&gbh.nodeSizeLog2[1]) >> 16) & 0xffff;
-  nodeSizeLog2_y_lower = (*(Int*)(&gbh.nodeSizeLog2[1])) & 0xffff;
-  m_bac->com_bsw_write_ue(&m_bitStream, nodeSizeLog2_y_upper);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-  m_bac->com_bsw_write_ue(&m_bitStream, nodeSizeLog2_y_lower);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-
-  nodeSizeLog2_z_upper = (*(Int*)(&gbh.nodeSizeLog2[2]) >> 16) & 0xffff;
-  nodeSizeLog2_z_lower = (*(Int*)(&gbh.nodeSizeLog2[2])) & 0xffff;
-  m_bac->com_bsw_write_ue(&m_bitStream, nodeSizeLog2_z_upper);
-  m_bac->com_bsw_write1(&m_bitStream, 1);
-  m_bac->com_bsw_write_ue(&m_bitStream, nodeSizeLog2_z_lower);
+  m_bac->com_bsw_write(&m_bitStream, gbh.nodeSizeLog2[0], 6);
+  m_bac->com_bsw_write(&m_bitStream, gbh.nodeSizeLog2[1], 6);
+  m_bac->com_bsw_write(&m_bitStream, gbh.nodeSizeLog2[2], 6);
   m_bac->com_bsw_write1(&m_bitStream, 1);
 
   geomNumPoints_upper = (*(UInt*)(&gbh.geomNumPoints) >> 16) & 0xffff;
   geomNumPoints_lower = (*(UInt*)(&gbh.geomNumPoints)) & 0xffff;
-  m_bac->com_bsw_write_ue(&m_bitStream, geomNumPoints_upper);
+  m_bac->com_bsw_write(&m_bitStream, geomNumPoints_upper, 16);
   m_bac->com_bsw_write1(&m_bitStream, 1);
-  m_bac->com_bsw_write_ue(&m_bitStream, geomNumPoints_lower);
+  m_bac->com_bsw_write(&m_bitStream, geomNumPoints_lower, 16);
   m_bac->com_bsw_write1(&m_bitStream, 1);
 
   m_bac->com_bsw_write_byte_align(&m_bitStream);
 }
 
 Void TEncBacTop::codeAPS(AttributeParameterSet& aps, const SequenceParameterSet& sps) {
-  for (int attrIdx = 0; attrIdx < (sps.maxNumAttrMinus1 + 1); attrIdx++) {
-    m_bac->com_bsw_write1(&m_bitStream, aps.attributePresentFlag[attrIdx]);
-    if (aps.attributePresentFlag[attrIdx]) {
-      m_bac->com_bsw_write_ue(&m_bitStream, aps.attribute_num_data_set_minus1[attrIdx]);
-      if (sps.sps_multi_set_flag)
-        m_bac->com_bsw_write1(&m_bitStream, aps.multi_data_set_flag[attrIdx]);
-      if (aps.multi_data_set_flag[attrIdx])
-        m_bac->com_bsw_write_ue(&m_bitStream, aps.attribute_num_set_minus1[attrIdx]);
-      for (int multiIdx = 0; multiIdx < aps.attribute_num_set_minus1[attrIdx] + 1; ++multiIdx) {
+  for (int attrIdx = 0; attrIdx < (sps.maxNumAttributesMinus1 + 1); attrIdx++) {
+    m_bac->com_bsw_write1(&m_bitStream, aps.attributeDataPresentFlag[attrIdx]);
+    if (aps.attributeDataPresentFlag[attrIdx]) {
+      m_bac->com_bsw_write_ue(&m_bitStream, aps.attributeDataNumSetMinus1[attrIdx]);
+      if ((attrIdx == 1) && (aps.attributeDataNumSetMinus1[attrIdx] > 0)) {
+        for (int i = 0; i < aps.attributeDataNumSetMinus1[attrIdx] + 1; ++i) {
+          m_bac->com_bsw_write_ue(&m_bitStream, aps.multiAttrGroupID[i]);
+        }
+      }
+      if (sps.multiAttributesSetFlag)
+        m_bac->com_bsw_write1(&m_bitStream, aps.multiDataSetFlag[attrIdx]);
+      if (aps.multiDataSetFlag[attrIdx])
+        m_bac->com_bsw_write_ue(&m_bitStream, aps.attributeInfoNumSetMinus1[attrIdx]);
+      for (int multiIdx = 0; multiIdx < aps.attributeInfoNumSetMinus1[attrIdx] + 1; ++multiIdx) {
         m_bac->com_bsw_write_ue(&m_bitStream, aps.outputMultiBitDepthMinus1[attrIdx][multiIdx]);
+        m_bac->com_bsw_write_ue(&m_bitStream, aps.attrMultiQuantParam[attrIdx][multiIdx]);
         if (attrIdx == 0) {
           m_bac->com_bsw_write1(&m_bitStream, aps.orderMultiSwitch[multiIdx]);
           m_bac->com_bsw_write_ue(&m_bitStream, aps.colorMultiReordermode[multiIdx]);
           m_bac->com_bsw_write_ue(&m_bitStream, aps.colorMultiGolombNum[multiIdx]);
-          m_bac->com_bsw_write_ue(&m_bitStream, aps.log2golombMultiGroupSize[multiIdx]);
+          m_bac->com_bsw_write_ue(&m_bitStream, aps.golombMultiGroupSizeLog2[multiIdx]);
         }
         if (attrIdx == 1) {
-          m_bac->com_bsw_write_ue(&m_bitStream, aps.axisMultiBias[multiIdx]);
-          m_bac->com_bsw_write_ue(&m_bitStream, aps.refMultiReordermode[multiIdx]);
-          m_bac->com_bsw_write_ue(&m_bitStream, aps.refMultiGolombNum[multiIdx]);
+          m_bac->com_bsw_write_ue(&m_bitStream, aps.axisMultiBiasMinus1[multiIdx]);
+          m_bac->com_bsw_write_ue(&m_bitStream, aps.reflMultiReordermode[multiIdx]);
+          m_bac->com_bsw_write_ue(&m_bitStream, aps.reflMultiGolombNum[multiIdx]);
           m_bac->com_bsw_write_ue(&m_bitStream, aps.predMultiFixedPointFracBit[multiIdx]);
-          m_bac->com_bsw_write_ue(&m_bitStream, aps.multiAttriGroupID[multiIdx]);
         }
         aps.colorMultiOutputDepth[multiIdx] = aps.outputMultiBitDepthMinus1[0][multiIdx] + 1;
         aps.reflMultiOutputDepth[multiIdx] = aps.outputMultiBitDepthMinus1[1][multiIdx] + 1;
+        aps.colorMultiQuantParam[multiIdx] = aps.attrMultiQuantParam[0][multiIdx];
+        aps.reflMultiQuantParam[multiIdx] = aps.attrMultiQuantParam[1][multiIdx];
 
         m_bac->com_bsw_write(&m_bitStream, aps.transformMulti[attrIdx][multiIdx], 2);
         if ((aps.transformMulti[attrIdx][multiIdx] == 0) ||
             (aps.transformMulti[attrIdx][multiIdx] == 2)) {
           m_bac->com_bsw_write(&m_bitStream,
                                aps.maxMultiNumOfNeighboursLog2Minus7[attrIdx][multiIdx], 2);
-         
+
           if (attrIdx == 0) {
             m_bac->com_bsw_write1(&m_bitStream, aps.crossMultiComponentPred[multiIdx]);
             m_bac->com_bsw_write_se(&m_bitStream, aps.chromaMultiQpOffsetCb[multiIdx]);
@@ -290,117 +179,157 @@ Void TEncBacTop::codeAPS(AttributeParameterSet& aps, const SequenceParameterSet&
           if (attrIdx == 1) {
             m_bac->com_bsw_write_ue(&m_bitStream, aps.nearestMultiPredParam1[multiIdx]);
             m_bac->com_bsw_write_ue(&m_bitStream, aps.nearestMultiPredParam2[multiIdx]);
-            m_bac->com_bsw_write_ue(&m_bitStream, aps.log2predDistWeightMultiGroupSize[multiIdx]);
+            m_bac->com_bsw_write_ue(&m_bitStream, aps.predDistWeightMultiGroupSizeLog2[multiIdx]);
           }
         }
         if (aps.transformMulti[attrIdx][multiIdx] == 1) {
+          UInt transformSegmentSize_upper =
+            (*(UInt*)(&aps.transformMultiSegmentSize[attrIdx][multiIdx]) >> 16) & 0xffff;
+          UInt transformSegmentSize_lower =
+            (*(UInt*)(&aps.transformMultiSegmentSize[attrIdx][multiIdx])) & 0xffff;
+          m_bac->com_bsw_write(&m_bitStream, transformSegmentSize_upper, 16);
+          m_bac->com_bsw_write1(&m_bitStream, 1);
+          m_bac->com_bsw_write(&m_bitStream, transformSegmentSize_lower, 16);
+          m_bac->com_bsw_write1(&m_bitStream, 1);
           m_bac->com_bsw_write_ue(&m_bitStream, aps.kMultiFracBits[attrIdx][multiIdx]);
           m_bac->com_bsw_write_ue(&m_bitStream, aps.attrMultiTransformQpDelta[attrIdx][multiIdx]);
-          m_bac->com_bsw_write_ue(&m_bitStream, aps.transformMultiSegmentSize[attrIdx][multiIdx]);
           m_bac->com_bsw_write1(&m_bitStream, aps.transMultiResLayer[attrIdx][multiIdx]);
-          if (attrIdx == 0) {
-            m_bac->com_bsw_write_se(&m_bitStream, aps.colorMultiInitPredTransRatio[multiIdx]);
-          }
-          if (attrIdx == 1) {
-            m_bac->com_bsw_write_se(&m_bitStream, aps.refMultiInitPredTransRatio[multiIdx]);
-          }
         }
 
         if (aps.transformMulti[attrIdx][multiIdx] == 2) {
           m_bac->com_bsw_write_ue(&m_bitStream,
-                                  aps.log2MultimaxNumofCoeffMinus8[attrIdx][multiIdx]);
-          if (aps.log2MultimaxNumofCoeffMinus8[attrIdx][multiIdx]) {
+                                  aps.MultimaxNumofCoeffLog2Minus8[attrIdx][multiIdx]);
+          if (aps.MultimaxNumofCoeffLog2Minus8[attrIdx][multiIdx]) {
             aps.maxMultiNumofCoeff[attrIdx][multiIdx] = 1
-              << (aps.log2MultimaxNumofCoeffMinus8[attrIdx][multiIdx] + 8);
+              << (aps.MultimaxNumofCoeffLog2Minus8[attrIdx][multiIdx] + 8);
           }
           m_bac->com_bsw_write_se(&m_bitStream, aps.QpMultiOffsetDC[attrIdx][multiIdx]);
           m_bac->com_bsw_write_se(&m_bitStream, aps.QpMultiOffsetAC[attrIdx][multiIdx]);
           if (attrIdx == 0) {
-            m_bac->com_bsw_write_ue(&m_bitStream, aps.colorMaxMultiTransNum[attrIdx][multiIdx]);
+            m_bac->com_bsw_write_ue(&m_bitStream, aps.colorMaxMultiTransNum[multiIdx]);
             m_bac->com_bsw_write_se(&m_bitStream, aps.chromaMultiQpOffsetDC[multiIdx]);
             m_bac->com_bsw_write_se(&m_bitStream, aps.chromaMultiQpOffsetAC[multiIdx]);
             m_bac->com_bsw_write1(&m_bitStream, aps.colorMultiQPAdjustFlag[multiIdx]);
-            if (aps.colorMultiQPAdjustFlag[multiIdx]) {
-              m_bac->com_bsw_write_se(&m_bitStream, aps.colorMultiQPAdjustScalar[multiIdx]);
-            }
           }
           if (attrIdx == 1) {
-            m_bac->com_bsw_write_ue(&m_bitStream, aps.reflMaxMultiTransNum[attrIdx][multiIdx]);
-            m_bac->com_bsw_write1(&m_bitStream, aps.refMultiGroupPredict[multiIdx]);
+            m_bac->com_bsw_write_ue(&m_bitStream, aps.reflMaxMultiTransNum[multiIdx]);
+            m_bac->com_bsw_write1(&m_bitStream, aps.reflMultiGroupPredict[multiIdx]);
           }
         }
 
         m_bac->com_bsw_write_ue(&m_bitStream,
-                                aps.log2coeffMultiLengthControlMinus8[attrIdx][multiIdx]);
-        if (aps.log2coeffMultiLengthControlMinus8[attrIdx][multiIdx]) {
+                                aps.coeffMultiLengthControlLog2Minus8[attrIdx][multiIdx]);
+        if (aps.coeffMultiLengthControlLog2Minus8[attrIdx][multiIdx]) {
           aps.coeffMultiLengthControl[attrIdx][multiIdx] = 1
-            << (aps.log2coeffMultiLengthControlMinus8[attrIdx][multiIdx] + 8);
+            << (aps.coeffMultiLengthControlLog2Minus8[attrIdx][multiIdx] + 8);
         }
       }
     }
   }
-  if (aps.attributePresentFlag[0] && aps.attributePresentFlag[1]) {
+  if ((aps.attributeDataNumSetMinus1[0] == 0) && (aps.attributeDataNumSetMinus1[1] == 0)) {
     m_bac->com_bsw_write1(&m_bitStream, aps.crossAttrTypePred);
     if (aps.crossAttrTypePred) {
       m_bac->com_bsw_write1(&m_bitStream, aps.attrEncodeOrder);
       m_bac->com_bsw_write(&m_bitStream, aps.crossAttrTypePredParam1, 15);
+      m_bac->com_bsw_write1(&m_bitStream, 1);
       m_bac->com_bsw_write(&m_bitStream, aps.crossAttrTypePredParam2, 21);
+      m_bac->com_bsw_write1(&m_bitStream, 1);
     }
   }
   m_bac->com_bsw_write_byte_align(&m_bitStream);
 }
 
-Void TEncBacTop::codeFrameHead(const FrameHeader& frameHead) {
-  UInt frameStartCode_w_upper, frameStartCode_w_lower;
-  frameStartCode_w_upper = (frame_start_code >> 16) & 0xffff;
-  frameStartCode_w_lower = frame_start_code & 0xffff;
-  m_bac->com_bsw_write(&m_bitStream, frameStartCode_w_upper, 16);  ///< the start code of frame head
-  m_bac->com_bsw_write(&m_bitStream, frameStartCode_w_lower, 16);  ///< the start code of frame head
-
-  m_bac->com_bsw_write_ue(&m_bitStream, frameHead.frame_index);
-  m_bac->com_bsw_write_ue(&m_bitStream, frameHead.num_slice_minus_one);
-  m_bac->com_bsw_write1(&m_bitStream, frameHead.timestamp_flag);
-  if (frameHead.timestamp_flag) {
-    m_bac->com_bsw_write_ue(&m_bitStream, frameHead.timestamp);
-  }
-
+Void TEncBacTop::codeFrameHeader(const FrameHeader& frameHeader) {
+  Int geomBoundingBoxOrigin_x_upper, geomBoundingBoxOrigin_x_lower;
+  Int geomBoundingBoxOrigin_y_upper, geomBoundingBoxOrigin_y_lower;
+  Int geomBoundingBoxOrigin_z_upper, geomBoundingBoxOrigin_z_lower;
+  UInt geomBoundingBoxSize_w_upper, geomBoundingBoxSize_w_lower;
+  UInt geomBoundingBoxSize_h_upper, geomBoundingBoxSize_h_lower;
+  UInt geomBoundingBoxSize_d_upper, geomBoundingBoxSize_d_lower;
   UInt geomNumPoints_upper, geomNumPoints_lower;
-  geomNumPoints_upper = (*(UInt*)(&frameHead.geomNumPoints) >> 16) & 0xffff;
-  geomNumPoints_lower = (*(UInt*)(&frameHead.geomNumPoints)) & 0xffff;
-  m_bac->com_bsw_write_ue(&m_bitStream, geomNumPoints_upper);
-  m_bac->com_bsw_write_ue(&m_bitStream, geomNumPoints_lower);
+
+  m_bac->com_bsw_write_ue(&m_bitStream, frameHeader.frameIndex);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
+  m_bac->com_bsw_write_ue(&m_bitStream, frameHeader.frameNumSliceMinus1);
+
+  if (frameHeader.lcuNodeSizeLog2 == 0)
+    m_bac->com_bsw_write_ue(&m_bitStream, 0);
+  else
+    m_bac->com_bsw_write_ue(&m_bitStream, frameHeader.lcuNodeSizeLog2 - 1);
+
+  geomNumPoints_upper = (*(UInt*)(&frameHeader.geomNumPoints) >> 16) & 0xffff;
+  geomNumPoints_lower = (*(UInt*)(&frameHeader.geomNumPoints)) & 0xffff;
+  m_bac->com_bsw_write(&m_bitStream, geomNumPoints_upper, 16);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
+  m_bac->com_bsw_write(&m_bitStream, geomNumPoints_lower, 16);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
+
+  geomBoundingBoxOrigin_x_upper = (*(Int*)(&frameHeader.geomBoundingBoxOrigin[0]) >> 16) & 0xffff;
+  geomBoundingBoxOrigin_x_lower = (*(Int*)(&frameHeader.geomBoundingBoxOrigin[0])) & 0xffff;
+  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxOrigin_x_upper, 16);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
+  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxOrigin_x_lower, 16);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
+
+  geomBoundingBoxOrigin_y_upper = (*(Int*)(&frameHeader.geomBoundingBoxOrigin[1]) >> 16) & 0xffff;
+  geomBoundingBoxOrigin_y_lower = (*(Int*)(&frameHeader.geomBoundingBoxOrigin[1])) & 0xffff;
+  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxOrigin_y_upper, 16);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
+  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxOrigin_y_lower, 16);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
+
+  geomBoundingBoxOrigin_z_upper = (*(Int*)(&frameHeader.geomBoundingBoxOrigin[2]) >> 16) & 0xffff;
+  geomBoundingBoxOrigin_z_lower = (*(Int*)(&frameHeader.geomBoundingBoxOrigin[2])) & 0xffff;
+  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxOrigin_z_upper, 16);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
+  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxOrigin_z_lower, 16);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
+
+  geomBoundingBoxSize_w_upper = (*(Int*)(&frameHeader.geomBoundingBoxSize[0]) >> 16) & 0xffff;
+  geomBoundingBoxSize_w_lower = (*(Int*)(&frameHeader.geomBoundingBoxSize[0])) & 0xffff;
+  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxSize_w_upper, 16);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
+  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxSize_w_lower, 16);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
+
+  geomBoundingBoxSize_h_upper = (*(Int*)(&frameHeader.geomBoundingBoxSize[1]) >> 16) & 0xffff;
+  geomBoundingBoxSize_h_lower = (*(Int*)(&frameHeader.geomBoundingBoxSize[1])) & 0xffff;
+  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxSize_h_upper, 16);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
+  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxSize_h_lower, 16);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
+
+  geomBoundingBoxSize_d_upper = (*(Int*)(&frameHeader.geomBoundingBoxSize[2]) >> 16) & 0xffff;
+  geomBoundingBoxSize_d_lower = (*(Int*)(&frameHeader.geomBoundingBoxSize[2])) & 0xffff;
+  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxSize_d_upper, 16);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
+  m_bac->com_bsw_write(&m_bitStream, geomBoundingBoxSize_d_lower, 16);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
 
   m_bac->com_bsw_write_byte_align(&m_bitStream);
 }
 
-Void TEncBacTop::codeABH(const AttributeBrickHeader& ah, const AttributeParameterSet& aps,
+Void TEncBacTop::codeABH(const AttributeBrickHeader& abh, const AttributeParameterSet& aps,
                          const SequenceParameterSet& sps) {
-  UInt sliceAttrStartCode_w_upper, sliceAttrStartCode_w_lower;
-  sliceAttrStartCode_w_upper = (slice_attribute_start_code >> 16) & 0xffff;
-  sliceAttrStartCode_w_lower = slice_attribute_start_code & 0xffff;
-  m_bac->com_bsw_write(&m_bitStream, sliceAttrStartCode_w_upper,
-                       16);  ///< the start code of frame head
-  m_bac->com_bsw_write(&m_bitStream, sliceAttrStartCode_w_lower,
-                       16);  ///< the start code of frame head
-
-  for (int attrIdx = 0; attrIdx < (sps.maxNumAttrMinus1 + 1); attrIdx++) {
-    if (aps.attributePresentFlag[attrIdx]) {
-      for (int multiIdx = 0; multiIdx < aps.attribute_num_set_minus1[attrIdx] + 1; ++multiIdx)
-        m_bac->com_bsw_write_ue(&m_bitStream, ah.attribute_ID[attrIdx][multiIdx]);
-    }
+  m_bac->com_bsw_write_ue(&m_bitStream, abh.sliceID);
+  m_bac->com_bsw_write1(&m_bitStream, 1);
+  m_bac->com_bsw_write_ue(&m_bitStream, abh.attributeID);
+  m_bac->com_bsw_write_se(&m_bitStream, abh.QpOffset);
+  m_bac->com_bsw_write_se(&m_bitStream, abh.colorInitPredTransRatio);
+  m_bac->com_bsw_write_se(&m_bitStream, abh.reflInitPredTransRatio);
+  if (aps.colorQPAdjustFlag) {
+    m_bac->com_bsw_write_ue(&m_bitStream, abh.colorQPAdjustScalar);
   }
-  m_bac->com_bsw_write_ue(&m_bitStream, ah.sliceID);
-  m_bac->com_bsw_write_se(&m_bitStream, ah.reflQPoffset);
   m_bac->com_bsw_write_byte_align(&m_bitStream);
 }
 
-void TEncBacTop::encodeGeomTreeType(UInt geomTreeType) {
+Void TEncBacTop::encodeGeomTreeType(UInt geomTreeType) {
   auto p_ctx = &p_aec->p_geometry_ctx_set->ctxGeomTreeType;
   m_bac->biari_encode_symbol_aec(p_aec, geomTreeType, p_ctx);
   m_bitStream.cur = p_aec->p;
 }
 
-void TEncBacTop::EligibleKOctreeDepthflag(bool isEligible) {
+Void TEncBacTop::EligibleKOctreeDepthflag(bool isEligible) {
   auto p_ctx = &p_aec->p_geometry_ctx_set->ctxdepth;
   m_bac->biari_encode_symbol_aec(p_aec, isEligible, p_ctx);
   m_bitStream.cur = p_aec->p;
@@ -451,7 +380,7 @@ Void TEncBacTop::encodePredTreeResidual(const V3<int32_t>& residual, const V3<in
     std::vector<bool> bitbit;
     bitbit.resize(numbits_Lcusize_log2[k]);
     for (int ctxIdx = 0, i = 0; i < numbits_Lcusize_log2[k]; i++) {
-      bitbit[i]= (numBits & (1 << i));
+      bitbit[i] = (numBits & (1 << i));
       m_bac->biari_encode_symbol_aec(p_aec, bitbit[i], &(p_ctxs[ctxIdx]));
       if (i < 2)
         ctxIdx = (1 << (i + 1)) - 1 + bitbit[i];
@@ -595,7 +524,6 @@ Void TEncBacTop::encodeOccUsingMemoryChannel(const UInt& occupancyCode,
   int ctxFrom6Nei =
     (!!(ctx6Parent & 0x0003)) && (!!(ctx6Parent & 0x000c)) && (!!(ctx6Parent & 0x0030));
 
-
   for (Int i = 0; i < 8; i++) {
     if (occupancySkip != 0) {
       if ((occupancySkip & 1) && (i & 1))  ///< skip when z = 1
@@ -620,17 +548,15 @@ Void TEncBacTop::encodeOccUsingMemoryChannel(const UInt& occupancyCode,
         context_t* bit_ctx = NULL;
         bit_ctx = p_aec->p_geometry_ctx_set->planarMode;
         m_bac->biari_encode_symbol_aec(p_aec, bit, bit_ctx + planarContext - 1);
-   
+
       } else {
         UInt8 ctxFrom3FaceNei = 0;
         UInt8 ctxFrom3EdgeNei = 0;
         for (int j = 0; j < 3; j++) {
-            ctxFrom3FaceNei |= (!!((ctx26Parent[i] >> j) & 0x01) << (2 - j));
-            ctxFrom3EdgeNei |= (!!((ctx26Parent[i] >> (j + 3)) & 0x01) << (2 - j));
+          ctxFrom3FaceNei |= (!!((ctx26Parent[i] >> j) & 0x01) << (2 - j));
+          ctxFrom3EdgeNei |= (!!((ctx26Parent[i] >> (j + 3)) & 0x01) << (2 - j));
         }
         UInt8 ctxFromParent = contextMap(ctxFrom3FaceNei, ctxFrom3EdgeNei) * 2 + ctxFrom6Nei;
-
-
 
         UInt16 childInformation = 0;
         const UInt8* adjChidIdx = adjacentCIdx[i];
@@ -651,7 +577,6 @@ Void TEncBacTop::encodeOccUsingMemoryChannel(const UInt& occupancyCode,
         m_bac->biari_encode_symbol_aec(p_aec, bit, bit_ctx + context);
         *memoryVal = ((*memoryVal) << 1) | bit;
       }
-
     }
     codedOccupancyCode |= (bit << i);
     numCodedBins++;
@@ -659,11 +584,10 @@ Void TEncBacTop::encodeOccUsingMemoryChannel(const UInt& occupancyCode,
   m_bitStream.cur = p_aec->p;
 }
 
-
 Void TEncBacTop::encodeOccupancyCode(const UInt& occupancyCode,
-                                      const TComOctreePartitionParams& params,
-                                      TComGeomContext& geomCtx, bool& planarModeEligibleForSlice,
-                                      const UInt contextMode) {
+                                     const TComOctreePartitionParams& params,
+                                     TComGeomContext& geomCtx, bool& planarModeEligibleForSlice,
+                                     const UInt contextMode) {
   UInt* encodedChildNode = geomCtx.ctxChildOccu;
   encodedChildNode[7] = occupancyCode & 0x7f;
   UInt ctxParent = geomCtx.ctxParent;
@@ -752,7 +676,7 @@ Void TEncBacTop::encodeOccupancyCode(const UInt& occupancyCode,
         m_bac->biari_encode_symbol_aec(p_aec, bit, bit_ctx + context);
       } else {
         const UInt8* adjChidIdx = adjacentCIdx1[i];
-   
+
         for (size_t idx = 3; idx < 7; ++idx) {
           ctxChild |= !!(encodedChildNode[adjChidIdx[idx] >> 3] & (1 << (adjChidIdx[idx] & 7)))
             << (idx - 3);
@@ -783,8 +707,7 @@ Void TEncBacTop::encodeOccupancyCode(const UInt& occupancyCode,
           *memoryVal = ((*memoryVal) << 1) | bit;
           m_bac->biari_encode_symbol_aec(p_aec, bit, bit_ctx + context);
 
-        } else
-        {
+        } else {
           bit_ctx = p_aec->p_geometry_ctx_set->ctxRUB_occupancy[i];
           context = ctxParentAdv1[i];
           m_bac->biari_encode_symbol_aec(p_aec, bit, bit_ctx + context);
@@ -803,8 +726,6 @@ Void TEncBacTop::encodeOccupancyCode(const UInt& occupancyCode,
 
   m_bitStream.cur = p_aec->p;
 }
-
-
 
 Void TEncBacTop::encodeSinglePointFlag(Bool singleModeFlag) {
   m_bac->biari_encode_symbol_aec(p_aec, singleModeFlag,
@@ -828,8 +749,22 @@ Void TEncBacTop::encodeDuplicateNumber(const UInt& dupNum) {
   assert(dupNum >= 1);
   auto p_ctx = &p_aec->p_geometry_ctx_set->ctx_geom_num_dup_eq1;
   m_bac->biari_encode_symbol_aec(p_aec, dupNum == 1, p_ctx);
-  if (dupNum > 1)
-    m_bac->sbac_write_ue_ep(&m_bitStream, dupNum - 2, p_aec);
+  if (dupNum > 1) {
+    UInt symbol = dupNum - 2;
+    int k = 0;
+    while (1) {
+      if (symbol >= (1u << k)) {
+        m_bac->biari_encode_symbol_eq_prob_aec(p_aec, 1);
+        symbol -= (1u << k);
+        k++;
+      } else {
+        m_bac->biari_encode_symbol_eq_prob_aec(p_aec, 0);
+        while (k--)
+          m_bac->biari_encode_symbol_eq_prob_aec(p_aec, (symbol >> k) & 1);
+        break;
+      }
+    }
+  }
 }
 
 Void TEncBacTop::encodeRunlength(int32_t& length) {
@@ -860,124 +795,82 @@ Void TEncBacTop::encodeExpGolombRunlength(unsigned int symbol, int k, context_t*
   }
 }
 
-
-Void TEncBacTop::encodeExpGolomb(unsigned int symbol, int k, context_t* p_ctxPrefix,
-                                 context_t* p_ctxSufffix) {
+Void TEncBacTop::encodeExpGolombN(unsigned int symbol, int k, context_t* p_ctxPrefix,
+                                  context_t* p_ctxSufffix) {
+  int count = 4;
   while (1) {
     if (symbol >= (1u << k)) {
-      m_bac->biari_encode_symbol_aec(p_aec, 1, p_ctxPrefix);
+      if (count) {
+        m_bac->biari_encode_symbol_aec(p_aec, 1, p_ctxPrefix);
+        count--;
+      } else {
+        m_bac->biari_encode_symbol_eq_prob_aec(p_aec, 1);
+      }
       symbol -= (1u << k);
       k++;
     } else {
-      m_bac->biari_encode_symbol_aec(p_aec, 0, p_ctxPrefix);
-      while (k--)
-        m_bac->biari_encode_symbol_aec(p_aec, (symbol >> k) & 1, p_ctxSufffix);
+      if (count) {
+        m_bac->biari_encode_symbol_aec(p_aec, 0, p_ctxPrefix);
+        count--;
+      } else {
+        m_bac->biari_encode_symbol_eq_prob_aec(p_aec, 0);
+      }
+      while (k--) {
+        if (count) {
+          m_bac->biari_encode_symbol_aec(p_aec, (symbol >> k) & 1, p_ctxSufffix);
+          count--;
+        } else {
+          m_bac->biari_encode_symbol_eq_prob_aec(p_aec, (symbol >> k) & 1);
+        }
+      }
       break;
     }
   }
 }
 
-Void TEncBacTop::encodeExpGolombN(unsigned int symbol, int k, context_t* p_ctxPrefix,
-    context_t* p_ctxSufffix) {
-    int count = 4;
-    while (1) {
-        if (symbol >= (1u << k)) {
-            if (count) {
-                m_bac->biari_encode_symbol_aec(p_aec, 1, p_ctxPrefix);
-                count--;
-            }
-            else {
-                m_bac->biari_encode_symbol_eq_prob_aec(p_aec, 1);
-            }
-            symbol -= (1u << k);
-            k++;
-        }
-        else {
-            if (count) {
-                m_bac->biari_encode_symbol_aec(p_aec, 0, p_ctxPrefix);
-                count--;
-            }
-            else {
-                m_bac->biari_encode_symbol_eq_prob_aec(p_aec, 0);
-            }
-            while (k--) {
-                if (count) {
-                    m_bac->biari_encode_symbol_aec(p_aec, (symbol >> k) & 1, p_ctxSufffix);
-                    count--;
-                }
-                else {
-                    m_bac->biari_encode_symbol_eq_prob_aec(p_aec, (symbol >> k) & 1);
-                }
-            }
-            break;
-        }
-    }
+Void TEncBacTop::setColorGolombKandBound(const UInt& groupSizeLog2, const UInt& GolombNum) {
+  Group_size = 1 << groupSizeLog2;
+  Group_size_log2 = groupSizeLog2;
+  golombK[0] = GolombNum;
+  golombK[1] = GolombNum;
+  golombK[2] = GolombNum;
+  if (GolombNum > 1) {
+    golombkForValUpper = (1 << (GolombNum - 1)) + (1 << (GolombNum - 2));
+    golombkForValLower = (1 << (GolombNum - 1)) - (1 << (GolombNum - 2));
+  } else {
+    golombkForValUpper = 1;
+    golombkForValLower = 1;
+  }
+  ExpGolombInputGroup = {{}, {}, {}};
+  inputGroupSum = {0, 0, 0};
 }
 
-Void TEncBacTop::encodeExpGolombAdp(const int val, const int k, const int colorType, const int ctx_id) {
-    golombK[colorType] = golombK[colorType] > 0 ? golombK[colorType] : 1;
-    encodeExpGolombN(val, golombK[colorType],
-        &p_aec->p_attribute_ctx_set->ctx_attr_residual_prefix[ctx_id],
-        &p_aec->p_attribute_ctx_set->ctx_attr_residual_suffix[ctx_id]);
-    if (ExpGolombInputGroup[colorType].size() < Group_size) {
-        inputGroupSum[colorType] += val;
-        ExpGolombInputGroup[colorType].push_back(val);
-    }
-    else {
-        auto valFirst = ExpGolombInputGroup[colorType].begin();
-        inputGroupSum[colorType] -= *valFirst;
-        ExpGolombInputGroup[colorType].erase(valFirst);
-        inputGroupSum[colorType] += val;
-        ExpGolombInputGroup[colorType].push_back(val);
-        int64_t inputGroupAvg = inputGroupSum[colorType] >> Group_size_shift;
-        golombK[colorType] = k;
-        if (inputGroupAvg < golombkForValLower)
-            golombK[colorType]--;
-        else if (inputGroupAvg > golombkForValUpper)
-            golombK[colorType]++;
-    }
-}
-
-Void TEncBacTop::encodeExpGolombRefl(unsigned int symbol, int k, context_t* p_ctxPrefix,
-                                     context_t* p_ctxSufffix) {
-  int k0 = k;
-  int kmax = k;
-  while (1) {
-    if (symbol >= (1u << k)) {
-      if (k == k0) {
-        m_bac->biari_encode_symbol_aec(p_aec, 1, &p_ctxPrefix[0]);
-      } else if (k == k0 + 1) {
-        m_bac->biari_encode_symbol_aec(p_aec, 1, &p_ctxPrefix[1]);
-      } else {
-        m_bac->biari_encode_symbol_aec(p_aec, 1, &p_ctxPrefix[2]);
-      }
-      symbol -= (1u << k);
-      k++;
-      kmax = k;
-    } else {
-      if (k == k0) {
-        m_bac->biari_encode_symbol_aec(p_aec, 0, &p_ctxPrefix[0]);
-      } else if (k == k0 + 1) {
-        m_bac->biari_encode_symbol_aec(p_aec, 0, &p_ctxPrefix[1]);
-      } else {
-        m_bac->biari_encode_symbol_aec(p_aec, 0, &p_ctxPrefix[2]);
-      }
-      while (k--) {
-        if (k == kmax - 1) {
-          m_bac->biari_encode_symbol_aec(p_aec, (symbol >> k) & 1, &p_ctxSufffix[0]);
-        } else if (k == kmax - 2) {
-          m_bac->biari_encode_symbol_aec(p_aec, (symbol >> k) & 1, &p_ctxSufffix[1]);
-        } else {
-          m_bac->biari_encode_symbol_aec(p_aec, (symbol >> k) & 1, &p_ctxSufffix[2]);
-        }
-      }
-      break;
-    }
+Void TEncBacTop::encodeExpGolombAdp(const int val, const int k, const int colorType,
+                                    const int ctx_id) {
+  golombK[colorType] = golombK[colorType] > 0 ? golombK[colorType] : 1;
+  encodeExpGolombN(val, golombK[colorType],
+                   &p_aec->p_attribute_ctx_set->ctx_attr_residual_prefix[ctx_id],
+                   &p_aec->p_attribute_ctx_set->ctx_attr_residual_suffix[ctx_id]);
+  if (ExpGolombInputGroup[colorType].size() < Group_size) {
+    inputGroupSum[colorType] += val;
+    ExpGolombInputGroup[colorType].push_back(val);
+  } else {
+    auto valFirst = ExpGolombInputGroup[colorType].begin();
+    inputGroupSum[colorType] -= *valFirst;
+    ExpGolombInputGroup[colorType].erase(valFirst);
+    inputGroupSum[colorType] += val;
+    ExpGolombInputGroup[colorType].push_back(val);
+    int64_t inputGroupAvg = inputGroupSum[colorType] >> Group_size_log2;
+    golombK[colorType] = k;
+    if (inputGroupAvg < golombkForValLower)
+      golombK[colorType]--;
+    else if (inputGroupAvg > golombkForValUpper)
+      golombK[colorType]++;
   }
 }
 
 Void TEncBacTop::encodeExpGolombReflN(UInt64 symbol, int k, context_t* p_ctxPrefix,
-                                        context_t* p_ctxSufffix) {
+                                      context_t* p_ctxSufffix) {
   int k0 = k;
   int kmax = k;
   int count = 4;
@@ -1030,30 +923,10 @@ Void TEncBacTop::encodeExpGolombReflN(UInt64 symbol, int k, context_t* p_ctxPref
   }
 }
 
-Void TEncBacTop::setGolombGroupSize(const UInt& groupSizeShift) {
-  Group_size = 1 << groupSizeShift;
-  Group_size_shift = groupSizeShift;
-}
-
-Void TEncBacTop::setColorGolombKandBound(const UInt& GolombNum) {
-  golombK[0] = GolombNum;
-  golombK[1] = GolombNum;
-  golombK[2] = GolombNum;
-  if (GolombNum > 1) {
-    golombkForValUpper = (1 << (GolombNum - 1)) + (1 << (GolombNum - 2));
-    golombkForValLower = (1 << (GolombNum - 1)) - (1 << (GolombNum - 2));
-
-  } else {
-    golombkForValUpper = 1;
-    golombkForValLower = 1;
-  }
-}
-
-
 Void TEncBacTop::codeAttributeResidualDual(const int64_t& delta, const bool& isColor,
                                            const int ctx_id, const bool isDuplicatePoint,
                                            const bool residualminusone_flag,
-                                           const UInt8& golombNUm) {
+                                           const UInt8& golombNum) {
   int sign_bit = (delta > 0) ? 1 : 0;
   int abs_delta = (delta > 0) ? delta : -delta;
   int parity = (abs_delta - 1) % 2;
@@ -1064,17 +937,17 @@ Void TEncBacTop::codeAttributeResidualDual(const int64_t& delta, const bool& isC
   m_bac->biari_encode_symbol_aec(p_aec, abs_delta > 2,
                                  &p_aec->p_attribute_ctx_set_dual->ctx_attr_residual_flag1[ctx_id]);
   if (abs_delta > 2) {
-    m_bac->biari_encode_symbol_aec(p_aec, abs_delta > 4, &p_aec->p_attribute_ctx_set_dual->ctx_attr_residual_flag2[ctx_id]);
+    m_bac->biari_encode_symbol_aec(
+      p_aec, abs_delta > 4, &p_aec->p_attribute_ctx_set_dual->ctx_attr_residual_flag2[ctx_id]);
     if (abs_delta > 4) {
       int val = (abs_delta - 5) >> 1;  // 2, 3,4,5, 6, 7...-->0,0,1,1,2,2,...
-      encodeExpGolombReflN(val, golombNUm,
-                          p_aec->p_attribute_ctx_set_dual->ctx_attr_residual_prefix,
-                          p_aec->p_attribute_ctx_set_dual->ctx_attr_residual_suffix);
+      encodeExpGolombReflN(val, golombNum,
+                           p_aec->p_attribute_ctx_set_dual->ctx_attr_residual_prefix,
+                           p_aec->p_attribute_ctx_set_dual->ctx_attr_residual_suffix);
     }
   }
   m_bitStream.cur = p_aec->p;
 }
-
 
 Void TEncBacTop::codeAttributerResidual(const int64_t& delta, const bool& isColor,
                                         const int& colorType, const int ctx_id,
@@ -1082,7 +955,7 @@ Void TEncBacTop::codeAttributerResidual(const int64_t& delta, const bool& isColo
                                         const bool residualminusone_flag, const UInt8& golombNum,
                                         const int b0) {
   const int ExpGolombNumber = golombNum;
-   if (!isColor) {
+  if (!isColor) {
     int sign_bit = (delta > 0) ? 1 : 0;
     UInt64 abs_delta = (delta > 0) ? delta : -delta;
     int parity = (abs_delta - 1) % 2;
@@ -1097,15 +970,14 @@ Void TEncBacTop::codeAttributerResidual(const int64_t& delta, const bool& isColo
                                      &p_aec->p_attribute_ctx_set->ctx_attr_residual_flag2[ctx_id]);
       if (abs_delta > 4) {
         UInt64 val = (abs_delta - 5) >> 1;  // 2, 3,4,5, 6, 7...-->0,0,1,1,2,2,...
-          encodeExpGolombReflN(val, ExpGolombNumber,
-                              p_aec->p_attribute_ctx_set->ctx_attr_residual_prefix,
-                              p_aec->p_attribute_ctx_set->ctx_attr_residual_suffix);
+        encodeExpGolombReflN(val, ExpGolombNumber,
+                             p_aec->p_attribute_ctx_set->ctx_attr_residual_prefix,
+                             p_aec->p_attribute_ctx_set->ctx_attr_residual_suffix);
       }
     }
     m_bitStream.cur = p_aec->p;
 
-  } 
-   else {
+  } else {
     if (!residualminusone_flag) {
       //m_residualStats.collectStats(abs(delta));
       if (b0 == 1) {
@@ -1127,11 +999,13 @@ Void TEncBacTop::codeAttributerResidual(const int64_t& delta, const bool& isColo
         int abs_delta = (delta > 0) ? delta : -delta;
         int parity = abs_delta % 2;
 
-        m_bac->biari_encode_symbol_aec(p_aec, abs_delta > 1, &p_aec->p_attribute_ctx_set->ctx_attr_residual_flag1[ctx_id + b0]);
+        m_bac->biari_encode_symbol_aec(
+          p_aec, abs_delta > 1, &p_aec->p_attribute_ctx_set->ctx_attr_residual_flag1[ctx_id + b0]);
         if (abs_delta > 1) {
           m_bac->biari_encode_symbol_aec(p_aec, parity,
                                          &p_aec->p_attribute_ctx_set->parity[ctx_id + b0]);
-          m_bac->biari_encode_symbol_aec(p_aec, abs_delta > 3,
+          m_bac->biari_encode_symbol_aec(
+            p_aec, abs_delta > 3,
             &p_aec->p_attribute_ctx_set->ctx_attr_residual_flag2[ctx_id + b0]);
           if (abs_delta > 3) {
             int val = (abs_delta - 4) >> 1;
@@ -1150,7 +1024,8 @@ Void TEncBacTop::codeAttributerResidual(const int64_t& delta, const bool& isColo
         &p_aec->p_attribute_ctx_set
            ->ctx_attr_residual_minusone_eq0[ctx_id + (3 * isDuplicatePoint)]);
       if (abs_delta != 0) {
-        m_bac->biari_encode_symbol_aec(p_aec, abs_delta > 1,
+        m_bac->biari_encode_symbol_aec(
+          p_aec, abs_delta > 1,
           &p_aec->p_attribute_ctx_set->ctx_attr_residual_minusone_flag1[ctx_id]);
         if (abs_delta > 1) {
           m_bac->biari_encode_symbol_aec(p_aec, parity,
@@ -1178,10 +1053,9 @@ Void TEncBacTop::codeSign(const int64_t delta) {
 
 Void TEncBacTop::codeAttributerResidualHaar(const int64_t& delta, const bool& isColor,
                                             const int& colorType, const bool reslayer,
-                                            const int ctx_id,
-                                            const bool isDuplicatePoint,
+                                            const int ctx_id, const bool isDuplicatePoint,
                                             const bool residualminusone_flag,
-                                            const UInt8& golombNUm) {
+                                            const UInt8& golombNum) {
   if (!isColor) {
     int sign_bit = (delta > 0) ? 1 : 0;
     int abs_delta = (delta > 0) ? delta : -delta;
@@ -1195,21 +1069,14 @@ Void TEncBacTop::codeAttributerResidualHaar(const int64_t& delta, const bool& is
       m_bac->biari_encode_symbol_aec(p_aec, abs_delta == 2,
                                      &p_aec->p_attribute_ctx_set->ctx_attr_residual_flag2[ctx_id]);
       if (abs_delta > 2) {
-        if (reslayer) {  
-          //encodeExpGolomb(abs_delta - 3, golombNUm,
-          //                &p_aec->p_ctx_set->ctx_attr_residual_prefix[ctx_id],
-           //               &p_aec->p_ctx_set->ctx_attr_residual_suffix[ctx_id]);
-          encodeExpGolombReflN(abs_delta - 3, golombNUm,
-                              p_aec->p_attribute_ctx_set->ctx_attr_residual_prefix,
-                              p_aec->p_attribute_ctx_set->ctx_attr_residual_suffix);
+        if (reslayer) {
+          encodeExpGolombReflN(abs_delta - 3, golombNum,
+                               p_aec->p_attribute_ctx_set->ctx_attr_residual_prefix,
+                               p_aec->p_attribute_ctx_set->ctx_attr_residual_suffix);
         } else {
           unsigned int val = abs_delta - 3;
-          //encodeExpGolomb(val, golombK[colorType],
-          //                &p_aec->p_ctx_set->ctx_attr_residual_prefix[ctx_id],
-          //                &p_aec->p_ctx_set->ctx_attr_residual_suffix[ctx_id]);
-          encodeExpGolombReflN(val, golombNUm,
-                              p_aec->p_attribute_ctx_set->ctx_attr_residual_prefix,
-                              p_aec->p_attribute_ctx_set->ctx_attr_residual_suffix);
+          encodeExpGolombReflN(val, golombNum, p_aec->p_attribute_ctx_set->ctx_attr_residual_prefix,
+                               p_aec->p_attribute_ctx_set->ctx_attr_residual_suffix);
         }
       }
     }
@@ -1225,17 +1092,19 @@ Void TEncBacTop::codeAttributerResidualHaar(const int64_t& delta, const bool& is
       if (delta != 0) {
         int abs_delta = (delta > 0) ? delta : -delta;
 
-        m_bac->biari_encode_symbol_aec(p_aec, abs_delta == 1, &p_aec->p_attribute_ctx_set->ctx_attr_residual_flag1[ctx_id]);
+        m_bac->biari_encode_symbol_aec(
+          p_aec, abs_delta == 1, &p_aec->p_attribute_ctx_set->ctx_attr_residual_flag1[ctx_id]);
         if (abs_delta > 1) {
-          m_bac->biari_encode_symbol_aec(p_aec, abs_delta == 2, &p_aec->p_attribute_ctx_set->ctx_attr_residual_flag2[ctx_id]);
+          m_bac->biari_encode_symbol_aec(
+            p_aec, abs_delta == 2, &p_aec->p_attribute_ctx_set->ctx_attr_residual_flag2[ctx_id]);
           if (abs_delta > 2) {
             if (reslayer) {
-              encodeExpGolombN(abs_delta - 3, golombNUm,
-                              &p_aec->p_attribute_ctx_set->ctx_attr_residual_prefix[ctx_id],
-                              &p_aec->p_attribute_ctx_set->ctx_attr_residual_suffix[ctx_id]);
+              encodeExpGolombN(abs_delta - 3, golombNum,
+                               &p_aec->p_attribute_ctx_set->ctx_attr_residual_prefix[ctx_id],
+                               &p_aec->p_attribute_ctx_set->ctx_attr_residual_suffix[ctx_id]);
             } else {
               unsigned int val = abs_delta - 3;
-              encodeExpGolombAdp(val, golombNUm, colorType, ctx_id);
+              encodeExpGolombAdp(val, golombNum, colorType, ctx_id);
             }
           }
         }
@@ -1250,7 +1119,8 @@ Void TEncBacTop::codeAttributerResidualHaar(const int64_t& delta, const bool& is
         &p_aec->p_attribute_ctx_set
            ->ctx_attr_residual_minusone_eq0[ctx_id + (3 * isDuplicatePoint)]);
       if (abs_delta != 0) {
-        m_bac->biari_encode_symbol_aec(p_aec, abs_delta == 1,
+        m_bac->biari_encode_symbol_aec(
+          p_aec, abs_delta == 1,
           &p_aec->p_attribute_ctx_set->ctx_attr_residual_minusone_flag1[ctx_id]);
         if (abs_delta > 1) {
           m_bac->biari_encode_symbol_aec(
@@ -1258,12 +1128,12 @@ Void TEncBacTop::codeAttributerResidualHaar(const int64_t& delta, const bool& is
             &p_aec->p_attribute_ctx_set->ctx_attr_residual_minusone_flag2[ctx_id]);
           if (abs_delta > 2) {
             if (reslayer) {
-              encodeExpGolombN(abs_delta - 3, golombNUm,
-                              &p_aec->p_attribute_ctx_set->ctx_attr_residual_prefix[ctx_id],
-                              &p_aec->p_attribute_ctx_set->ctx_attr_residual_suffix[ctx_id]);
+              encodeExpGolombN(abs_delta - 3, golombNum,
+                               &p_aec->p_attribute_ctx_set->ctx_attr_residual_prefix[ctx_id],
+                               &p_aec->p_attribute_ctx_set->ctx_attr_residual_suffix[ctx_id]);
             } else {
               unsigned int val = abs_delta - 3;
-              encodeExpGolombAdp(val, golombNUm, colorType, ctx_id);
+              encodeExpGolombAdp(val, golombNum, colorType, ctx_id);
             }
           }
         }
@@ -1273,25 +1143,15 @@ Void TEncBacTop::codeAttributerResidualHaar(const int64_t& delta, const bool& is
   }
 }
 
-Void TEncBacTop::codeAttributerResidualequaltwo0(const int64_t& delta) {
+Void TEncBacTop::codeAttributerResidualequaltwo(const int64_t& delta) {
   m_bac->biari_encode_symbol_aec(p_aec, delta == 0, &p_aec->p_attribute_ctx_set->ctx_attr_flag2);
   m_bitStream.cur = p_aec->p;
 }
 
-Void TEncBacTop::codeAttributerResidualequalone0(const int64_t& delta) {
+Void TEncBacTop::codeAttributerResidualequalone(const int64_t& delta) {
   m_bac->biari_encode_symbol_aec(p_aec, delta == 0, &p_aec->p_attribute_ctx_set->ctx_attr_flag1);
   m_bitStream.cur = p_aec->p;
 }
-
-Void TEncBacTop::codeAttributerResidualequal0(const int64_t& delta) {
-  m_bac->biari_encode_symbol_aec(p_aec, delta == 0, &p_aec->p_attribute_ctx_set->ctx_attr_flag4);
-  m_bitStream.cur = p_aec->p;
-}
-
-Void TEncBacTop::encodeCoeffNumber(const UInt64 CoeffNum) {
-  //m_bac->com_bsw_write_ue(&m_bitStream, CoeffNum);
-  m_bac->sbac_write_ue_ep(&m_bitStream, CoeffNum, p_aec);
-};
 
 Void TEncBacTop::encodeTerminationFlag(Bool terminateFlag) {
   m_bac->biari_encode_symbol_final_aec(p_aec, terminateFlag ? 1 : 0);
@@ -1300,19 +1160,6 @@ Void TEncBacTop::encodeTerminationFlag(Bool terminateFlag) {
   m_bitStream.cur = p_aec->p;
 }
 
-Void TEncBacTop::computeAttributeID(AttributeBrickHeader& abh, const AttributeParameterSet& aps,
-                                    const SequenceParameterSet& sps) {
-  for (int attrIdx = 0; attrIdx < (sps.maxNumAttrMinus1 + 1); attrIdx++) {
-    if (aps.attributePresentFlag[attrIdx]) {
-      for (int multiIdx = 0; multiIdx < aps.attribute_num_set_minus1[attrIdx] + 1; ++multiIdx)
-        abh.attribute_ID[attrIdx][multiIdx] = multiIdx;
-    }
-  }
-}
-
-UInt8* TEncBacTop::getBitStreamCur() {
-  return m_bitStream.cur;
-}
 Void TEncBacTop::encodeFinish() {
   if (m_bac)
     m_bac->enc_sbac_finish(&m_bitStream);
@@ -1336,7 +1183,6 @@ TEncBacTop::~TEncBacTop() {
 
 Void TEncBacTop::setBitstreamBuffer(TComBufferChunk& buffer, const bool& initDulatAttribute) {
   if (buffer.getBufferType() == BufferChunkType::BCT_GEOM ||
-      buffer.getBufferType() == BufferChunkType::BCT_ATTR ||
       buffer.getBufferType() == BufferChunkType::BCT_COL ||
       buffer.getBufferType() == BufferChunkType::BCT_REFL)
     buffer.allocateBuffSize(buffersize);
@@ -1347,8 +1193,7 @@ Void TEncBacTop::setBitstreamBuffer(TComBufferChunk& buffer, const bool& initDul
   if (buffer.getBufferType() == BufferChunkType::BCT_GEOM) {
     m_bac->init_geometry_contexts(p_aec);
     m_bac->aec_start(p_aec, m_bitStream.beg, m_bitStream.end, 1);
-  } else if (buffer.getBufferType() == BufferChunkType::BCT_ATTR ||
-             buffer.getBufferType() == BufferChunkType::BCT_COL ||
+  } else if (buffer.getBufferType() == BufferChunkType::BCT_COL ||
              buffer.getBufferType() == BufferChunkType::BCT_REFL) {
     m_bac->init_attribute_contexts(p_aec, initDulatAttribute);
     m_bac->aec_start(p_aec, m_bitStream.beg, m_bitStream.end, 1);
@@ -1370,12 +1215,16 @@ Void TEncBacTop::reset() {
   p_aec = &aec;
   std::fill(begin(memoryChannel), end(memoryChannel), 15);
 }
+
 Void TEncBacTop::LcuReset() {
   std::fill(begin(memoryChannel), end(memoryChannel), 15);
   m_bac->init_geometry_contexts(p_aec);
 }
+
 UInt64 TEncBacTop::getBitStreamLength() {
   return m_bitStream.cur - m_bitStream.beg;
 }
+
+Void TEncBacTop::codeUserData() {}
 
 ///< \{

@@ -37,6 +37,7 @@ public:
   void operator+=(const FXPoint& that);
   void operator-=(const FXPoint& that);
   void operator*=(const FXPoint& that);
+  void operator*=(const int64_t that);
   void operator/=(const FXPoint& that);
   void operator>>=(const int64_t that);
   void operator<<=(const int64_t that);
@@ -74,6 +75,10 @@ inline void FXPoint::operator*=(const FXPoint& that) {
     this->val = -((kOneHalf - this->val) >> kFracBits);
   else
     this->val = +((kOneHalf + this->val) >> kFracBits);
+}
+
+inline void FXPoint::operator*=(const int64_t val) {
+  this->val = (this->val * val) >> kFracBits;
 }
 
 inline void FXPoint::operator/=(const FXPoint& that) {

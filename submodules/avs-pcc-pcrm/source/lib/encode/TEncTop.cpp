@@ -80,20 +80,34 @@ Int TEncTop::encode() {
   MetricParam.m_showHausdorff = m_showHausdorff;
 
   EncoderStatistics esTotal;
+  UInt64 prevFrameBits = 0;
+
+  ///< init geom rate control para (cat2)
+ 
+  Double control_a = 28.9;     // geom rate control  model para a
+  Double control_b = -0.166;   //geom rc control model para b
+  Double control_c = -10.143;  //geom rc control model para c
+
+  ///< init attribute rate control para (cat2)
+
+  double control_ap = 55;
+  double control_bp = -2;
 
   for (UInt i_frame = 0; i_frame < m_numOfFrames; i_frame++) {
     m_frame_ID = i_frame;
-
     EncoderStatistics esCurFrame;
     printFrameCutoffRule(i_frame, numDigits);
+    if (m_splitBinFlag) {
+      prevFrameBits = 0;
+    }
 
     if (i_frame == 0) {
-      resetBitstream_Recon_FileName(m_startFrame,
-                                    numDigits);  // reset m_bitstreamFileName & m_reconFileName
+      resetBitstream_Recon_FileName(m_startFrame, numDigits,
+                                    m_splitBinFlag);  // reset m_bitstreamFileName & m_reconFileName
     } else {
       updateIOFileName(
-        m_startFrame + i_frame,
-        numDigits);  // update m_inputFileName & m_bitstreamFileName & m_reconFileName
+        m_startFrame + i_frame, numDigits,
+        m_splitBinFlag);  // update m_inputFileName & m_bitstreamFileName & m_reconFileName
     }
 
     if (!m_pointCloudOrg.readFromFile(m_inputFileName, !m_hls.sps.attrPresentFlag) ||
@@ -102,149 +116,200 @@ Int TEncTop::encode() {
       exitState |= EXIT_FAILURE;
       continue;  // if can not open the corresponding file then skip and move on to find next input file
     }
-    m_bitstreamFile.open(m_bitstreamFileName, fstream::binary | fstream::out);
-    if (!m_bitstreamFile) {
-      cerr << "Error: failed to open bitstream file " << m_bitstreamFileName << " for writing!"
-           << endl;
-      exitState |= EXIT_FAILURE;
-      continue;  // if can not open the corresponding file then skip and move on to find next input file
-    }
-
-    clock_t userTimeTotalBegin = clock();
-
-    ///< preprocessing
-    vector<PC_COL> pointCloudOrgColors = m_pointCloudOrg.getColors();
-    if (m_colorTransformFlag && m_pointCloudOrg.hasColors()) {
-      m_pointCloudOrg.convertRGBToYUV();
-    }
-    ///< determine bounding box
-    PC_POS bbMin, bbMax, bbSize;
-    m_pointCloudOrg.computeBoundingBox(bbMin, bbMax);
-    for (Int k = 0; k < 3; k++) {
-      bbMin[k] = floor(bbMin[k]);
-      m_hls.sps.geomBoundingBoxOrigin[k] = Int(bbMin[k]);
-    }
-    bbSize = bbMax - bbMin;
-    m_hls.sps.geomBoundingBoxSize[0] = Int(round(bbSize[0] / m_hls.sps.geomQuantStep)) + 1;
-    m_hls.sps.geomBoundingBoxSize[1] = Int(round(bbSize[1] / m_hls.sps.geomQuantStep)) + 1;
-    m_hls.sps.geomBoundingBoxSize[2] = Int(round(bbSize[2] / m_hls.sps.geomQuantStep)) + 1;
-    m_hls.sps.sps_multi_set_flag = true;
-    m_hls.frameHead.geomNumPoints = (UInt)m_pointCloudOrg.getNumPoint();
-    ///< quantization
-    geomPreprocessAndQuantization(m_hls.frameHead.geomNumPoints, m_hls.sps.geomQuantStep,
-                                  esCurFrame.recolorUserTime);
 
     ///< determine if only geometry
     if (!m_pointCloudOrg.hasColors() && !m_pointCloudOrg.hasReflectances()) {
       m_hls.sps.attrPresentFlag = 0;
     }
 
-    initParameters();
-    init_aec_context_tab();
-    m_encBac.computeBufferSize(m_pointCloudOrg.getNumPoint());
+    clock_t userTimeTotalBegin = clock();
 
-    ///< encoding sequence parameter set
-    m_bufferChunk.setBufferType(BufferChunkType::BCT_SPS);
-    m_encBac.setBitstreamBuffer(m_bufferChunk);
-    m_encBac.codeSPS(m_hls.sps);
-    m_encBac.encodeFinish();
-    m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
-    m_bufferChunk.reset();
-    m_encBac.reset();
+   
 
-    ///< when lcuNodeSizeLog2 == 0, lcuNodeDepth is used to control the node size
-    if (m_hls.gps.lcuNodeSizeLog2 == 0 && m_hls.gps.lcuNodeDepth > 0) {
-      UInt maxBB = std::max({1U, m_hls.sps.geomBoundingBoxSize[0], m_hls.sps.geomBoundingBoxSize[1],
-                             m_hls.sps.geomBoundingBoxSize[2]});
-      int maxNodeSizeLog2 = ceilLog2(maxBB);
 
-      //avoid small lcu size
-      m_hls.gps.lcuNodeSizeLog2 = std::max(10U, maxNodeSizeLog2 + 1 - m_hls.gps.lcuNodeDepth);
-    }
 
-    ///< recolor
-    if (m_hls.sps.geomRemoveDuplicateFlag && m_hls.sps.recolorMode == 0) {
-      clock_t userTimeRecolorBegin = clock();
-      recolour(m_pointCloudOrg, float(1.0 / m_hls.sps.geomQuantStep),
-               m_hls.sps.geomBoundingBoxOrigin, &m_pointCloudRecon);
-      esCurFrame.recolorUserTime += (Double)(clock() - userTimeRecolorBegin) / CLOCKS_PER_SEC;
-    }
+    if (i_frame == 0 || m_splitBinFlag) {
+      m_bitstreamFile.open(m_bitstreamFileName, fstream::binary | fstream::out);
+      if (!m_bitstreamFile) {
+        cerr << "Error: failed to open bitstream file " << m_bitstreamFileName << " for writing!"
+             << endl;
+        exitState |= EXIT_FAILURE;
+      }
 
-    ///< encoding geometry parameter set
-    m_bufferChunk.setBufferType(BufferChunkType::BCT_GPS);
-    m_encBac.setBitstreamBuffer(m_bufferChunk);
-    m_encBac.codeGPS(m_hls.gps);
-    m_encBac.encodeFinish();
-    m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
-    m_bufferChunk.reset();
-    m_encBac.reset();
 
-    ///< encoding attribute parameter set
-    if (m_hls.sps.attrPresentFlag) {
-      auto& aps = m_hls.aps;
-      if (m_pointCloudOrg.hasColors()) {
-        aps.attributePresentFlag[0] = 1;
-        aps.outputBitDepthMinus1[0] = m_hls.aps.colorOutputDepth - 1;
-        aps.maxNumOfNeighboursLog2Minus7[0] = 0;
-        
-        UInt colorInitOutputDepth = aps.colorOutputDepth - aps.colorInitGolombOffset;
-        m_pointCloudOrg.computeColorRes(aps.colorGolombNum, colorInitOutputDepth,
-                                        m_hls.sps.colorQuantParam);
-        // adjust colorInitPredTransRatio
-        UInt64 BBmax =
-          std::max(std::max(m_hls.sps.geomBoundingBoxSize[0], m_hls.sps.geomBoundingBoxSize[1]),
-                   m_hls.sps.geomBoundingBoxSize[2]);
-        UInt64 BBmin =
-          std::min(std::min(m_hls.sps.geomBoundingBoxSize[0], m_hls.sps.geomBoundingBoxSize[1]),
-                   m_hls.sps.geomBoundingBoxSize[2]);
-        if (BBmax / BBmin < 2)
-          aps.colorInitPredTransRatio++;
-        // calculate scalar of adjust color QP per point tools
-        if (aps.colorQPAdjustFlag) {
-          int ratio = m_pointCloudOrg.getNumPoint() / m_pointCloudQuant.getNumPoint();
-          aps.colorQPAdjustScalar = ratio * 2;
-          aps.colorQPAdjustScalar *= aps.colorQPAdjustScalar;
+
+      ///< calculate geom qs  
+      Double qg_max = 800;
+      Double qg_min = 1;
+      Double temp_rg;
+      
+      while (abs(qg_max - qg_min) > 0.01) {
+        temp_rg = control_a * pow((qg_max + qg_min) / 2, control_b) + control_c;
+        if (temp_rg > m_geomTarbpp)
+          qg_min = (qg_max + qg_min) / 2;
+        if (temp_rg <= m_geomTarbpp)
+          qg_max = (qg_max + qg_min) / 2;
+      }
+
+      ///< set geom qs 
+      if (m_geomTarbpp != 0)
+      {
+        m_hls.gps.geomQuantStep = 1.0 * int(qg_max * 100000) / 100000;
+        unsigned ns = 0;
+        unsigned mask = 1;
+        unsigned U1 = m_hls.gps.geomQuantStep;
+        while (U1 > 1) {
+          ns++;
+          U1 = U1 >> 1;
         }
+        unsigned U = m_hls.gps.geomQuantStep * pow(2, 20 - ns) + 0.5;
+        while (U & mask == 0) {
+          ns++;
+          U = U >> 1;
+        }
+        unsigned n = 20 - ns;
+        m_hls.gps.geomQuantStepSignificand = U;
+        m_hls.gps.geomQuantStepExponent = n;
       }
-      if (m_pointCloudOrg.hasReflectances()) {
-        aps.attributePresentFlag[1] = 1;
-        aps.outputBitDepthMinus1[1] = m_hls.aps.reflOutputDepth - 1;
-        aps.maxNumOfNeighboursLog2Minus7[1] = 0;
-        UInt reflInitOutputDepth = aps.reflOutputDepth - aps.reflInitGolombOffset;
-        m_pointCloudOrg.computeReflRes(aps.refGolombNum, reflInitOutputDepth,
-                                       m_hls.sps.reflQuantParam);
+        
+
+      ///< calculate attribute qp 
+      ///< set attribute para b 
+      if (i_frame ==0 ) {
+        control_bp = -0.003 * m_hls.gps.geomQuantStep - 0.6;
+
       }
-      m_hls.aps.multi_data_set_flag[0] =
-        aps.attributePresentFlag[0] ? m_pointCloudQuant.getNumMultilColor() > 0 : false;
-      m_hls.aps.multi_data_set_flag[1] =
-        aps.attributePresentFlag[1] ? m_pointCloudQuant.getNumMultilRefl() > 0 : false;
+      ///< set attribute qp  
+      if (m_attrTarbpp !=0)
+        m_hls.aps.reflQuantParam = m_hls.aps.colorQuantParam = control_ap * exp(control_bp * m_attrTarbpp) + 0.5;
 
-      m_hls.aps.attribute_num_data_set_minus1[0] =
-        m_hls.aps.multi_data_set_flag[0] ? m_pointCloudQuant.getNumMultilColor() - 1 : -1;
-      m_hls.aps.attribute_num_data_set_minus1[1] =
-        m_hls.aps.multi_data_set_flag[1] ? m_pointCloudQuant.getNumMultilRefl() - 1 : -1;
 
-      m_hls.aps.attribute_num_set_minus1[0] =
-        m_hls.aps.multi_data_set_flag[0] ? m_hls.aps.attribute_num_data_set_minus1[0] : -1;
-      m_hls.aps.attribute_num_set_minus1[1] =
-        m_hls.aps.multi_data_set_flag[1] ? m_hls.aps.attribute_num_data_set_minus1[1] : -1;
-      FixedMultiAPs(m_hls.sps, m_hls.aps);
 
-      m_bufferChunk.setBufferType(BufferChunkType::BCT_APS);
+      ///< encoding sequence parameter set
+      m_bufferChunk.setBufferType(BufferChunkType::BCT_SPS);
       m_encBac.setBitstreamBuffer(m_bufferChunk);
-      m_encBac.codeAPS(m_hls.aps, m_hls.sps);
+      m_encBac.codeSPS(m_hls.sps);
       m_encBac.encodeFinish();
       m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
       m_bufferChunk.reset();
       m_encBac.reset();
-      aps.maxNumOfNeighbours = 1 << (aps.maxNumOfNeighboursLog2Minus7[0] + 7);
-      if (aps.transform == 1) {
-        FXPoint::set_kFracBits(aps.kFracBits);
+
+      ///< encoding geometry parameter set
+      m_bufferChunk.setBufferType(BufferChunkType::BCT_GPS);
+      m_encBac.setBitstreamBuffer(m_bufferChunk);
+      m_encBac.codeGPS(m_hls.gps);
+      m_encBac.encodeFinish();
+      m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      m_bufferChunk.reset();
+      m_encBac.reset();
+
+      // encoding attribute parameter set
+      if (m_hls.sps.attrPresentFlag) {
+        auto& aps = m_hls.aps;
+        if (m_pointCloudOrg.hasColors()) {
+          aps.attributeDataPresentFlag[0] = 1;
+          aps.outputBitDepthMinus1[0] = m_hls.aps.colorOutputDepth - 1;
+          aps.attrQuantParam[0] = m_hls.aps.colorQuantParam;
+          UInt colorInitOutputDepth = aps.colorOutputDepth - aps.colorInitGolombOffset;
+          m_pointCloudOrg.computeColorRes(aps.colorGolombNum, colorInitOutputDepth,
+                                          m_hls.aps.colorQuantParam);
+        }
+        if (m_pointCloudOrg.hasReflectances()) {
+          aps.attributeDataPresentFlag[1] = 1;
+          aps.outputBitDepthMinus1[1] = m_hls.aps.reflOutputDepth - 1;
+          aps.attrQuantParam[1] = m_hls.aps.reflQuantParam;
+          UInt reflInitOutputDepth = aps.reflOutputDepth - aps.reflInitGolombOffset;
+          m_pointCloudOrg.computeReflRes(aps.reflGolombNum, reflInitOutputDepth,
+                                         m_hls.aps.reflQuantParam);
+        }
+        m_hls.aps.multiDataSetFlag[0] =
+          aps.attributeDataPresentFlag[0] ? m_pointCloudOrg.getNumMultilColor() > 0 : false;
+        m_hls.aps.multiDataSetFlag[1] =
+          aps.attributeDataPresentFlag[1] ? m_pointCloudOrg.getNumMultilRefl() > 0 : false;
+
+        m_hls.aps.attributeDataNumSetMinus1[0] =
+          m_hls.aps.multiDataSetFlag[0] ? m_pointCloudOrg.getNumMultilColor() - 1 : -1;
+        m_hls.aps.attributeDataNumSetMinus1[1] =
+          m_hls.aps.multiDataSetFlag[1] ? m_pointCloudOrg.getNumMultilRefl() - 1 : -1;
+
+        m_hls.aps.attributeInfoNumSetMinus1[0] =
+          m_hls.aps.multiDataSetFlag[0] ? m_hls.aps.attributeDataNumSetMinus1[0] : -1;
+        m_hls.aps.attributeInfoNumSetMinus1[1] =
+          m_hls.aps.multiDataSetFlag[1] ? m_hls.aps.attributeDataNumSetMinus1[1] : -1;
+        FixedMultiAPs(m_hls.sps, m_hls.aps);
+        m_hls.aps.eligibleDupPointPred = true;
+        if (m_hls.sps.attrPresentFlag) {
+          if (m_hls.aps.attributeDataPresentFlag[0] && m_hls.aps.attributeDataPresentFlag[1])
+            m_hls.aps.eligibleDupPointPred = false;
+          else
+            m_hls.aps.eligibleDupPointPred = true;
+        } else
+          m_hls.aps.eligibleDupPointPred = false;
+
+        m_bufferChunk.setBufferType(BufferChunkType::BCT_APS);
+        m_encBac.setBitstreamBuffer(m_bufferChunk);
+        m_encBac.codeAPS(m_hls.aps, m_hls.sps);
+        m_encBac.encodeFinish();
+        m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+        m_bufferChunk.reset();
+        m_encBac.reset();
+
+        if (aps.transform == 1) {
+          FXPoint::set_kFracBits(aps.kFracBits);
+        }
+      }
+      ///< encoding userdata start (turn off)
+      if (false) {
+        m_bufferChunk.setBufferType(BufferChunkType::BCT_UDA);
+        m_encBac.setBitstreamBuffer(m_bufferChunk);
+        m_encBac.codeUserData();
+        m_encBac.encodeFinish();
+        m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+        m_bufferChunk.reset();
+        m_encBac.reset();
+      }
+      ///< encoding userdata end
+    }
+
+    ///< preprocessing
+    vector<PC_COL> pointCloudOrgColors = m_pointCloudOrg.getColors();
+    if (m_colorTransformFlag && m_pointCloudOrg.hasColors()) {
+      m_pointCloudOrg.convertRGBToYUV();
+    }
+    ///< init frame header
+    initFrameParameters(m_hls.frameheader);
+
+    ///< quantization
+    geomPreprocessAndQuantization(m_hls.frameheader.geomNumPoints, m_hls.gps.geomQuantStep,
+                                  esCurFrame.recolorUserTime);
+    // adjust colorInitPredTransRatio
+    if (m_hls.aps.attributeDataPresentFlag[0]) {
+      UInt64 BBmax = std::max(std::max(m_hls.frameheader.geomBoundingBoxSize[0],
+                                       m_hls.frameheader.geomBoundingBoxSize[1]),
+                              m_hls.frameheader.geomBoundingBoxSize[2]);
+      UInt64 BBmin = std::min(std::min(m_hls.frameheader.geomBoundingBoxSize[0],
+                                       m_hls.frameheader.geomBoundingBoxSize[1]),
+                              m_hls.frameheader.geomBoundingBoxSize[2]);
+      if (BBmax / BBmin < 2)
+        m_hls.abh.colorInitPredTransRatio++;
+      // calculate scalar of adjust color QP per point tools
+      if (m_hls.aps.colorQPAdjustFlag) {
+        int ratio = m_pointCloudOrg.getNumPoint() / m_pointCloudQuant.getNumPoint();
+        m_hls.abh.colorQPAdjustScalar = ratio * 2;
+        m_hls.abh.colorQPAdjustScalar *= m_hls.abh.colorQPAdjustScalar;
       }
     }
 
-    ///< encoding frame header
-    initFrameParameters(m_hls.frameHead);
+    init_aec_context_tab();
+    m_encBac.computeBufferSize(m_pointCloudOrg.getNumPoint());
+
+    ///< recolor
+    if (m_hls.sps.geomRemoveDuplicateFlag && m_hls.sps.recolorMode == 0) {
+      clock_t userTimeRecolorBegin = clock();
+      recolor(m_pointCloudOrg, float(1.0 / m_hls.gps.geomQuantStep),
+              m_hls.frameheader.geomBoundingBoxOrigin, &m_pointCloudRecon);
+      esCurFrame.recolorUserTime += (Double)(clock() - userTimeRecolorBegin) / CLOCKS_PER_SEC;
+    }
 
     TComPointCloud pointCloudRecon;
     pointCloudRecon.setNumPoint(0);
@@ -252,31 +317,36 @@ Int TEncTop::encode() {
     if (!m_sliceFlag) {
       m_sliceOrigin = {0, 0, 0};
       m_sliceID = 0;
-      m_sliceBoundingBox = m_hls.sps.geomBoundingBoxSize;
+      m_sliceBoundingBox = m_hls.frameheader.geomBoundingBoxSize;
     } else {
       // dividing slice
-      if (m_sliceDivisionMode == 0) {
-        SliceDevisionByMortonCode(m_hls.frameHead.num_slice_minus_one, pointCloudPartitionList);
-      } else if (m_sliceDivisionMode == 1) {
-        sliceDevisionByHistZ(m_pointCloudQuant, pointCloudPartitionList,
-                             m_hls.frameHead.num_slice_minus_one, m_hls.sps.geomQuantStep,
-                             numDigits);
-      } else if (m_sliceDivisionMode == 2) {
-        SliceDevisionByPointNum(pointCloudPartitionList, m_maxPointNumOfSlicesLog2);
-      }
+      SliceDevisionByPointNum(pointCloudPartitionList, m_maxPointNumOfSlicesLog2);
     }
+    // encode frameHeader
     m_bufferChunk.setBufferType(BufferChunkType::BCT_FRAME);
     m_encBac.setBitstreamBuffer(m_bufferChunk);
-    m_encBac.codeFrameHead(m_hls.frameHead);
+    m_encBac.codeFrameHeader(m_hls.frameheader);
     m_encBac.encodeFinish();
     m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
     m_bufferChunk.reset();
     m_encBac.reset();
 
+    ///< encoding userdata start (turn off)
+    if (false) {
+      m_bufferChunk.setBufferType(BufferChunkType::BCT_UDA);
+      m_encBac.setBitstreamBuffer(m_bufferChunk);
+      m_encBac.codeUserData();
+      m_encBac.encodeFinish();
+      m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      m_bufferChunk.reset();
+      m_encBac.reset();
+    }
+    ///< encoding userdata end
+
     if (!m_sliceFlag) {
       encodeSlice(esCurFrame);
     } else {
-      for (Int slice_id = 0; slice_id < m_hls.frameHead.num_slice_minus_one + 1; slice_id++) {
+      for (Int slice_id = 0; slice_id < m_hls.frameheader.frameNumSliceMinus1 + 1; slice_id++) {
         const int slicePointNum = pointCloudPartitionList[slice_id].getNumPoint();
         std::cout << "slice number: " << slice_id << " with " << slicePointNum << " points"
                   << std::endl;
@@ -302,21 +372,22 @@ Int TEncTop::encode() {
       }
       m_pointCloudRecon = pointCloudRecon;
     }
-    std::cout << "Total bitstream size " << m_bitstreamFile.tellp() * 8 << " bits" << std::endl;
-    esCurFrame.totalBits += m_bitstreamFile.tellp() * 8;
-    m_bitstreamFile.close();
+    esCurFrame.totalBits = m_bitstreamFile.tellp() * 8 - prevFrameBits;
+    std::cout << "Total bitstream size " << esCurFrame.totalBits << " bits" << std::endl;
+    prevFrameBits += esCurFrame.totalBits;
+
     esCurFrame.totalUserTime = (Double)(clock() - userTimeTotalBegin) / CLOCKS_PER_SEC;
     if (m_hls.sps.attrPresentFlag) {
       esCurFrame.colorUserTime = m_attrEncoder.getColorTime();
       esCurFrame.reflUserTime = m_attrEncoder.getReflectanceTime();
-      if (m_hls.aps.attributePresentFlag[0] && m_hls.aps.attributePresentFlag[1]) {
+      if (m_hls.aps.attributeDataPresentFlag[0] && m_hls.aps.attributeDataPresentFlag[1]) {
         esCurFrame.colorUserTime =
           (esCurFrame.colorUserTime + esCurFrame.attrUserTime - esCurFrame.reflUserTime) / 2;
         esCurFrame.reflUserTime =
           (esCurFrame.reflUserTime + esCurFrame.attrUserTime - esCurFrame.colorUserTime) / 2;
-      } else if (m_hls.aps.attributePresentFlag[0]) {
+      } else if (m_hls.aps.attributeDataPresentFlag[0]) {
         esCurFrame.colorUserTime = esCurFrame.attrUserTime;
-      } else if (m_hls.aps.attributePresentFlag[1]) {
+      } else if (m_hls.aps.attributeDataPresentFlag[1]) {
         esCurFrame.reflUserTime = esCurFrame.attrUserTime;
       }
     }
@@ -326,9 +397,29 @@ Int TEncTop::encode() {
     cout << "Reflectance processing time (user): " << esCurFrame.reflUserTime << " sec." << endl;
     cout << "Attribute processing time (user): " << esCurFrame.attrUserTime << " sec." << endl;
     cout << "Total processing time (user): " << esCurFrame.totalUserTime << " sec." << endl << endl;
+
     esTotal += esCurFrame;
 
-    geomPostprocessingAndDequantization(m_hls.sps.geomQuantStep);
+    ///< geom para update
+    Double real_geom_bpp = esCurFrame.geomBits * 1.0 / m_pointCloudOrg.getNumPoint();
+    Double comp_geom_bpp = control_a * pow(m_hls.gps.geomQuantStep, control_b) + control_c;
+    control_a = control_a + 0.003 * (log(real_geom_bpp) - log(comp_geom_bpp)) * control_a; 
+    control_b = control_b + 0.003 * (log(real_geom_bpp) - log(comp_geom_bpp)) * log(m_hls.gps.geomQuantStep);
+    control_c = control_c + 0.006 * (real_geom_bpp - comp_geom_bpp);
+    ///< attribute para update
+    double real_refl_bpp = 1.0 * esCurFrame.reflBits / m_pointCloudOrg.getNumPoint();
+    double temp_b = log(m_hls.aps.reflQuantParam * 1.0 / 55) / real_refl_bpp;
+    ///< attribute para clip
+    if (temp_b - control_bp > 8)
+      control_bp = control_bp + 8;
+    else {
+      if (control_bp - temp_b > 8)
+        control_bp = control_bp - 8;
+      else
+        control_bp = temp_b;
+    }
+
+    geomPostprocessingAndDequantization();
     if (m_colorTransformFlag && m_pointCloudRecon.hasColors()) {
       m_pointCloudRecon.convertYUVToRGB();
     }
@@ -351,24 +442,31 @@ Int TEncTop::encode() {
       pc_evalue::computeMetric(m_pointCloudOrg, m_pointCloudRecon, MetricParam, res);
       totalMetricRes = totalMetricRes + res;
     }
+
+    if (i_frame == m_numOfFrames - 1 || m_splitBinFlag) {
+      //< write the sps_end_code
+      m_bufferChunk.writeFinalCodeToBitstream(&m_bitstreamFile);
+      esTotal.totalBits = m_bitstreamFile.tellp() * 8;
+      m_bitstreamFile.close();
+    }
   }
 
   cout << "All frames number of output points: " << esTotal.numReconPoints << endl;
   cout << "All frames geometry bits: " << esTotal.geomBits << " bits." << endl;
   cout << "All frames color bits: " << esTotal.colorBits << " bits." << endl;
   cout << "All frames refl bits: " << esTotal.reflBits << " bits." << endl;
-  if (m_hls.aps.attributePresentFlag[0])
-    for (int multiIdx = 0; multiIdx < m_hls.aps.attribute_num_data_set_minus1[0] + 1; ++multiIdx)
+  if (m_hls.aps.attributeDataPresentFlag[0])
+    for (int multiIdx = 0; multiIdx < m_hls.aps.attributeDataNumSetMinus1[0] + 1; ++multiIdx)
       cout << "MultiData " << multiIdx
            << " All frames attributes bits: " << esTotal.attrBits[multiIdx] << " bits." << endl;
-  else if (m_hls.aps.attributePresentFlag[1]) {
-    if (m_hls.aps.attribute_num_data_set_minus1[1]==0)
-        for (int multiIdx = 0; multiIdx < m_hls.aps.attribute_num_data_set_minus1[1] + 1; ++multiIdx)
-          cout << "MultiData " << multiIdx
-               << " All frames attributes bits: " << esTotal.attrBits[multiIdx] << " bits." << endl;
+  else if (m_hls.aps.attributeDataPresentFlag[1]) {
+    if (m_hls.aps.attributeDataNumSetMinus1[1] == 0)
+      for (int multiIdx = 0; multiIdx < m_hls.aps.attributeDataNumSetMinus1[1] + 1; ++multiIdx)
+        cout << "MultiData " << multiIdx
+             << " All frames attributes bits: " << esTotal.attrBits[multiIdx] << " bits." << endl;
     else {
-      for (int multiIdx = 0, indexGroup = 0;
-           multiIdx < m_hls.aps.attribute_num_data_set_minus1[1] + 1; indexGroup++) {
+      for (int multiIdx = 0, indexGroup = 0; multiIdx < m_hls.aps.attributeDataNumSetMinus1[1] + 1;
+           indexGroup++) {
         cout << "MultiData " << multiIdx
              << " All frames attributes bits: " << esTotal.attrBits[multiIdx] << " bits." << endl;
         multiIdx += m_hls.aps.multiAttriGroupNum[indexGroup];
@@ -387,10 +485,11 @@ Int TEncTop::encode() {
   cout << "All frames total processing time (user): " << esTotal.totalUserTime << " sec." << endl
        << endl;
 
+
   if (m_metricsEnable) {
     totalMetricRes = totalMetricRes / m_numOfFrames;
-    totalMetricRes.print(MetricParam, m_hls.aps.attribute_num_data_set_minus1[0] + 1,
-                         m_hls.aps.attribute_num_data_set_minus1[1] + 1);
+    totalMetricRes.print(MetricParam, m_hls.aps.attributeDataNumSetMinus1[0] + 1,
+                         m_hls.aps.attributeDataNumSetMinus1[1] + 1);
   }
   if (md5FileOpenFlag)
     md5Calculator.closeFile();
@@ -401,25 +500,25 @@ Void TEncTop::getSingleAttrAPs(const SequenceParameterSet& sps, AttributeParamet
                                const int& attrIdx, const int& multiIdx) {
   if (attrIdx == 0) {
     aps.orderSwitch = aps.orderMultiSwitch[multiIdx];
-    aps.colorReordermode = aps.colorMultiReordermode[multiIdx];
+    aps.colorReorderMode = aps.colorMultiReordermode[multiIdx];
     aps.colorGolombNum = aps.colorMultiGolombNum[multiIdx];
-    aps.log2golombGroupSize = aps.log2golombMultiGroupSize[multiIdx];
+    aps.golombGroupSizeLog2 = aps.golombMultiGroupSizeLog2[multiIdx];
   }
   if (attrIdx == 1) {
-    aps.axisBias = aps.axisMultiBias[multiIdx];
-    aps.refReordermode = aps.refMultiReordermode[multiIdx];
-    aps.refGolombNum = aps.refMultiGolombNum[multiIdx];
+    aps.axisBias = aps.axisMultiBiasMinus1[multiIdx] + 1;
+    aps.reflReorderMode = aps.reflMultiReordermode[multiIdx];
+    aps.reflGolombNum = aps.reflMultiGolombNum[multiIdx];
     aps.predFixedPointFracBit = aps.predMultiFixedPointFracBit[multiIdx];
   }
   aps.colorOutputDepth = aps.colorMultiOutputDepth[multiIdx];
   aps.reflOutputDepth = aps.reflMultiOutputDepth[multiIdx];
+  aps.colorQuantParam = aps.colorMultiQuantParam[multiIdx];
+  aps.reflQuantParam = aps.reflMultiQuantParam[multiIdx];
 
   aps.transform = aps.transformMulti[attrIdx][multiIdx];
   if ((aps.transform == 0) || (aps.transform == 2)) {
-    aps.maxNumOfNeighboursLog2Minus7[attrIdx] =
-      aps.maxMultiNumOfNeighboursLog2Minus7[attrIdx][multiIdx];
-    aps.maxNumOfNeighbours = 1 << (aps.maxNumOfNeighboursLog2Minus7[attrIdx] + 7);
-    
+    aps.maxNumOfNeighbours = 1 << (aps.maxMultiNumOfNeighboursLog2Minus7[attrIdx][multiIdx] + 7);
+
     if (attrIdx == 0) {
       aps.crossComponentPred = aps.crossMultiComponentPred[multiIdx];
       aps.chromaQpOffsetCb = aps.chromaMultiQpOffsetCb[multiIdx];
@@ -428,199 +527,124 @@ Void TEncTop::getSingleAttrAPs(const SequenceParameterSet& sps, AttributeParamet
     if (attrIdx == 1) {
       aps.nearestPredParam1 = aps.nearestMultiPredParam1[multiIdx];
       aps.nearestPredParam2 = aps.nearestMultiPredParam2[multiIdx];
-      aps.log2predDistWeightGroupSize = aps.log2predDistWeightMultiGroupSize[multiIdx];
+      aps.predDistWeightGroupSizeLog2 = aps.predDistWeightMultiGroupSizeLog2[multiIdx];
     }
   }
   if (aps.transform == 1) {
     aps.kFracBits = aps.kMultiFracBits[attrIdx][multiIdx];
-    aps.attrTransformQpDelta = aps.attrMultiTransformQpDelta[attrIdx][multiIdx];
+    aps.attrTransQpDelta = aps.attrMultiTransformQpDelta[attrIdx][multiIdx];
     aps.transformSegmentSize = aps.transformMultiSegmentSize[attrIdx][multiIdx];
     aps.transResLayer = aps.transMultiResLayer[attrIdx][multiIdx];
-    if (attrIdx == 0) {
-      aps.colorInitPredTransRatio = aps.colorMultiInitPredTransRatio[multiIdx];
-    }
-    if (attrIdx == 1) {
-      aps.refInitPredTransRatio = aps.refMultiInitPredTransRatio[multiIdx];
-    }
   }
 
-  if (aps.transform == 2) { 
-    aps.log2maxNumofCoeffMinus8 = aps.log2MultimaxNumofCoeffMinus8[attrIdx][multiIdx];
-    if (aps.log2maxNumofCoeffMinus8) {
-      aps.maxNumofCoeff = 1 << (aps.log2maxNumofCoeffMinus8 + 8);
+  if (aps.transform == 2) {
+    aps.maxNumofCoeffLog2Minus8 = aps.MultimaxNumofCoeffLog2Minus8[attrIdx][multiIdx];
+    if (aps.maxNumofCoeffLog2Minus8) {
+      aps.maxNumofCoeff = 1 << (aps.maxNumofCoeffLog2Minus8 + 8);
     }
     aps.QpOffsetDC = aps.QpMultiOffsetDC[attrIdx][multiIdx];
     aps.QpOffsetAC = aps.QpMultiOffsetAC[attrIdx][multiIdx];
     if (attrIdx == 0) {
-      aps.colorMaxTransNum = aps.colorMaxMultiTransNum[attrIdx][multiIdx];
+      aps.colorMaxTransNum = aps.colorMaxMultiTransNum[multiIdx];
       aps.chromaQpOffsetDC = aps.chromaMultiQpOffsetDC[multiIdx];
       aps.chromaQpOffsetAC = aps.chromaMultiQpOffsetAC[multiIdx];
       aps.colorQPAdjustFlag = aps.colorMultiQPAdjustFlag[multiIdx];
-      if (aps.colorQPAdjustFlag) {
-        aps.colorQPAdjustScalar = aps.colorMultiQPAdjustScalar[multiIdx];
-      }
     }
     if (attrIdx == 1) {
-      aps.reflMaxTransNum = aps.reflMaxMultiTransNum[attrIdx][multiIdx];
-      aps.refGroupPredict = aps.refMultiGroupPredict[multiIdx];
+      aps.reflMaxTransNum = aps.reflMaxMultiTransNum[multiIdx];
+      aps.reflGroupPredict = aps.reflMultiGroupPredict[multiIdx];
     }
   }
-  aps.log2coeffLengthControlMinus8 = aps.log2coeffMultiLengthControlMinus8[attrIdx][multiIdx];
-  if (aps.log2coeffLengthControlMinus8) {
-    aps.coeffLengthControl = 1 << (aps.log2coeffLengthControlMinus8 + 8);
+  aps.coeffLengthControlLog2Minus8 = aps.coeffMultiLengthControlLog2Minus8[attrIdx][multiIdx];
+  if (aps.coeffLengthControlLog2Minus8) {
+    aps.coeffLengthControl = 1 << (aps.coeffLengthControlLog2Minus8 + 8);
   }
 }
-
 
 Void TEncTop::FixedMultiAPs(const SequenceParameterSet& sps, AttributeParameterSet& aps) {
-  for (int attrIdx = 0; attrIdx < (sps.maxNumAttrMinus1 + 1); attrIdx++) {
-    if (aps.attributePresentFlag[attrIdx]) {
-      for (int multiIdx = 0; multiIdx < aps.attribute_num_set_minus1[attrIdx] + 1; ++multiIdx) {
-        aps.outputMultiBitDepthMinus1[attrIdx][multiIdx] = aps.outputBitDepthMinus1[attrIdx];
-        if (attrIdx == 0) {
-          aps.orderMultiSwitch[multiIdx] = aps.orderSwitch;
-          aps.colorMultiReordermode[multiIdx] = aps.colorReordermode;
-          aps.colorMultiGolombNum[multiIdx] = aps.colorGolombNum;
-          aps.log2golombMultiGroupSize[multiIdx] = aps.log2golombGroupSize;
-        }
-        if (attrIdx == 1) {
-          aps.axisMultiBias[multiIdx] = aps.axisBias;
-          aps.refMultiReordermode[multiIdx] = aps.refReordermode;
-          aps.refMultiGolombNum[multiIdx] = aps.refGolombNum;
-          aps.predMultiFixedPointFracBit[multiIdx] = aps.predFixedPointFracBit;
-        }
+  ///< if multil attribute parameyers have parsed from the configuration
+  if (!aps.updateMultilAttrParams) {
+    for (int attrIdx = 0; attrIdx < (sps.maxNumAttributesMinus1 + 1); attrIdx++) {
+      if (aps.attributeDataPresentFlag[attrIdx]) {
+        for (int multiIdx = 0; multiIdx < aps.attributeInfoNumSetMinus1[attrIdx] + 1; ++multiIdx) {
+          aps.outputMultiBitDepthMinus1[attrIdx][multiIdx] = aps.outputBitDepthMinus1[attrIdx];
+          aps.attrMultiQuantParam[attrIdx][multiIdx] = aps.attrQuantParam[attrIdx];
+          if (attrIdx == 0) {
+            aps.orderMultiSwitch[multiIdx] = aps.orderSwitch;
+            aps.colorMultiReordermode[multiIdx] = aps.colorReorderMode;
+            aps.colorMultiGolombNum[multiIdx] = aps.colorGolombNum;
+            aps.golombMultiGroupSizeLog2[multiIdx] = aps.golombGroupSizeLog2;
+          }
+          if (attrIdx == 1) {
+            aps.axisMultiBiasMinus1[multiIdx] = aps.axisBiasMinus1;
+            aps.reflMultiReordermode[multiIdx] = aps.reflReorderMode;
+            aps.reflMultiGolombNum[multiIdx] = aps.reflGolombNum;
+            aps.predMultiFixedPointFracBit[multiIdx] = aps.predFixedPointFracBit;
+          }
+          aps.transformMulti[attrIdx][multiIdx] = aps.transform;
 
-        aps.transformMulti[attrIdx][multiIdx] = aps.transform;
-        if ((aps.transformMulti[attrIdx][multiIdx] == 0) ||
-            (aps.transformMulti[attrIdx][multiIdx] == 2)) {
-          aps.maxMultiNumOfNeighboursLog2Minus7[attrIdx][multiIdx] =
-            aps.maxNumOfNeighboursLog2Minus7[attrIdx];
-          aps.maxMultiNumOfNeighbours[multiIdx] = 1
-            << (aps.maxMultiNumOfNeighboursLog2Minus7[attrIdx][multiIdx] + 7);
-          
-          if (attrIdx == 0) {
-            aps.crossMultiComponentPred[multiIdx] = aps.crossComponentPred;
-            aps.chromaMultiQpOffsetCb[multiIdx] = aps.chromaQpOffsetCb;
-            aps.chromaMultiQpOffsetCr[multiIdx] = aps.chromaQpOffsetCr;
-          }
-          if (attrIdx == 1) {
-            aps.nearestMultiPredParam1[multiIdx] = aps.nearestPredParam1;
-            aps.nearestMultiPredParam2[multiIdx] = aps.nearestPredParam2;
-            aps.log2predDistWeightMultiGroupSize[multiIdx] = aps.log2predDistWeightGroupSize;
-          }
-        }
-        if (aps.transformMulti[attrIdx][multiIdx] == 1) {
-          aps.kMultiFracBits[attrIdx][multiIdx] = aps.kFracBits;
-          aps.attrMultiTransformQpDelta[attrIdx][multiIdx] = aps.attrTransformQpDelta;
-          aps.transformMultiSegmentSize[attrIdx][multiIdx] = aps.transformSegmentSize;
-          aps.transMultiResLayer[attrIdx][multiIdx] = aps.transResLayer;
-          if (attrIdx == 0) {
-            aps.colorMultiInitPredTransRatio[multiIdx] = aps.colorInitPredTransRatio;
-          }
-          if (attrIdx == 1) {
-            aps.refMultiInitPredTransRatio[multiIdx] = aps.refInitPredTransRatio;
-          }
-        }
-        if (aps.transformMulti[attrIdx][multiIdx] == 2) {         
-          aps.log2MultimaxNumofCoeffMinus8[attrIdx][multiIdx] = aps.log2maxNumofCoeffMinus8;
-          if (aps.log2MultimaxNumofCoeffMinus8[attrIdx][multiIdx]) {
-            aps.maxMultiNumofCoeff[attrIdx][multiIdx] = 1
-              << (aps.log2MultimaxNumofCoeffMinus8[attrIdx][multiIdx] + 8);
-          }
-          aps.QpMultiOffsetDC[attrIdx][multiIdx] = aps.QpOffsetDC;
-          aps.QpMultiOffsetAC[attrIdx][multiIdx] = aps.QpOffsetAC;
-          if (attrIdx == 0) {
-            aps.colorMaxMultiTransNum[attrIdx][multiIdx] = aps.colorMaxTransNum;
-            aps.chromaMultiQpOffsetDC[multiIdx] = aps.chromaQpOffsetDC;
-            aps.chromaMultiQpOffsetAC[multiIdx] = aps.chromaQpOffsetAC;
-            aps.colorMultiQPAdjustFlag[multiIdx] = aps.colorQPAdjustFlag;
-            if (aps.colorMultiQPAdjustFlag[multiIdx]) {
-              aps.colorMultiQPAdjustScalar[multiIdx] = aps.colorQPAdjustScalar;
+          if ((aps.transformMulti[attrIdx][multiIdx] == 0) ||
+              (aps.transformMulti[attrIdx][multiIdx] == 2)) {
+            aps.maxMultiNumOfNeighboursLog2Minus7[attrIdx][multiIdx] =
+              aps.maxNumOfNeighboursLog2Minus7;
+            if (attrIdx == 0) {
+              aps.crossMultiComponentPred[multiIdx] = aps.crossComponentPred;
+              aps.chromaMultiQpOffsetCb[multiIdx] = aps.chromaQpOffsetCb;
+              aps.chromaMultiQpOffsetCr[multiIdx] = aps.chromaQpOffsetCr;
+            }
+            if (attrIdx == 1) {
+              aps.nearestMultiPredParam1[multiIdx] = aps.nearestPredParam1;
+              aps.nearestMultiPredParam2[multiIdx] = aps.nearestPredParam2;
+              aps.predDistWeightMultiGroupSizeLog2[multiIdx] = aps.predDistWeightGroupSizeLog2;
             }
           }
-          if (attrIdx == 1) {
-            aps.reflMaxMultiTransNum[attrIdx][multiIdx] = aps.reflMaxTransNum;
-            aps.refMultiGroupPredict[multiIdx] = aps.refGroupPredict;
+          if (aps.transformMulti[attrIdx][multiIdx] == 1) {
+            aps.kMultiFracBits[attrIdx][multiIdx] = aps.kFracBits;
+            aps.attrMultiTransformQpDelta[attrIdx][multiIdx] = aps.attrTransQpDelta;
+            aps.transformMultiSegmentSize[attrIdx][multiIdx] = aps.transformSegmentSize;
+            aps.transMultiResLayer[attrIdx][multiIdx] = aps.transResLayer;
           }
-        }
+          if (aps.transformMulti[attrIdx][multiIdx] == 2) {
+            aps.MultimaxNumofCoeffLog2Minus8[attrIdx][multiIdx] = aps.maxNumofCoeffLog2Minus8;
+            if (aps.MultimaxNumofCoeffLog2Minus8[attrIdx][multiIdx]) {
+              aps.maxMultiNumofCoeff[attrIdx][multiIdx] = 1
+                << (aps.MultimaxNumofCoeffLog2Minus8[attrIdx][multiIdx] + 8);
+            }
+            aps.QpMultiOffsetDC[attrIdx][multiIdx] = aps.QpOffsetDC;
+            aps.QpMultiOffsetAC[attrIdx][multiIdx] = aps.QpOffsetAC;
+            if (attrIdx == 0) {
+              aps.colorMaxMultiTransNum[multiIdx] = aps.colorMaxTransNum;
+              aps.chromaMultiQpOffsetDC[multiIdx] = aps.chromaQpOffsetDC;
+              aps.chromaMultiQpOffsetAC[multiIdx] = aps.chromaQpOffsetAC;
+              aps.colorMultiQPAdjustFlag[multiIdx] = aps.colorQPAdjustFlag;
+            }
+            if (attrIdx == 1) {
+              aps.reflMaxMultiTransNum[multiIdx] = aps.reflMaxTransNum;
+              aps.reflMultiGroupPredict[multiIdx] = aps.reflGroupPredict;
+            }
+          }
 
-        aps.log2coeffMultiLengthControlMinus8[attrIdx][multiIdx] = aps.log2coeffLengthControlMinus8;
-        if (aps.log2coeffMultiLengthControlMinus8[attrIdx][multiIdx]) {
-          aps.coeffMultiLengthControl[attrIdx][multiIdx] = 1
-            << (aps.log2coeffMultiLengthControlMinus8[attrIdx][multiIdx] + 8);
+          aps.coeffMultiLengthControlLog2Minus8[attrIdx][multiIdx] =
+            aps.coeffLengthControlLog2Minus8;
+          if (aps.coeffMultiLengthControlLog2Minus8[attrIdx][multiIdx]) {
+            aps.coeffMultiLengthControl[attrIdx][multiIdx] = 1
+              << (aps.coeffMultiLengthControlLog2Minus8[attrIdx][multiIdx] + 8);
+          }
         }
       }
     }
   }
-  // set multiAttriGroupID and multiAttriGroupNum
-  if (aps.attributePresentFlag[1] && (aps.attribute_num_set_minus1[1] > 0) && aps.transform==0) {
-    int numAttriCount = 0, i = 0, multiIdx=0;
-    if (aps.attribute_num_data_set_minus1[1] == 44) {
-      std::vector<UInt> multiAttriIDGroup1 = {3, 1, 1, 1, 1, 1, 1, 3, 3, 5, 5, 1, 1, 1,
-                                              1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3};
-      while (numAttriCount < (aps.attribute_num_data_set_minus1[1] + 1)) {
-        aps.multiAttriGroupNum[i] = multiAttriIDGroup1[i];
-        numAttriCount += multiAttriIDGroup1[i];
-        while (multiIdx < numAttriCount) {
-          aps.multiAttriGroupID[multiIdx] = i;
-          multiIdx++;
-        }
-        i++;
-      }
-      aps.numofMultiAttriGroup = i;
-    } else if (aps.attribute_num_data_set_minus1[1] == 8) {
-      std::vector<UInt> multiAttriIDGroup1 = {1, 1, 1, 1, 1, 1, 3};
-      while (numAttriCount < (aps.attribute_num_data_set_minus1[1] + 1)) {
-        aps.multiAttriGroupNum[i] = multiAttriIDGroup1[i];
-        numAttriCount += multiAttriIDGroup1[i];
-        while (multiIdx < numAttriCount) {
-          aps.multiAttriGroupID[multiIdx] = i;
-          multiIdx++;
-        }
-        i++;
-      }
-      aps.numofMultiAttriGroup = i;
-    } else if (aps.attribute_num_data_set_minus1[1] == 42) {
-      std::vector<UInt> multiAttriIDGroup1 = {3, 1, 1, 1, 1, 1, 3, 3, 5, 5, 1,
-                                              4, 4, 1, 1, 1, 1, 1, 1, 1, 3};
-      while (numAttriCount < (aps.attribute_num_data_set_minus1[1] + 1)) {
-        aps.multiAttriGroupNum[i] = multiAttriIDGroup1[i];
-        numAttriCount += multiAttriIDGroup1[i];
-        while (multiIdx < numAttriCount) {
-          aps.multiAttriGroupID[multiIdx] = i;
-          multiIdx++;
-        }
-        i++;
-      }
-      aps.numofMultiAttriGroup = i;
-    } else if (aps.attribute_num_data_set_minus1[1] == 24) {
-      std::vector<UInt> multiAttriIDGroup1 = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3};
-      while (numAttriCount < (aps.attribute_num_data_set_minus1[1] + 1)) {
-        aps.multiAttriGroupNum[i] = multiAttriIDGroup1[i];
-        numAttriCount += multiAttriIDGroup1[i];
-        while (multiIdx < numAttriCount) {
-          aps.multiAttriGroupID[multiIdx] = i;
-          multiIdx++;
-        }
-        i++;
-      }
-      aps.numofMultiAttriGroup = i;
-    } else {
-      while (numAttriCount < (aps.attribute_num_data_set_minus1[1] + 1)) {
-        aps.multiAttriGroupNum[i] = 1;
-        numAttriCount += 1;
-        while (multiIdx < numAttriCount) {
-          aps.multiAttriGroupID[multiIdx] = i;
-          multiIdx++;
-        }
-        i++;
-      }
-      aps.numofMultiAttriGroup = i;
+
+  // set multiAttrGroupID and multiAttriGroupNum
+  if (aps.attributeDataPresentFlag[1] && (aps.attributeInfoNumSetMinus1[1] > 0) &&
+      aps.transform == 0) {
+    for (int multiIdx = 0; multiIdx < aps.attributeInfoNumSetMinus1[1] + 1; ++multiIdx) {
+      if (multiIdx > 0 && aps.multiAttrGroupID[multiIdx] < aps.multiAttrGroupID[multiIdx - 1])
+        break;
+      aps.multiAttriGroupNum[aps.multiAttrGroupID[multiIdx]]++;
     }
   }
 }
-
 
 Void TEncTop::encodeSlice(EncoderStatistics& es) {
   auto& aps = m_hls.aps;
@@ -628,7 +652,7 @@ Void TEncTop::encodeSlice(EncoderStatistics& es) {
   ///< node size (log2) for xyz dimensions
   UInt maxBB = std::max({1U, m_sliceBoundingBox[0], m_sliceBoundingBox[1], m_sliceBoundingBox[2]});
   V3<UInt> nodeSizeLog2;
-  if (m_hls.gps.im_qtbt_flag) {
+  if (m_hls.gps.implicitGeomPartitionFlag) {
     nodeSizeLog2[0] = ceilLog2(m_sliceBoundingBox[0]);
     nodeSizeLog2[1] = ceilLog2(m_sliceBoundingBox[1]);
     nodeSizeLog2[2] = ceilLog2(m_sliceBoundingBox[2]);
@@ -672,21 +696,19 @@ Void TEncTop::encodeSlice(EncoderStatistics& es) {
   bool dense = false;
   dense = !!(currnentVolumePerPoint1 < 7);
   if (dense) {
-    m_hls.gbh.geom_context_mode = 1;
-    m_hls.gbh.im_qtbt_num_before_ot = 5;
-    m_hls.gbh.im_qtbt_min_size = 0;
+    m_hls.gbh.contextMode = 1;
+    m_hls.gbh.imQtbtNumBeforeOt = m_hls.gps.imQtbtNumBeforeOt;
+    m_hls.gbh.imQtbtMinSize = m_hls.gps.imQtbtMinSize;
   } else {
-    m_hls.gbh.geom_context_mode = 0;
-    m_hls.gbh.im_qtbt_num_before_ot = 0;
-    m_hls.gbh.im_qtbt_min_size = 0;
+    m_hls.gbh.contextMode = 0;
+    m_hls.gbh.imQtbtNumBeforeOt = 0;
+    m_hls.gbh.imQtbtMinSize = 0;
   }
 
   if (ifSparse)
     m_hls.gbh.singleModeFlagInSlice = 1;
   else
     m_hls.gbh.singleModeFlagInSlice = 0;
-
-
 
   m_hls.gbh.planarModeEligibleForSlice = planarModeEligible;
   m_encBac.codeGBH(m_hls.gps, m_hls.gbh);
@@ -715,79 +737,44 @@ Void TEncTop::encodeSlice(EncoderStatistics& es) {
   es.geomUserTime += (Double)(clock() - userTimeGeometryBegin) / CLOCKS_PER_SEC;
   es.numReconPoints += m_pointCloudRecon.getNumPoint();
 
-  //encoding attribute brick header
-  if (m_hls.sps.attrPresentFlag) {
-    m_encBac.computeAttributeID(m_hls.abh, m_hls.aps, m_hls.sps);
-    m_bufferChunk.setBufferType(BufferChunkType::BCT_ABH);
-    m_encBac.setBitstreamBuffer(m_bufferChunk);
-    m_hls.abh.sliceID = m_sliceID;
-    m_encBac.codeABH(m_hls.abh, m_hls.aps, m_hls.sps);
-    m_encBac.encodeFinish();
-    m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
-    m_bufferChunk.reset();
-    m_encBac.reset();
-  }
-
   ///< start attribute coding
-  int colorBitstreamSzie[NUM_MULTIATTRIBUTE] = {0};
-  int refBitstreamSzie[NUM_MULTIATTRIBUTE] = {0};
   if (m_hls.sps.attrPresentFlag) {
+    int colorBitstreamSzie[NUM_MULTIATTRIBUTE] = {0};
+    int refBitstreamSzie[NUM_MULTIATTRIBUTE] = {0};
     clock_t userTimeAttributeBegin = clock();
     m_attrEncoder.getColorBits() = 0;
     m_attrEncoder.getReflectanceBits() = 0;
     m_attrEncoder.getColorTime() = 0;
     m_attrEncoder.getReflectanceTime() = 0;
-    if (m_hls.aps.attributePresentFlag[0] && m_hls.aps.attributePresentFlag[1]) {
-      multiDataID = 0;
-      getSingleAttrAPs(m_hls.sps, m_hls.aps, 0, m_hls.abh.attribute_ID[0][multiDataID]);
-      getSingleAttrAPs(m_hls.sps, m_hls.aps, 1, m_hls.abh.attribute_ID[1][multiDataID]);
-      m_bufferChunk.setBufferType(BufferChunkType::BCT_COL);
-      m_encBac.setBitstreamBuffer(m_bufferChunk);
-      m_encBac.initBac();
-      //set adaptive expGolomb encoder parameter
-      m_encBac.setGolombGroupSize(aps.log2golombGroupSize);
-      m_encBac.setColorGolombKandBound(aps.colorGolombNum);
-
-      TComBufferChunk bufferChunkDual(BufferChunkType::BCT_REFL);
-      if ((aps.transform == 0) || (aps.transform == 2)) {
-        m_encBacDual.setBitstreamBuffer(bufferChunkDual,true);
-        m_encBacDual.initBac();
-        //set adaptive expGolomb encoder parameter
-        m_encBacDual.setGolombGroupSize(aps.log2golombGroupSize);
-        m_encBacDual.setColorGolombKandBound(aps.colorGolombNum);
-      }
-
+    multiDataID = 0;
+    if (m_hls.aps.attributeDataPresentFlag[0] && m_hls.aps.attributeDataPresentFlag[1]) {
+      getSingleAttrAPs(m_hls.sps, m_hls.aps, 0, multiDataID);
+      getSingleAttrAPs(m_hls.sps, m_hls.aps, 1, multiDataID);
       compressAndEncodeAttribute();
-      m_encBac.encodeTerminationFlag();
-      m_encBac.encodeFinish();
-      m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
-
-      if ((aps.transform == 0) || (aps.transform == 2)) {
-        m_attrEncoder.getColorBits() = m_encBac.getBitStreamLength() * 8;
-        m_encBacDual.encodeTerminationFlag();
-        m_encBacDual.encodeFinish();
-        bufferChunkDual.writeToBitstream(&m_bitstreamFile, m_encBacDual.getBitStreamLength());
-        m_attrEncoder.getReflectanceBits() = m_encBacDual.getBitStreamLength() * 8;
-        bufferChunkDual.reset();
-        m_encBacDual.reset();
-      }
       colorBitstreamSzie[multiDataID] = m_attrEncoder.getColorBits();
       refBitstreamSzie[multiDataID] = m_attrEncoder.getReflectanceBits();
       m_bufferChunk.reset();
       m_encBac.reset();
     }
-    if (m_hls.aps.attributePresentFlag[0] && !m_hls.aps.attributePresentFlag[1]) {
-      multiDataID = 0;
-      m_attrEncoder.getColorBits() = 0;
-      while (multiDataID < m_hls.aps.attribute_num_data_set_minus1[0] + 1) {
-        getSingleAttrAPs(m_hls.sps, m_hls.aps, 0, m_hls.abh.attribute_ID[0][multiDataID]);
 
+    if (m_hls.aps.attributeDataPresentFlag[0] && !m_hls.aps.attributeDataPresentFlag[1]) {
+      while (multiDataID < m_hls.aps.attributeDataNumSetMinus1[0] + 1) {
+        //encoding attribute brick header
+        m_bufferChunk.setBufferType(BufferChunkType::BCT_ABH_COL);
+        m_encBac.setBitstreamBuffer(m_bufferChunk);
+        m_hls.abh.sliceID = m_sliceID;
+        m_hls.abh.attributeID = multiDataID;
+        m_encBac.codeABH(m_hls.abh, m_hls.aps, m_hls.sps);
+        m_encBac.encodeFinish();
+        m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+        m_bufferChunk.reset();
+        m_encBac.reset();
+
+        ///< start attribute coding
+        getSingleAttrAPs(m_hls.sps, m_hls.aps, 0, multiDataID);
         m_bufferChunk.setBufferType(BufferChunkType::BCT_COL);
         m_encBac.setBitstreamBuffer(m_bufferChunk);
         m_encBac.initBac();
-        //set adaptive expGolomb encoder parameter
-        m_encBac.setGolombGroupSize(aps.log2golombGroupSize);
-        m_encBac.setColorGolombKandBound(aps.colorGolombNum);
 
         compressAndEncodeColor();
         m_encBac.encodeTerminationFlag();
@@ -811,15 +798,26 @@ Void TEncTop::encodeSlice(EncoderStatistics& es) {
     cout << "Attributes_color bpp: "
          << (Double)(m_attrEncoder.getColorBits()) / m_pointCloudQuant.getNumPoint() << " bpp."
          << endl;
-    if (!m_hls.aps.attributePresentFlag[0] && m_hls.aps.attributePresentFlag[1]) {
-      multiDataID = 0;
-      m_attrEncoder.getReflectanceBits() = 0;
-      int multiDataGroupNum = 1, multiDataGroupIndex=0;
-      if (m_hls.aps.attribute_num_data_set_minus1[1] > 0)
+
+    if (!m_hls.aps.attributeDataPresentFlag[0] && m_hls.aps.attributeDataPresentFlag[1]) {
+      int multiDataGroupNum = 1, multiDataGroupIndex = 0;
+      if (m_hls.aps.attributeDataNumSetMinus1[1] > 0)
         m_encBac.computeBufferSize(m_pointCloudOrg.getNumPoint(), 5);
-      while (multiDataID < m_hls.aps.attribute_num_data_set_minus1[1] + 1) {
-        getSingleAttrAPs(m_hls.sps, m_hls.aps, 1, m_hls.abh.attribute_ID[1][multiDataID]);
-        if (m_hls.aps.attribute_num_data_set_minus1[1] > 0 && m_hls.aps.transform == 0) {
+      while (multiDataID < m_hls.aps.attributeDataNumSetMinus1[1] + 1) {
+        //encoding attribute brick header
+        m_bufferChunk.setBufferType(BufferChunkType::BCT_ABH_REFL);
+        m_encBac.setBitstreamBuffer(m_bufferChunk);
+        m_hls.abh.sliceID = m_sliceID;
+        m_hls.abh.attributeID = multiDataID;
+        m_encBac.codeABH(m_hls.abh, m_hls.aps, m_hls.sps);
+        m_encBac.encodeFinish();
+        m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+        m_bufferChunk.reset();
+        m_encBac.reset();
+
+        ///< start attribute coding
+        getSingleAttrAPs(m_hls.sps, m_hls.aps, 1, multiDataID);
+        if (m_hls.aps.attributeDataNumSetMinus1[1] > 0 && m_hls.aps.transform == 0) {
           multiDataGroupNum = m_hls.aps.multiAttriGroupNum[multiDataGroupIndex];
           multiDataGroupIndex++;
         }
@@ -851,16 +849,16 @@ Void TEncTop::encodeSlice(EncoderStatistics& es) {
          << " bpp." << endl;
 
     UInt64 getAttributeBits[NUM_MULTIATTRIBUTE] = {0};
-    if (m_hls.aps.attributePresentFlag[0]) {
-      for (int multiIdx = 0; multiIdx < m_hls.aps.attribute_num_data_set_minus1[0] + 1; ++multiIdx)
+    if (m_hls.aps.attributeDataPresentFlag[0]) {
+      for (int multiIdx = 0; multiIdx < m_hls.aps.attributeDataNumSetMinus1[0] + 1; ++multiIdx)
         getAttributeBits[multiIdx] = colorBitstreamSzie[multiIdx];
-      for (int multiIdx = 0; multiIdx < m_hls.aps.attribute_num_data_set_minus1[0] + 1; ++multiIdx)
+      for (int multiIdx = 0; multiIdx < m_hls.aps.attributeDataNumSetMinus1[0] + 1; ++multiIdx)
         es.attrBits[multiIdx] += colorBitstreamSzie[multiIdx];
     }
-    if (m_hls.aps.attributePresentFlag[1]) {
-      for (int multiIdx = 0; multiIdx < m_hls.aps.attribute_num_data_set_minus1[1] + 1; ++multiIdx)
+    if (m_hls.aps.attributeDataPresentFlag[1]) {
+      for (int multiIdx = 0; multiIdx < m_hls.aps.attributeDataNumSetMinus1[1] + 1; ++multiIdx)
         getAttributeBits[multiIdx] = refBitstreamSzie[multiIdx];
-      for (int multiIdx = 0; multiIdx < m_hls.aps.attribute_num_data_set_minus1[1] + 1; ++multiIdx)
+      for (int multiIdx = 0; multiIdx < m_hls.aps.attributeDataNumSetMinus1[1] + 1; ++multiIdx)
         es.attrBits[multiIdx] += refBitstreamSzie[multiIdx];
     }
     es.colorBits += m_attrEncoder.getColorBits();
@@ -873,22 +871,34 @@ Void TEncTop::encodeSlice(EncoderStatistics& es) {
 // Private class functions
 //////////////////////////////////////////////////////////////////////////
 
-Void TEncTop::initParameters() {
-  m_hls.sps.level = 0;
-  m_hls.sps.spsID = 0;
+Void TEncTop::initFrameParameters(FrameHeader& frameheader) {
+  frameheader.frameIndex = m_frame_ID;
+  frameheader.frameNumSliceMinus1 = 0;
 
-  m_hls.gps.gpsID = 0;
-  m_hls.gps.spsID = 0;
+  ///< determine bounding box
+  PC_POS bbMin, bbMax, bbSize;
+  m_pointCloudOrg.computeBoundingBox(bbMin, bbMax);
+  for (Int k = 0; k < 3; k++) {
+    bbMin[k] = floor(bbMin[k]);
+    frameheader.geomBoundingBoxOrigin[k] = Int(bbMin[k]);
+  }
+  bbSize = bbMax - bbMin;
+  frameheader.geomBoundingBoxSize[0] = Int(round(bbSize[0] / m_hls.gps.geomQuantStep)) + 1;
+  frameheader.geomBoundingBoxSize[1] = Int(round(bbSize[1] / m_hls.gps.geomQuantStep)) + 1;
+  frameheader.geomBoundingBoxSize[2] = Int(round(bbSize[2] / m_hls.gps.geomQuantStep)) + 1;
+  frameheader.geomNumPoints = (UInt)m_pointCloudOrg.getNumPoint();
 
-  m_hls.aps.apsID = 0;
-  m_hls.aps.spsID = 0;
-}
-Void TEncTop::initFrameParameters(FrameHeader& frameHead) {
-  frameHead.frame_index = 0;
-  frameHead.num_slice_minus_one = 0;
-  frameHead.timestamp_flag = true;
-  if (frameHead.timestamp_flag)
-    frameHead.timestamp = 0;
+  ///< when lcuNodeSizeLog2 == 0, lcuNodeDepth is used to control the node size
+  frameheader.lcuNodeSizeLog2 = m_hls.gps.lcuNodeSizeLog2;
+  if (frameheader.lcuNodeSizeLog2 == 0 && m_hls.gps.lcuNodeDepth > 0) {
+    UInt maxBB = std::max({1U, m_hls.frameheader.geomBoundingBoxSize[0],
+                           m_hls.frameheader.geomBoundingBoxSize[1],
+                           m_hls.frameheader.geomBoundingBoxSize[2]});
+    int maxNodeSizeLog2 = ceilLog2(maxBB);
+
+    //avoid small lcu size
+    frameheader.lcuNodeSizeLog2 = std::max(10U, maxNodeSizeLog2 + 1 - m_hls.gps.lcuNodeDepth);
+  }
 }
 
 Void TEncTop::compressAndEncodePartition() {
@@ -904,9 +914,9 @@ Void TEncTop::fastRecolor(const std::pair<const PC_POS, std::vector<int>> it,
   Int64 weightSum = 0;
   Double eps = 0.1;
   PC_POS posDequant = m_pointCloudQuant[uniquePointNumber] * qs;
-  posDequant[0] += m_hls.sps.geomBoundingBoxOrigin[0];
-  posDequant[1] += m_hls.sps.geomBoundingBoxOrigin[1];
-  posDequant[2] += m_hls.sps.geomBoundingBoxOrigin[2];
+  posDequant[0] += m_hls.frameheader.geomBoundingBoxOrigin[0];
+  posDequant[1] += m_hls.frameheader.geomBoundingBoxOrigin[1];
+  posDequant[2] += m_hls.frameheader.geomBoundingBoxOrigin[2];
 
   for (const auto& idx : it.second) {
     PC_POS posOrg = m_pointCloudOrg[idx];
@@ -960,9 +970,9 @@ Void TEncTop::geomPreprocessAndQuantization(UInt& geoNumPoint, const Float& qs,
   ///< shift to origin
   const TSize pointCount = m_pointCloudOrg.getNumPoint();
   for (Int i = 0; i < pointCount; i++) {
-    m_pointCloudQuant[i][0] -= m_hls.sps.geomBoundingBoxOrigin[0];
-    m_pointCloudQuant[i][1] -= m_hls.sps.geomBoundingBoxOrigin[1];
-    m_pointCloudQuant[i][2] -= m_hls.sps.geomBoundingBoxOrigin[2];
+    m_pointCloudQuant[i][0] -= m_hls.frameheader.geomBoundingBoxOrigin[0];
+    m_pointCloudQuant[i][1] -= m_hls.frameheader.geomBoundingBoxOrigin[1];
+    m_pointCloudQuant[i][2] -= m_hls.frameheader.geomBoundingBoxOrigin[2];
   }
 
   ///< geometry quantization
@@ -1014,60 +1024,259 @@ Void TEncTop::geomPreprocessAndQuantization(UInt& geoNumPoint, const Float& qs,
   }
 }
 
-Void TEncTop::geomPreprocessAndQuantizationRetainingDuplicatePoints(const Float& qs) {
-  m_pointCloudQuant = m_pointCloudOrg;
-
-  ///< shift to origin
-  const TSize pointCount = m_pointCloudQuant.getNumPoint();
-  for (Int i = 0; i < pointCount; i++) {
-    m_pointCloudQuant[i][0] -= m_hls.sps.geomBoundingBoxOrigin[0];
-    m_pointCloudQuant[i][1] -= m_hls.sps.geomBoundingBoxOrigin[1];
-    m_pointCloudQuant[i][2] -= m_hls.sps.geomBoundingBoxOrigin[2];
-  }
-
-  ///< geometry quantization
-  for (Int i = 0; i < pointCount; i++) {
-    m_pointCloudQuant[i][0] = round(m_pointCloudQuant[i][0] / qs);
-    m_pointCloudQuant[i][1] = round(m_pointCloudQuant[i][1] / qs);
-    m_pointCloudQuant[i][2] = round(m_pointCloudQuant[i][2] / qs);
-  }
-}
-
-Void TEncTop::geomPostprocessingAndDequantization(const Float& qs) {
+Void TEncTop::geomPostprocessingAndDequantization() {
   const TSize numPoints = m_pointCloudRecon.getNumPoint();
 
   ///< geometry dequantization
-  if (qs > 1) {
-    for (TSize i = 0; i < numPoints; i++) {
-      m_pointCloudRecon[i][0] = round(m_pointCloudRecon[i][0] * qs * 1e6) / 1e6;
-      m_pointCloudRecon[i][1] = round(m_pointCloudRecon[i][1] * qs * 1e6) / 1e6;
-      m_pointCloudRecon[i][2] = round(m_pointCloudRecon[i][2] * qs * 1e6) / 1e6;
-    }
-  } else {
-    for (TSize i = 0; i < numPoints; i++) {
-      m_pointCloudRecon[i][0] = m_pointCloudRecon[i][0] * qs;
-      m_pointCloudRecon[i][1] = m_pointCloudRecon[i][1] * qs;
-      m_pointCloudRecon[i][2] = m_pointCloudRecon[i][2] * qs;
-    }
+  for (TSize i = 0; i < numPoints; i++) {
+    m_pointCloudRecon[i][0] = m_pointCloudRecon[i][0] * m_hls.gps.geomQuantStepSignificand /
+      (1 << m_hls.gps.geomQuantStepExponent);
+    m_pointCloudRecon[i][1] = m_pointCloudRecon[i][1] * m_hls.gps.geomQuantStepSignificand /
+      (1 << m_hls.gps.geomQuantStepExponent);
+    m_pointCloudRecon[i][2] = m_pointCloudRecon[i][2] * m_hls.gps.geomQuantStepSignificand /
+      (1 << m_hls.gps.geomQuantStepExponent);
   }
 
   ///< shift back to world coordinates
   for (TSize i = 0; i < numPoints; i++) {
-    m_pointCloudRecon[i][0] += m_hls.sps.geomBoundingBoxOrigin[0];
-    m_pointCloudRecon[i][1] += m_hls.sps.geomBoundingBoxOrigin[1];
-    m_pointCloudRecon[i][2] += m_hls.sps.geomBoundingBoxOrigin[2];
+    m_pointCloudRecon[i][0] += m_hls.frameheader.geomBoundingBoxOrigin[0];
+    m_pointCloudRecon[i][1] += m_hls.frameheader.geomBoundingBoxOrigin[1];
+    m_pointCloudRecon[i][2] += m_hls.frameheader.geomBoundingBoxOrigin[2];
   }
 }
 
 Void TEncTop::compressAndEncodeAttribute() {
-  m_attrEncoder.initDual(&m_pointCloudRecon, &m_pointCloudRecon, &m_hls, &m_encBac, &m_encBacDual,
-                         m_frame_ID, m_numOfFrames, multiDataID);
-  if (m_hls.aps.transform == 0) {
-    m_attrEncoder.predictEncodeAttribute();
-  } else if (m_hls.aps.transform == 1) {
-    m_attrEncoder.transformEncodeAttribute();
-  } else if (m_hls.aps.transform == 2) {
-    m_attrEncoder.predictAndTransformEncodeAttribute();
+  if (m_hls.aps.transform == 0 ||
+      m_hls.aps.transform == 2) {  //encode attribute with two entropy codecs
+    m_attrEncoder.initDual(&m_pointCloudRecon, &m_pointCloudRecon, &m_hls, &m_encBac, &m_encBacDual,
+                           m_frame_ID, m_numOfFrames, multiDataID);
+    TComBufferChunk bufferChunkDual;
+    if (m_hls.aps.crossAttrTypePred &&
+        m_hls.aps.attrEncodeOrder) {  //encode reflectance first, color sencond
+      //write reflectance slice header
+      bufferChunkDual.setBufferType(BufferChunkType::BCT_ABH_REFL);
+      m_encBacDual.setBitstreamBuffer(bufferChunkDual, true);
+      m_hls.abh.sliceID = m_sliceID;
+      m_hls.abh.attributeID = multiDataID;
+      m_encBacDual.codeABH(m_hls.abh, m_hls.aps, m_hls.sps);
+      m_encBacDual.encodeFinish();
+      bufferChunkDual.writeToBitstream(&m_bitstreamFile, m_encBacDual.getBitStreamLength());
+      bufferChunkDual.reset();
+      m_encBacDual.reset();
+      //init reflectance slice data
+      bufferChunkDual.setBufferType(BufferChunkType::BCT_REFL);
+      m_encBacDual.setBitstreamBuffer(bufferChunkDual, true);
+      m_encBacDual.initBac();
+      //init color slice data
+      m_bufferChunk.setBufferType(BufferChunkType::BCT_COL);
+      m_encBac.setBitstreamBuffer(m_bufferChunk);
+      m_encBac.initBac();
+      //encode attribute
+      m_attrEncoder.dualEncodeAttribute();
+      //write reflectance slice data
+      m_encBacDual.encodeTerminationFlag();
+      m_encBacDual.encodeFinish();
+      bufferChunkDual.writeToBitstream(&m_bitstreamFile, m_encBacDual.getBitStreamLength());
+      m_attrEncoder.getReflectanceBits() = m_encBacDual.getBitStreamLength() * 8;
+      bufferChunkDual.reset();
+      m_encBacDual.reset();
+      //write color slice header
+      bufferChunkDual.setBufferType(BufferChunkType::BCT_ABH_COL);
+      m_encBacDual.setBitstreamBuffer(bufferChunkDual, true);
+      m_hls.abh.sliceID = m_sliceID;
+      m_hls.abh.attributeID = multiDataID;
+      m_encBacDual.codeABH(m_hls.abh, m_hls.aps, m_hls.sps);
+      m_encBacDual.encodeFinish();
+      bufferChunkDual.writeToBitstream(&m_bitstreamFile, m_encBacDual.getBitStreamLength());
+      bufferChunkDual.reset();
+      m_encBacDual.reset();
+      //write color slice data
+      m_encBac.encodeTerminationFlag();
+      m_encBac.encodeFinish();
+      m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      m_attrEncoder.getColorBits() = m_encBac.getBitStreamLength() * 8;
+      m_bufferChunk.reset();
+      m_encBac.reset();
+    } else {  //encode color first, reflectance sencond
+      //write color slice header
+      m_bufferChunk.setBufferType(BufferChunkType::BCT_ABH_COL);
+      m_encBac.setBitstreamBuffer(m_bufferChunk);
+      m_hls.abh.sliceID = m_sliceID;
+      m_hls.abh.attributeID = multiDataID;
+      m_encBac.codeABH(m_hls.abh, m_hls.aps, m_hls.sps);
+      m_encBac.encodeFinish();
+      m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      m_bufferChunk.reset();
+      m_encBac.reset();
+      //init color slice data
+      m_bufferChunk.setBufferType(BufferChunkType::BCT_COL);
+      m_encBac.setBitstreamBuffer(m_bufferChunk);
+      m_encBac.initBac();
+      //init reflectance slice data
+      bufferChunkDual.setBufferType(BufferChunkType::BCT_REFL);
+      m_encBacDual.setBitstreamBuffer(bufferChunkDual, true);
+      m_encBacDual.initBac();
+      //encode attribute
+      m_attrEncoder.dualEncodeAttribute();
+      //write color slice data
+      m_encBac.encodeTerminationFlag();
+      m_encBac.encodeFinish();
+      m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      m_attrEncoder.getColorBits() = m_encBac.getBitStreamLength() * 8;
+      m_bufferChunk.reset();
+      m_encBac.reset();
+      //write reflectance slice header
+      m_bufferChunk.setBufferType(BufferChunkType::BCT_ABH_REFL);
+      m_encBac.setBitstreamBuffer(m_bufferChunk);
+      m_hls.abh.sliceID = m_sliceID;
+      m_hls.abh.attributeID = multiDataID;
+      m_encBac.codeABH(m_hls.abh, m_hls.aps, m_hls.sps);
+      m_encBac.encodeFinish();
+      m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      m_bufferChunk.reset();
+      m_encBac.reset();
+      //write reflectance slice data
+      m_encBacDual.encodeTerminationFlag();
+      m_encBacDual.encodeFinish();
+      bufferChunkDual.writeToBitstream(&m_bitstreamFile, m_encBacDual.getBitStreamLength());
+      m_attrEncoder.getReflectanceBits() = m_encBacDual.getBitStreamLength() * 8;
+      bufferChunkDual.reset();
+      m_encBacDual.reset();
+    }
+  } else if (m_hls.aps.transform == 1) {  //encode attribute with one entropy codec
+    m_attrEncoder.init(&m_pointCloudRecon, &m_pointCloudRecon, &m_hls, &m_encBac, m_frame_ID,
+                       m_numOfFrames, multiDataID);
+
+    if (!m_hls.aps.crossAttrTypePred) {
+      //write color slice header
+      m_bufferChunk.setBufferType(BufferChunkType::BCT_ABH_COL);
+      m_encBac.setBitstreamBuffer(m_bufferChunk);
+      m_hls.abh.sliceID = m_sliceID;
+      m_hls.abh.attributeID = multiDataID;
+      m_encBac.codeABH(m_hls.abh, m_hls.aps, m_hls.sps);
+      m_encBac.encodeFinish();
+      m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      m_bufferChunk.reset();
+      m_encBac.reset();
+      // encode color
+      TComBufferChunk bufferChunkCol(BufferChunkType::BCT_COL);
+      m_encBac.setBitstreamBuffer(bufferChunkCol);
+      m_encBac.initBac();
+      m_attrEncoder.transformEncodeColor();
+      m_encBac.encodeTerminationFlag();
+      m_encBac.encodeFinish();
+      m_attrEncoder.getColorBits() = m_encBac.getBitStreamLength() * 8;
+      bufferChunkCol.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      bufferChunkCol.reset();
+      m_encBac.reset();
+      //write reflectance slice header
+      m_bufferChunk.setBufferType(BufferChunkType::BCT_ABH_REFL);
+      m_encBac.setBitstreamBuffer(m_bufferChunk);
+      m_hls.abh.sliceID = m_sliceID;
+      m_hls.abh.attributeID = multiDataID;
+      m_encBac.codeABH(m_hls.abh, m_hls.aps, m_hls.sps);
+      m_encBac.encodeFinish();
+      m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      m_bufferChunk.reset();
+      m_encBac.reset();
+      // encode reflectance
+      TComBufferChunk bufferChunkRefl(BufferChunkType::BCT_REFL);
+      m_encBac.setBitstreamBuffer(bufferChunkRefl);
+      m_encBac.initBac();
+      m_attrEncoder.transformEncodeReflectance();
+      m_encBac.encodeTerminationFlag();
+      m_encBac.encodeFinish();
+      m_attrEncoder.getReflectanceBits() = m_encBac.getBitStreamLength() * 8;
+      bufferChunkRefl.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      bufferChunkRefl.reset();
+      m_encBac.reset();
+    } else if (!m_hls.aps.attrEncodeOrder) {  // firstly encode color
+      //write color slice header
+      m_bufferChunk.setBufferType(BufferChunkType::BCT_ABH_COL);
+      m_encBac.setBitstreamBuffer(m_bufferChunk);
+      m_hls.abh.sliceID = m_sliceID;
+      m_hls.abh.attributeID = multiDataID;
+      m_encBac.codeABH(m_hls.abh, m_hls.aps, m_hls.sps);
+      m_encBac.encodeFinish();
+      m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      m_bufferChunk.reset();
+      m_encBac.reset();
+      // encode color
+      TComBufferChunk bufferChunkCol(BufferChunkType::BCT_COL);
+      m_encBac.setBitstreamBuffer(bufferChunkCol);
+      m_encBac.initBac();
+      m_attrEncoder.transformEncodeColor();
+      m_encBac.encodeTerminationFlag();
+      m_encBac.encodeFinish();
+      m_attrEncoder.getColorBits() = m_encBac.getBitStreamLength() * 8;
+      bufferChunkCol.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      bufferChunkCol.reset();
+      m_encBac.reset();
+      //write reflectance slice header
+      m_bufferChunk.setBufferType(BufferChunkType::BCT_ABH_REFL);
+      m_encBac.setBitstreamBuffer(m_bufferChunk);
+      m_hls.abh.sliceID = m_sliceID;
+      m_hls.abh.attributeID = multiDataID;
+      m_encBac.codeABH(m_hls.abh, m_hls.aps, m_hls.sps);
+      m_encBac.encodeFinish();
+      m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      m_bufferChunk.reset();
+      m_encBac.reset();
+      // encode reflectance
+      TComBufferChunk bufferChunkRefl(BufferChunkType::BCT_REFL);
+      m_encBac.setBitstreamBuffer(bufferChunkRefl);
+      m_encBac.initBac();
+      m_attrEncoder.transformEncodeReflectanceFromColor();
+      m_encBac.encodeTerminationFlag();
+      m_encBac.encodeFinish();
+      m_attrEncoder.getReflectanceBits() = m_encBac.getBitStreamLength() * 8;
+      bufferChunkRefl.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      bufferChunkRefl.reset();
+      m_encBac.reset();
+    } else {  // firstly encode refl, CTC default
+      //write reflectance slice header
+      m_bufferChunk.setBufferType(BufferChunkType::BCT_ABH_REFL);
+      m_encBac.setBitstreamBuffer(m_bufferChunk);
+      m_hls.abh.sliceID = m_sliceID;
+      m_hls.abh.attributeID = multiDataID;
+      m_encBac.codeABH(m_hls.abh, m_hls.aps, m_hls.sps);
+      m_encBac.encodeFinish();
+      m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      m_bufferChunk.reset();
+      m_encBac.reset();
+      // encode reflectance
+      TComBufferChunk bufferChunkRefl(BufferChunkType::BCT_REFL);
+      m_encBac.setBitstreamBuffer(bufferChunkRefl);
+      m_encBac.initBac();
+      m_attrEncoder.transformEncodeReflectance();
+      m_encBac.encodeTerminationFlag();
+      m_encBac.encodeFinish();
+      m_attrEncoder.getReflectanceBits() = m_encBac.getBitStreamLength() * 8;
+      bufferChunkRefl.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      bufferChunkRefl.reset();
+      m_encBac.reset();
+      //write color slice header
+      m_bufferChunk.setBufferType(BufferChunkType::BCT_ABH_COL);
+      m_encBac.setBitstreamBuffer(m_bufferChunk);
+      m_hls.abh.sliceID = m_sliceID;
+      m_hls.abh.attributeID = multiDataID;
+      m_encBac.codeABH(m_hls.abh, m_hls.aps, m_hls.sps);
+      m_encBac.encodeFinish();
+      m_bufferChunk.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      m_bufferChunk.reset();
+      m_encBac.reset();
+      // encode color
+      TComBufferChunk bufferChunkCol(BufferChunkType::BCT_COL);
+      m_encBac.setBitstreamBuffer(bufferChunkCol);
+      m_encBac.initBac();
+      m_attrEncoder.transformEncodeColorFromReflectance();
+      m_encBac.encodeTerminationFlag();
+      m_encBac.encodeFinish();
+      m_attrEncoder.getColorBits() = m_encBac.getBitStreamLength() * 8;
+      bufferChunkCol.writeToBitstream(&m_bitstreamFile, m_encBac.getBitStreamLength());
+      bufferChunkCol.reset();
+      m_encBac.reset();
+    }
   }
 }
 
@@ -1087,11 +1296,11 @@ Void TEncTop::compressAndEncodeReflectance() {
   m_attrEncoder.init(&m_pointCloudRecon, &m_pointCloudRecon, &m_hls, &m_encBac, m_frame_ID,
                      m_numOfFrames, multiDataID);
   if (m_hls.aps.transform == 0) {
-    if (m_hls.aps.attribute_num_data_set_minus1[1] > 0 &&
-        m_hls.aps.multiAttriGroupNum[m_hls.aps.multiAttriGroupID[multiDataID]] > 1)
+    if (m_hls.aps.attributeDataNumSetMinus1[1] > 0 &&
+        m_hls.aps.multiAttriGroupNum[m_hls.aps.multiAttrGroupID[multiDataID]] > 1)
       m_attrEncoder.predictEncodeMultiReflectance();
     else
-      m_attrEncoder.predictEncodeReflectance(); 
+      m_attrEncoder.predictEncodeReflectance();
   } else if (m_hls.aps.transform == 1) {
     m_attrEncoder.transformEncodeReflectance();
   } else if (m_hls.aps.transform == 2) {
@@ -1099,90 +1308,15 @@ Void TEncTop::compressAndEncodeReflectance() {
   }
 }
 
-Void TEncTop::SliceDevisionByMortonCode(int slicenum,
-                                        vector<TComPointCloud>& pointCloudPartitionList) {
-  // Morton sorting
-  int32_t voxelCount = m_pointCloudQuant.getNumPoint();
-  std::vector<pointCodeWithIndex> pointCloudMorton(voxelCount);
-  for (int n = 0; n < voxelCount; n++) {
-    const auto point = m_pointCloudQuant[n];
-    const int32_t x = (int32_t)point[0];
-    const int32_t y = (int32_t)point[1];
-    const int32_t z = (int32_t)point[2];
-    pointCloudMorton[n].code = mortonAddr(x, y, z);
-    pointCloudMorton[n].index = n;
-  }
-  std::sort(pointCloudMorton.begin(), pointCloudMorton.end());
-
-  //to make sure the num to move right
-  int64_t movedigits = 0;
-  while (((pointCloudMorton[voxelCount - 1].code >> movedigits) -
-          (pointCloudMorton[0].code >> movedigits)) >= slicenum)
-    movedigits++;
-  int slicesize = ((pointCloudMorton[voxelCount - 1].code >> movedigits) -
-                   (pointCloudMorton[0].code >> movedigits)) +
-    1;
-
-  //to cteate slice
-  int64_t fatherMorton = (pointCloudMorton[0].code >> movedigits);
-  auto end = std::lower_bound(pointCloudMorton.begin(), pointCloudMorton.end(),
-                              (fatherMorton) << movedigits) -
-    pointCloudMorton.begin();
-  for (int slice_id = 0; fatherMorton <= (pointCloudMorton[voxelCount - 1].code >> movedigits);
-       slice_id++, fatherMorton++) {
-    auto begin = end;
-    end = std::lower_bound(pointCloudMorton.begin() + begin, pointCloudMorton.end(),
-                           (fatherMorton + 1) << movedigits) -
-      pointCloudMorton.begin();
-    if (begin == end) {
-      slice_id--;
-      continue;
-    }
-
-    int index = 0;
-    pointCloudPartitionList[slice_id].setNumPoint(end - begin);
-    if (m_pointCloudQuant.hasColors())
-      pointCloudPartitionList[slice_id].addColors();
-
-    if (m_pointCloudQuant.hasReflectances())
-      pointCloudPartitionList[slice_id].addReflectances();
-
-    for (int i = begin, j = 0; i < end && i < voxelCount; i++, j++) {
-      pointCloudPartitionList[slice_id][j] = m_pointCloudQuant[pointCloudMorton[i].index];
-      if (m_pointCloudQuant.hasColors()) {
-        for (int multiIdx = 0; multiIdx < m_pointCloudQuant.getNumMultilColor(); ++multiIdx)
-          pointCloudPartitionList[slice_id].setColor(
-            j, m_pointCloudQuant.getColor(pointCloudMorton[i].index, multiIdx), multiIdx);
-      }
-
-      if (m_pointCloudQuant.hasReflectances()) {
-        for (int multiIdx = 0; multiIdx < m_pointCloudQuant.getNumMultilRefl(); ++multiIdx)
-          pointCloudPartitionList[slice_id].setReflectance(
-            j, m_pointCloudQuant.getReflectance(pointCloudMorton[i].index, multiIdx), multiIdx);
-      }
-    }
-  }
-  pointCloudPartitionList.erase(
-    std::remove_if(pointCloudPartitionList.begin(), pointCloudPartitionList.end(),
-                   [](const TComPointCloud& partion) { return partion.getNumPoint() == 0; }),
-    pointCloudPartitionList.end());
-  m_hls.frameHead.num_slice_minus_one = pointCloudPartitionList.size() - 1;
-}
-
-Void TEncTop::addToReconstructionCloud(TComPointCloud* reconstructionCloud) 
-{
+Void TEncTop::addToReconstructionCloud(TComPointCloud* reconstructionCloud) {
   int voxelCount_add = m_pointCloudRecon.getNumPoint();
   int voxelClout_re = reconstructionCloud->getNumPoint();
   if (m_hls.gbh.geomBoundingBoxOrigin.max())
     for (size_t idx = 0; idx < voxelCount_add; ++idx)
       for (size_t k = 0; k < 3; ++k)
         m_pointCloudRecon[idx][k] += m_hls.gbh.geomBoundingBoxOrigin[k];
-
-  if (!m_hls.gbh.sliceID) {
-    *reconstructionCloud = m_pointCloudRecon;
-    return;
-  }
-  reconstructionCloud->init(voxelClout_re + voxelCount_add, m_pointCloudRecon.hasColors(),
+  reconstructionCloud->init(voxelClout_re + voxelCount_add, m_pointCloudRecon.getNumMultilColor(),
+                            m_pointCloudRecon.getNumMultilRefl(), m_pointCloudRecon.hasColors(),
                             m_pointCloudRecon.hasReflectances());
   std::copy(m_pointCloudRecon.positions().begin(), m_pointCloudRecon.positions().end(),
             std::next(reconstructionCloud->positions().begin(), voxelClout_re));
@@ -1195,273 +1329,6 @@ Void TEncTop::addToReconstructionCloud(TComPointCloud* reconstructionCloud)
               m_pointCloudRecon.getReflectances().end(),
               std::next(reconstructionCloud->getReflectances().begin(),
                         voxelClout_re * reconstructionCloud->getNumMultilRefl()));
-}
-
-Void TEncTop::pointCloudPack(TComPointCloud& pointCloudRecon, const TComPointCloud& pointCloudAdd) {
-  vector<PC_POS> pos_org(pointCloudRecon.positions()), pos_add(pointCloudAdd.positions());
-  vector<PC_REFL> refl_org(pointCloudRecon.getReflectances()),
-    refl_add(pointCloudAdd.getReflectances());
-  vector<PC_COL> col_org(pointCloudRecon.getColors()), col_add(pointCloudAdd.getColors());
-
-  pos_org.insert(pos_org.end(), pos_add.begin(), pos_add.end());
-  refl_org.insert(refl_org.end(), refl_add.begin(), refl_add.end());
-  col_org.insert(col_org.end(), col_add.begin(), col_add.end());
-
-  pointCloudRecon.setPoses(pos_org);
-  pointCloudRecon.setReflectances(refl_org);
-  pointCloudRecon.setColors(col_org);
-}
-
-Void TEncTop::histogramZ(PC_POS posMin, PC_POS posMax, const TComPointCloud pc,
-                         vector<int32_t>& groundZ) {
-  Int rangeZ = posMax[2] - posMin[2];
-  vector<Int> listNum(rangeZ + 1, 0);
-
-  for (Int i = 0; i < pc.getNumPoint(); i++) {
-    listNum[posMax[2] - pc[i][2]]++;
-  }
-
-  vector<Int> hist0ToMin = {};
-  Int histWidth = 50;
-
-  for (Int hw = posMax[2] + histWidth * 4; hw < (rangeZ - histWidth); hw += histWidth) {
-    if (hw > (rangeZ - histWidth)) {
-      break;
-    }
-    Int numPerHistWidth = 0;
-    for (Int i = 0; i < histWidth; i++) {
-      numPerHistWidth += listNum[hw + i];
-    }
-    hist0ToMin.push_back(numPerHistWidth);
-  }
-  auto maxNum = max_element(hist0ToMin.begin(), hist0ToMin.end());
-  Int maxPos = distance(hist0ToMin.begin(), maxNum);
-  Int groundZPeak = (posMax[2] + 50 * (maxPos + 1));
-  vector<Int> hist0ToGroundPeak = {};
-  for (Int hw = posMax[2] + histWidth; hw < groundZPeak; hw += histWidth) {
-    if (hw > groundZPeak) {
-      break;
-    }
-    Int numPerHistWidth = 0;
-    for (Int i = 0; i < histWidth; i++) {
-      numPerHistWidth += listNum[hw + i];
-    }
-    hist0ToGroundPeak.push_back(numPerHistWidth);
-  }
-  auto minNum = min_element(hist0ToGroundPeak.begin(), hist0ToGroundPeak.end());
-
-  vector<Int> groundZRange;
-  Int m = 2;
-  for (Int i = 0; i < hist0ToMin.size(); i++) {
-    if (hist0ToMin[i] > ((*minNum) * m)) {
-      groundZRange.push_back(posMax[2] + 50 * i);
-    }
-  }
-  if (groundZRange.size() == 1 || groundZRange.size() == 0) {
-    m = 1.5;
-    for (Int i = 0; i < hist0ToMin.size(); i++) {
-      if (hist0ToMin[i] > ((*minNum) * m)) {
-        groundZRange.push_back(posMax[2] + 50 * i);
-      }
-    }
-  }
-  groundZ[0] = posMax[2] - groundZRange[groundZRange.size() - 1];
-  groundZ[1] = posMax[2] - groundZRange[0];
-}
-
-Void TEncTop::groundSlices(vector<TComPointCloud>& groundList, int32_t dis, int32_t groundZMin,
-                           const TComPointCloud pointCloudRes) {
-  const TSize pointCount = pointCloudRes.getNumPoint();
-  TComPointCloud pcRest = pointCloudRes;
-  Int groundNum = groundList.size();
-  for (Int n = 0; n < (groundNum - 1); n++) {
-    Int count = 0;
-    vector<PC_POS> pos_res = {};
-    vector<vector<PC_REFL>> refl_res = {};
-    groundList[n].setNumPoint(pointCount);
-    if (m_hls.sps.attrPresentFlag)
-      groundList[n].setNumMultilRefl(pointCloudRes.getNumMultilRefl());
-    for (Int i = 0; i < pcRest.getNumPoint(); i++) {
-      if (pcRest[i][2] > (groundZMin + dis * n) && pcRest[i][2] < (groundZMin + dis * (n + 1))) {
-        groundList[n].setPos(count, pcRest[i]);
-        if (m_hls.sps.attrPresentFlag) {
-          for (int multiIdx = 0; multiIdx < pcRest.getNumMultilRefl(); ++multiIdx)
-            groundList[n].setReflectance(count, pcRest.getReflectance(i, multiIdx), multiIdx);
-        }
-
-        count++;
-      } else {
-        pos_res.push_back(pcRest[i]);
-        if (m_hls.sps.attrPresentFlag) {
-          vector<PC_REFL> refls;
-          for (int multiIdx = 0; multiIdx < pcRest.getNumMultilRefl(); ++multiIdx)
-            refls.push_back(pcRest.getReflectance(i, multiIdx));
-          refl_res.push_back(refls);
-        }
-      }
-    }
-    pcRest.clear();
-    pcRest.setPoses(pos_res);
-    pcRest.setNumPoint(pos_res.size());
-    for (int i; i < pos_res.size(); i++) {
-      for (int multiIdx = 0; multiIdx < pcRest.getNumMultilRefl(); ++multiIdx) {
-        pcRest.setReflectance(i, refl_res[i][multiIdx], multiIdx);
-      }
-    }
-    if (n == (groundNum - 2)) {
-      groundList[n + 1] = pcRest;
-      groundList[n].setNumPoint(count);
-      if (m_hls.sps.attrPresentFlag)
-        groundList[n].setNumMultilRefl(pointCloudRes.getNumMultilRefl());
-    } else {
-      groundList[n].setNumPoint(count);
-      if (m_hls.sps.attrPresentFlag)
-        groundList[n].setNumMultilRefl(pointCloudRes.getNumMultilRefl());
-    }
-  }
-}
-
-Void TEncTop::sliceDevisionByHistZ(const TComPointCloud pointCloudOrg,
-                                   vector<TComPointCloud>& pointCloudPartitionList, Int numOfSlice,
-                                   const Float& geomQs, Int numDigits) {
-  const TSize pointCount = pointCloudOrg.getNumPoint();
-  TComPointCloud pointCloudRes = pointCloudOrg;
-
-  if (numOfSlice == 1) {
-    pointCloudPartitionList[0] = pointCloudRes;
-    return;
-  }
-
-  ///< pointCloudPartitionList[0] = pointCloudLidar (z = 0)
-  Int count = 0;
-  vector<PC_POS> pos_res = {};
-  vector<vector<PC_REFL>> refl_res = {};
-  pointCloudPartitionList[0].setNumPoint(pointCount);
-  if (m_hls.sps.attrPresentFlag)
-    pointCloudPartitionList[0].setNumMultilRefl(pointCloudRes.getNumMultilRefl());
-
-  for (Int i = 0; i < pointCloudRes.getNumPoint(); i++) {
-    if (pointCloudRes[i][2] == 0) {
-      pointCloudPartitionList[0].setPos(count, pointCloudRes[i]);
-      for (int multiIdx = 0; multiIdx = pointCloudRes.getNumMultilRefl(); ++multiIdx)
-        pointCloudPartitionList[0].setReflectance(count, pointCloudRes.getReflectance(i, multiIdx),
-                                                  multiIdx);
-      count++;
-    } else {
-      pos_res.push_back(pointCloudRes[i]);
-      vector<PC_REFL> refls;
-      for (int multiIdx = 0; multiIdx = pointCloudRes.getNumMultilRefl(); ++multiIdx)
-        refls.push_back(pointCloudRes.getReflectance(i, multiIdx));
-      refl_res.push_back(refls);
-    }
-  }
-  pointCloudPartitionList[0].setNumPoint(count);
-  if (m_hls.sps.attrPresentFlag)
-    pointCloudPartitionList[0].setNumMultilRefl(pointCloudRes.getNumMultilRefl());
-  pointCloudRes.clear();
-  pointCloudRes.setPoses(pos_res);
-  if (m_hls.sps.attrPresentFlag) {
-    for (int i; i < pos_res.size(); i++) {
-      for (int multiIdx = 0; multiIdx < pointCloudRes.getNumMultilRefl(); ++multiIdx) {
-        pointCloudRes.setReflectance(i, refl_res[i][multiIdx], multiIdx);
-      }
-    }
-
-  }
-  pointCloudRes.setNumPoint(pos_res.size());
-
-  ///< histogramZ generation
-  PC_POS posMin, posMax, posRange;
-  vector<int32_t> groundZ(2);
-  pointCloudRes.computeBoundingBox(posMin, posMax);
-  posRange = posMax - posMin;
-
-  histogramZ(posMin, posMax, pointCloudRes, groundZ);
-
-  count = 0;
-  pos_res = {};
-  refl_res = {};
-  int32_t groundZMin = groundZ[0];
-  int32_t groundZMax = groundZ[1];
-  const TSize pointCnt = pointCloudRes.getNumPoint();
-  pointCloudPartitionList[1].setNumPoint(pointCnt);
-
-  if (m_hls.sps.attrPresentFlag)
-    pointCloudPartitionList[1].setNumMultilRefl(pointCloudRes.getNumMultilRefl());
-
-  for (Int i = 0; i < pointCloudRes.getNumPoint(); i++) {
-    if (pointCloudRes[i][2] < groundZMin || pointCloudRes[i][2] > groundZMax) {
-      pointCloudPartitionList[1].setPos(count, pointCloudRes[i]);
-      if (m_hls.sps.attrPresentFlag) {
-        for (int multiIdx = 0; multiIdx = pointCloudRes.getNumMultilRefl(); ++multiIdx)
-          pointCloudPartitionList[1].setReflectance(
-            count, pointCloudRes.getReflectance(i, multiIdx), multiIdx);
-      }
-      count++;
-    } else {
-      pos_res.push_back(pointCloudRes[i]);
-      if (m_hls.sps.attrPresentFlag) {
-        vector<PC_REFL> refls;
-        for (int multiIdx = 0; multiIdx = pointCloudRes.getNumMultilRefl(); ++multiIdx)
-          refls.push_back(pointCloudRes.getReflectance(i, multiIdx));
-        refl_res.push_back(refls);
-      }
-    }
-  }
-  pointCloudPartitionList[1].setNumPoint(count);
-  if (m_hls.sps.attrPresentFlag)
-    pointCloudPartitionList[1].setNumMultilRefl(pointCloudRes.getNumMultilRefl());
-
-  pointCloudRes.clear();
-  pointCloudRes.setPoses(pos_res);
-  if (m_hls.sps.attrPresentFlag) {
-    for (int i; i < pos_res.size(); i++) {
-      for (int multiIdx = 0; multiIdx < pointCloudRes.getNumMultilRefl(); ++multiIdx) {
-        pointCloudRes.setReflectance(i, refl_res[i][multiIdx], multiIdx);
-      }
-    }
-  }
-  pointCloudRes.setNumPoint(pos_res.size());
-
-  if (geomQs == 1 && numDigits != 0) {
-    ///< lossless geom: pointCloudPartitionList[0] = pointCloudLidar
-    ///<                pointCloudPartitionList[1] = pointCloudRest
-    ///<                pointCloudPartitionList[i] = pointCloudGround, i = 2...N
-    if (numOfSlice == 2) {
-      pointCloudPack(pointCloudPartitionList[0], pointCloudPartitionList[1]);
-      pointCloudPartitionList[0].setNumPoint(pointCloudPartitionList[0].getNumPoint() +
-                                             pointCloudPartitionList[1].getNumPoint());
-      pointCloudPartitionList[1] = pointCloudRes;
-      pointCloudPartitionList[1].setNumPoint(pointCloudRes.getNumPoint());
-    } else if ((numOfSlice - 2) == 1) {
-      pointCloudPartitionList[2] = pointCloudRes;
-    } else {
-      vector<TComPointCloud> groundList(numOfSlice - 2);
-      int32_t dis = (groundZMax - groundZMin) / (numOfSlice - 2);
-      groundSlices(groundList, dis, groundZMin, pointCloudRes);
-      for (Int n = 2; n < numOfSlice; n++) {
-        pointCloudPartitionList[n] = groundList[n - 2];
-      }
-    }
-
-  } else {
-
-    pointCloudPack(pointCloudPartitionList[0], pointCloudPartitionList[1]);
-    pointCloudPartitionList[0].setNumPoint(pointCloudPartitionList[0].getNumPoint() +
-                                           pointCloudPartitionList[1].getNumPoint());
-    if (numOfSlice == 2) {
-      pointCloudPartitionList[1] = pointCloudRes;
-    } else {
-      vector<TComPointCloud> groundList(numOfSlice - 1);
-      int32_t dis = (groundZMax - groundZMin) / (numOfSlice - 1);
-
-      groundSlices(groundList, dis, groundZMin, pointCloudRes);
-
-      for (Int n = 1; n < numOfSlice; n++) {
-        pointCloudPartitionList[n] = groundList[n - 1];
-      }
-    }
-  }
 }
 
 Void TEncTop::SliceDevisionByPointNum(vector<TComPointCloud>& pointCloudPartitionList,
@@ -1512,7 +1379,7 @@ Void TEncTop::SliceDevisionByPointNum(vector<TComPointCloud>& pointCloudPartitio
     std::remove_if(pointCloudPartitionList.begin(), pointCloudPartitionList.end(),
                    [](const TComPointCloud& partion) { return partion.getNumPoint() == 0; }),
     pointCloudPartitionList.end());
-  m_hls.frameHead.num_slice_minus_one = pointCloudPartitionList.size() - 1;
+  m_hls.frameheader.frameNumSliceMinus1 = pointCloudPartitionList.size() - 1;
 }
 
 ///< \}

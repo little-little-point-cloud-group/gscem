@@ -63,7 +63,6 @@ public:
   int biari_decode_final(aec_t* p_aec);
   int biari_decode_symbol_eq_prob(aec_t* p_aec);
   UInt32 sbac_read_unary_sym_ep(COM_BS* bs, aec_t* p_aec);
-  UInt32 sbac_read_ue_ep(aec_t* p_aec);
 
   ///< bypass decoder
   Void com_bsr_init(COM_BS* bs, UInt8* buf, Int size, COM_BS_FN_FLUSH fn_flush);

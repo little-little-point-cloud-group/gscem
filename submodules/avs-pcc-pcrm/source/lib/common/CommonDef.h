@@ -51,7 +51,7 @@ using namespace std;
 // Software Information
 //////////////////////////////////////////////////////////////////////////
 #define AVS_PCC_SW_NAME "AVS-PCC-PCRM"
-#define AVS_PCC_VERSION "v12.0"  ///< software version
+#define AVS_PCC_VERSION "v14.2"  ///< software version
 
 //////////////////////////////////////////////////////////////////////////
 // Platform Information
@@ -175,7 +175,7 @@ static inline Int floorLog2(UInt x) {
   return result;
 }
 
-static inline Int ceilLog2(UInt x) {
+static inline Int ceilLog2(UInt64 x) {
   if (x == 0)  ///< log2(0) is illegal
     return -1;
   Int result = 0;

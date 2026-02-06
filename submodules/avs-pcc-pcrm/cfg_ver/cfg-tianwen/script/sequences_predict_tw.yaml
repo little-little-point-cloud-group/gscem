@@ -2,9 +2,9 @@
 ---
 partType0:
   peakvalue: 30000
-  category: cat1-A
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  category: tianwen
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -13,26 +13,30 @@ partType0:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-9
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   attr_adapt_pred: 0
   refl_output_depth: 32
-  refl_init_golomb_offset: 9
+  refl_init_golomb_offset: 3
+  pred_fixed_point_frac_bit: 30
   max_num_of_predict_neighbours: 3
   transform: 0
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
+  max_number_neighbours_log2_minus7 : 0
+  max_number_coefficients_log2_minus8 : 0
+  coeff_length_control_log2_minus8: 9
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 4
-  ref_reorder_mode: 1
-  pred_Fixed_Point_Frac_Bit    : 30
-  refl_QP_offset: 0
+  axis_bias_minus1: 3
+  nearest_pred_param1: 0
+  nearest_pred_param2: 0
+  refl_reorder_mode: 1
+  qp_offset: 0
+  multi_attr_group_id: 0,0,0,1,2,3,4,5,6,7,7,7,8,8,8,9,9,9,9,9,10,10,10,10,10,11,12,13,14,15,16,16,16,17,18,19,20,21,22,23,24,25,26,26,26
   
 partType1:
   peakvalue: 30000
-  category: cat1-A
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  category: tianwen
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -41,26 +45,30 @@ partType1:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-9
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   attr_adapt_pred: 0
   refl_output_depth: 32
-  refl_init_golomb_offset: 9
+  refl_init_golomb_offset: 3
+  pred_fixed_point_frac_bit: 30
   max_num_of_predict_neighbours: 3
   transform: 0
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
+  max_number_neighbours_log2_minus7 : 0
+  max_number_coefficients_log2_minus8 : 0
+  coeff_length_control_log2_minus8: 9
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 4
-  ref_reorder_mode: 1
-  pred_Fixed_Point_Frac_Bit    : 30
-  refl_QP_offset: 0
+  axis_bias_minus1: 3
+  nearest_pred_param1: 0
+  nearest_pred_param2: 0
+  refl_reorder_mode: 1
+  qp_offset: 0
+  multi_attr_group_id: 0,1,2,3,4,5,6,6,6
   
 partType4:
   peakvalue: 30000
-  category: cat1-A
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  category: tianwen
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -69,26 +77,30 @@ partType4:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-9
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   attr_adapt_pred: 0
   refl_output_depth: 32
-  refl_init_golomb_offset: 9
+  refl_init_golomb_offset: 3
+  pred_fixed_point_frac_bit: 30
   max_num_of_predict_neighbours: 3
   transform: 0
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
+  max_number_neighbours_log2_minus7 : 0
+  max_number_coefficients_log2_minus8 : 0
+  coeff_length_control_log2_minus8: 9
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 4
-  ref_reorder_mode: 1
-  pred_Fixed_Point_Frac_Bit    : 30
-  refl_QP_offset: 0
+  axis_bias_minus1: 3
+  nearest_pred_param1: 0
+  nearest_pred_param2: 0
+  refl_reorder_mode: 1
+  qp_offset: 0
+  multi_attr_group_id: 0,0,0,1,2,3,4,5,6,6,6,7,7,7,8,8,8,8,8,9,9,9,9,9,10,11,11,11,11,12,12,12,12,13,14,15,16,17,18,19,20,20,20
   
 partType5:
   peakvalue: 30000
-  category: cat1-A
-  slice_division_mode: 2
-  geom_im_qtbt_k: 0
+  category: tianwen
+  geom_im_qtbt_flag: 1
+  geom_im_qtbt_k: 5
   geom_im_qtbt_m: 0
   geom_planar_eligible: 0
   geom_lcu_nzlg2: 0
@@ -97,17 +109,21 @@ partType5:
   geom_tree_sort_mode: 1
   geom_tree_density_low: 1e-9
   geom_tree_density_high: 1e-8
-  log2_geom_tree_max_size_minus8: 3
+  geom_max_tree_size_log2_minus8: 3
   attr_adapt_pred: 0
   refl_output_depth: 32
-  refl_init_golomb_offset: 9
+  refl_init_golomb_offset: 3
+  pred_fixed_point_frac_bit: 30
   max_num_of_predict_neighbours: 3
   transform: 0
-  log2_max_number_coefficients_minus8 : 0
-  log2_coeff_length_control_minus8: 9
+  max_number_neighbours_log2_minus7 : 0
+  max_number_coefficients_log2_minus8 : 0
+  coeff_length_control_log2_minus8: 9
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  axis_bias: 4
-  ref_reorder_mode: 1
-  pred_Fixed_Point_Frac_Bit    : 30
-  refl_QP_offset: 0
+  axis_bias_minus1: 3
+  nearest_pred_param1: 0
+  nearest_pred_param2: 0
+  refl_reorder_mode: 1
+  qp_offset: 0
+  multi_attr_group_id: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,22,22

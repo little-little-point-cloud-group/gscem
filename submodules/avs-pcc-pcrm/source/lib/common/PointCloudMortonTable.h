@@ -65,3 +65,4 @@ extern const int fatherIndex2[8][18];
 extern const int hashShfit2[8][18][3];
 extern const int hilbertShift[8][7][3];
 extern const int kthIndex[13];
+extern const int KfraIndex[14];

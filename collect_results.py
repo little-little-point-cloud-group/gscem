@@ -1,58 +1,62 @@
 import os
 import re
+import sys
 import pathlib
 import shutil
 import argparse
 import pandas as pd
 import numpy as np
+import openpyxl
 from icecream import ic
 
 from collections import defaultdict
 from typing import Iterable, List, Optional
 from argparse import ArgumentParser
+from cfg.cfg_quant import load_config
 ic.disable()
 
-# 渲染图像的宽、高、视角数、起始帧、帧数、Excel所在行
-seq_information = {
-"alley"      :[1920,1080,328,0,1,35],
-"bartender"  :[1920,1080,21 ,0,1,5],
-"bicycle"    :[1920,1080,194,0,1,25],
-"cinema"     :[1920,1080,15 ,0,1,10],
-"garden"     :[1920,1080,185,0,1,30],
-"photo"      :[1920,1080,307,0,1,15],
-"rocket"     :[1920,1080,309,0,1,40],
-"toy"        :[1920,1080,317,0,1,20],
-}
+seq_start_row = {"bartender": 5,
+        "cinema": 10,
+        "photo": 15,
+        "toy": 20,
+        "bicycle": 25,
+        "garden": 30,
+        "alley": 35,
+        "rocket": 40,}
 
 
-PSNR_columns = {
-    "PSNR-RGB": 17,  # PSNR-RGB 列
-    "PSNR-YCbCr": 18,  # PSNR-YCbCr 列
-    "SSIM-YCbCr": 19,  # SSIM-YCbCr 列
-    # "IVSSIM": "I",  # IVSSIM 列
-    # "LPIPS": "J"  # LPIPS 列
-}
+def delete_extensions(folder: pathlib.Path, extensions: list[str]) -> int:
+    """
+    Delete files in *folder* that match any of the suffixes in *extensions*.
 
-Bitstream_columns = {
-"no_output_points"  : 6 ,
-"total_bits"        : 7 ,
-"geom_bits"         : 8 ,
-"ref_bits"          : 9 ,
-"enc_time"          : 20 ,
-"geom_enc_time"     : 22 ,
-"refl_enc_time"     : 24 ,               
-"sh0"               : 10 ,     
-"sh1"               : 11 ,     
-"sh2"               : 12 ,     
-"sh3"               : 13 ,     
-"opacity"           : 14 ,         
-"scaling"           : 15 ,         
-"rot"               : 16 ,     
-"dec_time"          : 21 ,          
-"geom_dec_time"     : 23 ,               
-"refl_dec_time"     : 25 ,         
+    Parameters
+    ----------
+    folder : pathlib.Path
+        Target directory.
+    extensions : list[str]
+        List of suffixes (without the leading dot), e.g. ['ply', 'bin'].
 
-}          
+    Returns
+    -------
+    int
+        Number of files successfully removed.
+    """
+    if not folder.is_dir():
+        print(f"{folder} is not a directory or does not exist.", file=sys.stderr)
+        return 0
+
+    removed = 0
+    for ext in extensions:
+        pattern = f"*.{ext}"
+        for file_path in folder.glob(pattern):
+            try:
+                file_path.unlink()
+                print(f"Removed: {file_path}")
+                removed += 1
+            except Exception as e:
+                print(f"Could not delete {file_path}: {e}", file=sys.stderr)
+
+    return removed
 
 
 def is_finite_number(s: str) -> bool:
@@ -89,6 +93,9 @@ def find_lines_with_pattern(
             if line.startswith(pattern):
                 matched.append(line.rstrip('\n'))
     ic(matched)
+    # Gracefully handle missing pattern: return NaN so downstream arithmetic still works
+    if not matched:
+        return float('nan')
     if len(matched) > 1:
         to_avg = []
         for line in matched:    
@@ -99,13 +106,15 @@ def find_lines_with_pattern(
                     break
             ic(to_avg.append(v))
         ret =  ic(np.mean(to_avg))
-    else:
+    elif len(matched) == 1:
         parts = ic(re.split(r'[:\s]', matched[0]))
         for i in reversed(parts):
             if is_finite_number(i):
                 v = float(i)
                 break
         ret = v
+    else:
+        ret = float('nan')
     
     return ret
 
@@ -135,14 +144,6 @@ def parse_enc_log(log_path):
         v = find_lines_with_pattern(log_path, enc_pattern_str[k])
         results[k].append(v)   
     
-
-    results['rot'][0] -= results['scaling'][0]
-    results['scaling'][0] -= results['opacity'][0]
-    results['opacity'][0] -= results['sh3'][0]
-    results['sh3'][0] -= results['sh2'][0]
-    results['sh2'][0] -= results['sh1'][0]
-    results['sh1'][0] -= results['sh0'][0]
-
     return results
 
 
@@ -178,6 +179,142 @@ def parse_metric_log(log_path):
     return results
 
 
+def parse_one_condition(log_dir, scene_frame, method, cond, rate_point, time_only: bool = False):
+    
+    cond = cond[0:2]
+    results = defaultdict(list)
+    for seq in scene_frame:
+        frame_name = re.split('\.', scene_frame[seq]['frame'])[0]
+        for rate in rate_point:
+            results['Sequence'].append(seq)
+            idendifier = '_'.join([seq, frame_name, cond, rate, method])
 
+            enc_log_path = pathlib.Path(log_dir) / f"{idendifier}_enc.log"
+            tmp = parse_enc_log(enc_log_path)
+            for k, v in tmp.items():
+                results[k] += v
+
+            dec_log_path = pathlib.Path(log_dir) / f"{idendifier}_dec.log"
+            tmp = parse_dec_log(dec_log_path)
+            for k, v in tmp.items():
+                results[k] += v
+            
+            if not time_only:
+                metric_log_path = pathlib.Path(log_dir) / f"{idendifier}_metric.log"
+                tmp = parse_metric_log(metric_log_path)
+                for k, v in tmp.items():
+                    results[k] += v
+
+    return results
+    
 if __name__ == "__main__":
-    pass
+    parser = argparse.ArgumentParser(description="Search a log file for lines containing a specific pattern.")
+    parser.add_argument("--test_id", default="qpSweep-sh0_y--8")
+    parser.add_argument("--quant_cfg_path", default='cfg/cfg_quant/cfg_quant_v0.1.json')
+    # change the following 2 path
+    parser.add_argument('--log-dir', default='/media/hipeson/21bd72c3-b2ba-406a-a594-1a7e99218c8a/hipeson/mmc_pcc/gly')
+    parser.add_argument('--output-dir', default='./results')
+    parser.add_argument('--template_path', default='template/template.xlsm', help="Excel template (.xlsm/.xlsx) with sheets named by cond (e.g., C1, C2)")
+    parser.add_argument('--skip_excel', action='store_true', help="Only write CSV; skip Excel output")
+    parser.add_argument('--keep_artifacts', action='store_true',
+                        help="Do not delete intermediate ply/bin/rgb files in log-dir (default: delete to save space)")
+    parser.add_argument('--time-only', action='store_true',
+                        help="Only collect time-related fields; skip PSNR/SSIM parsing and output")
+    
+    args, _ = parser.parse_known_args()
+    quant_cfg = load_config(args.quant_cfg_path)
+    scenes = quant_cfg['scenes']
+    PCRM_methods = quant_cfg['PCRM_methods']
+    ratepoint_per_cond = quant_cfg['ratepoint_per_cond']
+
+    args.log_dir = pathlib.Path(args.log_dir) / f"{args.test_id}"
+    output_dir = pathlib.Path(args.output_dir)
+
+    # Prepare Excel workbook if needed
+    wb = None
+    if not args.skip_excel:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        excel_path = output_dir / f"{args.test_id}.xlsm"
+        shutil.copyfile(args.template_path, excel_path)
+        wb = openpyxl.load_workbook(excel_path, keep_vba=True, read_only=False)
+        if "Summary" in wb.sheetnames:
+            wb["Summary"].cell(row=2, column=3).value = args.test_id
+
+    full_order = ['Sequence', 'no_output_points', 
+                  'total_bits', 'geom_bits', 'ref_bits', 
+                  'sh0', 'sh1', 'sh2', 'sh3',
+                  'opacity', 'scaling', 'rot', 
+                  'rgb_psnr', 'yuv_psnr', 'yuv_ssim',
+                  'enc_time', 'dec_time', 
+                  'geom_enc_time', 'geom_dec_time', 
+                  'refl_enc_time', 'refl_dec_time']
+    time_only_order = ['Sequence', 'enc_time', 'dec_time', 
+                       'geom_enc_time', 'geom_dec_time', 
+                       'refl_enc_time', 'refl_dec_time']
+    time_only_fields = set(time_only_order) - {"Sequence"}
+
+    for method in PCRM_methods.keys():
+        for cond in ratepoint_per_cond.keys():
+            ret = parse_one_condition(args.log_dir, scenes, method, cond, ratepoint_per_cond[cond], time_only=args.time_only)
+
+            df = pd.DataFrame(ret)
+            if not args.time_only:
+                df['rot'] -= df['scaling']
+                df['scaling'] -= df['opacity']
+                df['opacity'] -= df['sh3']
+                df['sh3'] -= df['sh2']
+                df['sh2'] -= df['sh1']
+                df['sh1'] -= df['sh0']
+                df['rgb_psnr'] = df['rgb_psnr']
+                df['yuv_psnr'] = df['yuv_psnr']
+                df['yuv_ssim'] = df['yuv_ssim']
+                df_order = df[full_order]
+            else:
+                df_order = df[time_only_order]
+            save_name = '_'.join(map(str, [args.test_id, method, cond + '.csv']))
+            save_path = output_dir / save_name
+  
+            # Write into Excel (sheet named by cond prefix, e.g., C1/C2)
+            if wb:
+                sheet_name = "C1"
+                start_row = 5
+                start_col = 25  # column Y=25? Actually 25 -> Y, 26 -> Z; here matches模板要求
+                sheet = wb[sheet_name]
+                
+                a=df_order.iloc[0]["Sequence"]
+                row=-1
+                for j in range(len(df_order)):
+                    # 获取当前行的Sequence值，并查找对应的起始行
+                    sequence_value = df_order.iloc[j]["Sequence"]
+                    if a==sequence_value:
+                        row=row+1
+                    else:
+                        row=0
+                        a=sequence_value
+                    current_start_row = seq_start_row.get(sequence_value)
+                    
+                    if current_start_row is None:
+                        print(f"警告：未找到Sequence '{sequence_value}' 对应的起始行，跳过该行")
+                        continue
+                    
+                    # 遍历每一列（按full_order的顺序，保持模板列对齐）
+                    for i, header in enumerate(full_order):
+                        # 获取当前单元格的值
+                        if header=="Sequence":
+                            continue
+                        if args.time_only and header not in time_only_fields:
+                            continue
+                        value = df.iloc[j][header] if header in df.columns else float('nan')
+                        
+                    
+                        sheet.cell(row=current_start_row+row, column=start_col + i-1, value=value)
+   
+
+    if wb:
+        wb.save(output_dir / f"{args.test_id}.xlsm")
+
+    if args.keep_artifacts:
+        print("keep_artifacts enabled: skip deleting ply/bin/rgb")
+    else:
+        deleted = delete_extensions(args.log_dir, ["ply", "bin", "rgb"])
+        print(f"{deleted} files deleted")
