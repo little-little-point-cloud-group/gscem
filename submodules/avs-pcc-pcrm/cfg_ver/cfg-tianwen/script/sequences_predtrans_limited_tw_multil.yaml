@@ -17,8 +17,8 @@ partType0:
   refl_output_depth: 32
   refl_init_golomb_offset: 3
   axis_bias_minus1: 3
-  transform: 2
-  refl_max_transform_number    : 2
+  transform: 0
+  refl_max_transform_number    : 0
   max_number_coefficients_log2_minus8 : 9
   max_number_coefficients_log2_minus8: 0
   refl_reorder_mode: 1
@@ -44,8 +44,8 @@ partType1:
   refl_output_depth: 32
   refl_init_golomb_offset: 3
   axis_bias_minus1: 3
-  transform: 2
-  refl_max_transform_number    : 2
+  transform: 0
+  refl_max_transform_number    : 0
   max_number_coefficients_log2_minus8 : 9
   max_number_coefficients_log2_minus8: 0
   refl_reorder_mode: 1
@@ -71,8 +71,8 @@ partType4:
   refl_output_depth: 32
   refl_init_golomb_offset: 3
   axis_bias_minus1: 3
-  transform: 2
-  refl_max_transform_number    : 2
+  transform: 0
+  refl_max_transform_number    : 0
   max_number_coefficients_log2_minus8 : 9
   max_number_coefficients_log2_minus8: 0
   refl_reorder_mode: 1
@@ -98,8 +98,8 @@ partType5:
   refl_output_depth: 32
   refl_init_golomb_offset: 3
   axis_bias_minus1: 3
-  transform: 2
-  refl_max_transform_number    : 2
+  transform: 0
+  refl_max_transform_number    : 0
   max_number_coefficients_log2_minus8 : 9
   max_number_coefficients_log2_minus8: 0
   refl_reorder_mode: 1

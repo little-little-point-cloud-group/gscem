@@ -365,6 +365,16 @@ Int TDecTop::decode() {
           }
         }
 
+
+// // Debug: print first point’s 56 reflectance channels调试
+// if (m_pointCloudRecon.hasReflectances()) {
+//   std::vector<PC_REFL> refl(m_pointCloudRecon.getNumMultilRefl());
+//   m_pointCloudRecon.getMultiReflectances(0, refl);
+//   std::cout << "[DEBUG] first point refl:";
+//   for (int k = 0; k < (int)refl.size(); ++k) std::cout << " " << refl[k];
+//   std::cout << std::endl;
+// }
+
         ///< write recon ply
         if (m_reconFileName.length() > 0) {
           m_pointCloudRecon.writeToFile(m_reconFileName, m_writePlyInAsciiFlag);

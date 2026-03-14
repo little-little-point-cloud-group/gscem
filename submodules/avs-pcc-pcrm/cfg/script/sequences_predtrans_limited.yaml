@@ -20,9 +20,9 @@ bridge_1mm:
   axis_bias_minus1: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
-  refl_max_transform_number    : 2
+  refl_max_transform_number    : 0
   max_number_coefficients_log2_minus8 : 9
   coeff_length_control_log2_minus8: 0
   refl_reorder_mode: 1
@@ -50,9 +50,9 @@ double_T_section_1mm:
   axis_bias_minus1: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
-  refl_max_transform_number    : 2
+  refl_max_transform_number    : 0
   max_number_coefficients_log2_minus8 : 9
   coeff_length_control_log2_minus8: 0
   refl_reorder_mode: 1
@@ -80,9 +80,9 @@ intersection1_1mm:
   axis_bias_minus1: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
-  refl_max_transform_number    : 2
+  refl_max_transform_number    : 0
   max_number_coefficients_log2_minus8 : 9
   coeff_length_control_log2_minus8: 0
   refl_reorder_mode: 1
@@ -110,9 +110,9 @@ intersection2_1mm:
   axis_bias_minus1: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
-  refl_max_transform_number    : 2
+  refl_max_transform_number    : 0
   max_number_coefficients_log2_minus8 : 9
   coeff_length_control_log2_minus8: 0
   refl_reorder_mode: 1
@@ -140,9 +140,9 @@ straight_road_1mm:
   axis_bias_minus1: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
-  refl_max_transform_number    : 2
+  refl_max_transform_number    : 0
   max_number_coefficients_log2_minus8 : 9
   coeff_length_control_log2_minus8: 0
   refl_reorder_mode: 1
@@ -170,9 +170,9 @@ T_section_1mm:
   axis_bias_minus1: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
-  refl_max_transform_number    : 2
+  refl_max_transform_number    : 0
   max_number_coefficients_log2_minus8 : 9
   coeff_length_control_log2_minus8: 0
   refl_reorder_mode: 1
@@ -200,7 +200,7 @@ Ford_01_AVS_1mm:
   axis_bias_minus1: 3
   nearest_pred_param1: 3
   nearest_pred_param2: 30
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   refl_max_transform_number    : 4
   max_number_coefficients_log2_minus8 : 9
@@ -232,7 +232,7 @@ Ford_02_AVS_1mm:
   axis_bias_minus1: 3
   nearest_pred_param1: 3
   nearest_pred_param2: 30
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   refl_max_transform_number    : 4
   max_number_coefficients_log2_minus8 : 9
@@ -263,7 +263,7 @@ Ford_03_AVS_1mm:
   axis_bias_minus1: 3
   nearest_pred_param1: 3
   nearest_pred_param2: 30
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   refl_max_transform_number    : 4
   max_number_coefficients_log2_minus8 : 9
@@ -294,7 +294,7 @@ Livox_01_all_in_one_1mm:
   axis_bias_minus1: 3
   nearest_pred_param1: 3
   nearest_pred_param2: 30
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   refl_max_transform_number    : 4
   max_number_coefficients_log2_minus8 : 9
@@ -325,7 +325,7 @@ Livox_02_all_in_one_1mm:
   axis_bias_minus1: 3
   nearest_pred_param1: 3
   nearest_pred_param2: 30
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   refl_max_transform_number    : 4
   max_number_coefficients_log2_minus8 : 9
@@ -357,7 +357,7 @@ basketball_player_vox11:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -390,7 +390,7 @@ dancer_vox11:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -423,7 +423,7 @@ exercise_vox11:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -456,7 +456,7 @@ model_vox11:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -489,7 +489,7 @@ Ignatius_vox11:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -522,7 +522,7 @@ chair_vox12:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -555,7 +555,7 @@ machine_vox12:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -588,7 +588,7 @@ vessel4_vox12:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -621,7 +621,7 @@ bicycle_vox13:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -654,7 +654,7 @@ building_vox13:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -687,7 +687,7 @@ clock1_vox13:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -720,7 +720,7 @@ candlestick_vox13:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -753,7 +753,7 @@ shoes_vox13:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -786,7 +786,7 @@ apollo_vox14:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -819,7 +819,7 @@ casket_vox14:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -852,7 +852,7 @@ mosquito_vox14:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -885,7 +885,7 @@ violin1_vox14:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -918,7 +918,7 @@ Truck_vox14:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -951,7 +951,7 @@ caiman_vox15:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -984,7 +984,7 @@ puppet_vox15:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -1017,7 +1017,7 @@ QQdog_vox15:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -1050,7 +1050,7 @@ Courthouse_vox16:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -1083,7 +1083,7 @@ Church_vox16:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -1116,7 +1116,7 @@ stanford_area_2_vox20:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -1149,7 +1149,7 @@ stanford_area_4_vox20:
   max_num_of_predict_neighbours: 3
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   color_max_transform_number: 8
   max_number_coefficients_log2_minus8 : 9
@@ -1185,11 +1185,11 @@ pcl_room_vox14:
   axis_bias_minus1: 0
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   max_number_coefficients_log2_minus8 : 9
   coeff_length_control_log2_minus8: 0
-  refl_max_transform_number    : 2
+  refl_max_transform_number    : 0
   color_max_transform_number: 8
   color_reorder_mode: 1
   refl_reorder_mode: 1
@@ -1228,11 +1228,11 @@ pcl_hawk_vox11:
   axis_bias_minus1: 0
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   max_number_coefficients_log2_minus8 : 9
   coeff_length_control_log2_minus8: 0
-  refl_max_transform_number    : 2
+  refl_max_transform_number    : 0
   color_max_transform_number: 8
   color_reorder_mode: 1
   refl_reorder_mode: 1
@@ -1271,7 +1271,7 @@ pcl_sofa_vox10:
   axis_bias_minus1: 0
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   max_number_coefficients_log2_minus8 : 9
   coeff_length_control_log2_minus8: 0
@@ -1314,11 +1314,11 @@ pcl_papi_vox11:
   axis_bias_minus1: 0
   nearest_pred_param1: 0
   nearest_pred_param2: 0
-  transform: 2
+  transform: 0
   max_number_neighbours_log2_minus7 : 0
   max_number_coefficients_log2_minus8 : 9
   coeff_length_control_log2_minus8: 0
-  refl_max_transform_number    : 2
+  refl_max_transform_number    : 0
   color_max_transform_number: 8
   color_reorder_mode: 1
   refl_reorder_mode: 1

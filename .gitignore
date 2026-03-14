@@ -7,6 +7,7 @@ build
 cfg/cfg_predict
 cfg/cfg_transform
 submodules/*
+scripts/
 !scripts/prep_data.sh
 !scripts/launch.sh
 !submodules/mpeg-gsc-tools/
