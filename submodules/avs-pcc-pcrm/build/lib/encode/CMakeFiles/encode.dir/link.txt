@@ -1,0 +1,2 @@
+/usr/bin/ar qc libencode.a CMakeFiles/encode.dir/TEncAttribute.cpp.o CMakeFiles/encode.dir/TEncBacCore.cpp.o CMakeFiles/encode.dir/TEncBacTop.cpp.o CMakeFiles/encode.dir/TEncCfg.cpp.o CMakeFiles/encode.dir/TEncGeometry.cpp.o CMakeFiles/encode.dir/TEncTop.cpp.o CMakeFiles/encode.dir/TEncTsp.cpp.o
+/usr/bin/ranlib libencode.a

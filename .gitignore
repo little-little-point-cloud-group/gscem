@@ -13,4 +13,5 @@ scripts/
 !submodules/mpeg-gsc-tools/
 !submodules/mpeg-gsc-metrics/
 !submodules/avs-pcc-pcrm/
-!submodules/README.md
+!submodules/README.md/
+.idea/

@@ -1,0 +1,3 @@
+include("/media/hipeson/21bd72c3-b2ba-406a-a594-1a7e99218c8a/hipeson/mmc_pcc/gly/gscem_all/submodules/mpeg-gsc-metrics/dependencies/cmake/CPM.cmake")
+CPMAddPackage("NAME;glm;GIT_REPOSITORY;https://github.com/g-truc/glm.git;GIT_TAG;1.0.1;SOURCE_DIR;/media/hipeson/21bd72c3-b2ba-406a-a594-1a7e99218c8a/hipeson/mmc_pcc/gly/gscem_all/submodules/mpeg-gsc-metrics/dependencies/glm;DOWNLOAD_ONLY;YES")
+set(glm_FOUND TRUE)

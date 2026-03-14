@@ -1,0 +1,1 @@
+/usr/bin/c++  -std=c++11 -O3 -DNDEBUG -rdynamic "CMakeFiles/encoder.dir/avs-pcc-enc.cpp.o" -o ../../avs-pcc-encoder  ../../lib/common/libcommon.a ../../lib/encode/libencode.a ../../lib/common/libcommon.a 

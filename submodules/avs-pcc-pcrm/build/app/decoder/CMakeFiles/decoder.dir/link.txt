@@ -1,0 +1,1 @@
+/usr/bin/c++  -std=c++11 -O3 -DNDEBUG -rdynamic "CMakeFiles/decoder.dir/avs-pcc-dec.cpp.o" -o ../../avs-pcc-decoder  ../../lib/common/libcommon.a ../../lib/decode/libdecode.a ../../lib/common/libcommon.a 

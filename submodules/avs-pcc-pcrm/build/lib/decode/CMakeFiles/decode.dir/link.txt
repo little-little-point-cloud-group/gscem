@@ -1,0 +1,2 @@
+/usr/bin/ar qc libdecode.a CMakeFiles/decode.dir/TDecAttribute.cpp.o CMakeFiles/decode.dir/TDecBacCore.cpp.o CMakeFiles/decode.dir/TDecBacTop.cpp.o CMakeFiles/decode.dir/TDecCfg.cpp.o CMakeFiles/decode.dir/TDecGeometry.cpp.o CMakeFiles/decode.dir/TDecTop.cpp.o CMakeFiles/decode.dir/TDecTsp.cpp.o
+/usr/bin/ranlib libdecode.a

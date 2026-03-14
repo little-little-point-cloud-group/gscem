@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcommon.a CMakeFiles/common.dir/AttributePredictor.cpp.o CMakeFiles/common.dir/FXPoint.cpp.o CMakeFiles/common.dir/MD5Sum.cpp.o CMakeFiles/common.dir/PointCloudMortonTable.cpp.o CMakeFiles/common.dir/TComBitStream.cpp.o CMakeFiles/common.dir/TComBufferChunk.cpp.o CMakeFiles/common.dir/TComOccupancyMap.cpp.o CMakeFiles/common.dir/TComParamParser.cpp.o CMakeFiles/common.dir/TComPcEvalue.cpp.o CMakeFiles/common.dir/TComPointCloud.cpp.o CMakeFiles/common.dir/TComRom.cpp.o CMakeFiles/common.dir/Transform.cpp.o
+/usr/bin/ranlib libcommon.a

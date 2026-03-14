@@ -1,0 +1,1 @@
+/usr/bin/c++  -std=c++11 -O3 -DNDEBUG -rdynamic "CMakeFiles/pc_evalue.dir/avs-pcc-pc_evalue.cpp.o" -o ../../avs-pcc-pc_evalue  ../../lib/common/libcommon.a ../../lib/encode/libencode.a ../../lib/common/libcommon.a 

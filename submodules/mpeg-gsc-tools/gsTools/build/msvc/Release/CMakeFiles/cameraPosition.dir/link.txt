@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -mfpmath=sse -msse4.2 -m64 -DNDEBUG -lstdc++  -O3 -DNDEBUG CMakeFiles/cameraPosition.dir/source/addCameraPosition.cpp.o "CMakeFiles/cameraPosition.dir/dependencies/program-options-lite/program_options_lite.cpp.o" -o bin/cameraPosition 
