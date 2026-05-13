@@ -1,0 +1,219 @@
+scenes:
+  bartender:
+    category: cat1
+    frame: frame000.ply
+    num_viewpoints: 21
+    viewport_sample_period: 1
+  cinema:
+    category: cat1
+    frame: frame000.ply
+    num_viewpoints: 21
+    viewport_sample_period: 1
+  photo:
+    category: cat1
+    frame: frame000.ply
+    num_viewpoints: 307
+    viewport_sample_period: 1
+  toy:
+    category: cat1
+    frame: frame000.ply
+    num_viewpoints: 317
+    viewport_sample_period: 1
+  bicycle:
+    category: cat2
+    frame: frame000.ply
+    num_viewpoints: 194
+    viewport_sample_period: 1
+  garden:
+    category: cat2
+    frame: frame000.ply
+    num_viewpoints: 185
+    viewport_sample_period: 1
+  alley:
+    category: cat2
+    frame: frame000.ply
+    num_viewpoints: 328
+    viewport_sample_period: 1
+  rocket:
+    category: cat2
+    frame: frame000.ply
+    num_viewpoints: 309
+    viewport_sample_period: 1
+
+color_space_conversion:
+  cat1: true
+  cat2: true
+
+quant_bits:
+  cat1:
+    bits_ac:
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    bits_dc:
+    - 13
+    - 13
+    - 13
+    bits_geom:
+    - 18
+    - 18
+    - 18
+    bits_opacity:
+    - 13
+    bits_rotation:
+    - 14
+    - 14
+    - 14
+    - 14
+    bits_scale:
+    - 13
+    - 13
+    - 13
+  cat2:
+    bits_ac:
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    - 12
+    bits_dc:
+    - 12
+    - 12
+    - 12
+    bits_geom:
+    - 18
+    - 18
+    - 18
+    bits_opacity:
+    - 12
+    bits_rotation:
+    - 14
+    - 14
+    - 14
+    - 14
+    bits_scale:
+    - 12
+    - 12
+    - 12
+
+quant_fn:
+  cat1:
+    fn_ac: logistic
+    fn_dc: linear
+    fn_geom: linear
+    fn_opacity: linear
+    fn_rotation: linear
+    fn_scale: linear
+  cat2:
+    fn_ac: logistic
+    fn_dc: linear
+    fn_geom: linear
+    fn_opacity: linear
+    fn_rotation: linear
+    fn_scale: linear
+
+ratepoint_per_cond:
+  C1-losslessG-lossyA-ai:
+  - r1
+  - r2
+  - r3
+  - r4
+  - r5
+
+sigmoid_theta:
+  cat1:
+    theta_ac: 20
+    theta_dc: 1
+    theta_geom: 1
+    theta_opacity: 1
+    theta_rotation: 1
+    theta_scale: 1
+  cat2:
+    theta_ac: 20
+    theta_dc: 1
+    theta_geom: 1
+    theta_opacity: 1
+    theta_rotation: 1
+    theta_scale: 1

@@ -469,7 +469,11 @@ Int TEncTop::encode() {
            indexGroup++) {
         cout << "MultiData " << multiIdx
              << " All frames attributes bits: " << esTotal.attrBits[multiIdx] << " bits." << endl;
-        multiIdx += m_hls.aps.multiAttriGroupNum[indexGroup];
+        if (m_hls.aps.transform == 0) {
+          multiIdx += m_hls.aps.multiAttriGroupNum[indexGroup];
+        } else {
+          multiIdx++;
+        }
       }
     }
   }
@@ -623,7 +627,75 @@ Void TEncTop::FixedMultiAPs(const SequenceParameterSet& sps, AttributeParameterS
               aps.reflMultiGroupPredict[multiIdx] = aps.reflGroupPredict;
             }
           }
+          aps.coeffMultiLengthControlLog2Minus8[attrIdx][multiIdx] =
+            aps.coeffLengthControlLog2Minus8;
+          if (aps.coeffMultiLengthControlLog2Minus8[attrIdx][multiIdx]) {
+            aps.coeffMultiLengthControl[attrIdx][multiIdx] = 1
+              << (aps.coeffMultiLengthControlLog2Minus8[attrIdx][multiIdx] + 8);
+          }
+        }
+      }
+    }
+  } else {
+    for (int attrIdx = 0; attrIdx < (sps.maxNumAttributesMinus1 + 1); attrIdx++) {
+      if (aps.attributeDataPresentFlag[attrIdx]) {
+        for (int multiIdx = 0; multiIdx < aps.attributeInfoNumSetMinus1[attrIdx] + 1; ++multiIdx) {
+          aps.outputMultiBitDepthMinus1[attrIdx][multiIdx] = aps.outputBitDepthMinus1[attrIdx];
 
+          if (attrIdx == 0) {
+            aps.orderMultiSwitch[multiIdx] = aps.orderSwitch;
+            aps.colorMultiReordermode[multiIdx] = aps.colorReorderMode;
+            aps.colorMultiGolombNum[multiIdx] = aps.colorGolombNum;
+            aps.golombMultiGroupSizeLog2[multiIdx] = aps.golombGroupSizeLog2;
+          }
+          if (attrIdx == 1) {
+            aps.axisMultiBiasMinus1[multiIdx] = aps.axisBiasMinus1;
+            aps.reflMultiReordermode[multiIdx] = aps.reflReorderMode;
+            aps.reflMultiGolombNum[multiIdx] = aps.reflGolombNum;
+            aps.predMultiFixedPointFracBit[multiIdx] = aps.predFixedPointFracBit;
+          }
+          aps.transformMulti[attrIdx][multiIdx] = aps.transform;
+
+          if ((aps.transformMulti[attrIdx][multiIdx] == 0) ||
+              (aps.transformMulti[attrIdx][multiIdx] == 2)) {
+            aps.maxMultiNumOfNeighboursLog2Minus7[attrIdx][multiIdx] =
+              aps.maxNumOfNeighboursLog2Minus7;
+            if (attrIdx == 0) {
+              aps.crossMultiComponentPred[multiIdx] = aps.crossComponentPred;
+              aps.chromaMultiQpOffsetCb[multiIdx] = aps.chromaQpOffsetCb;
+              aps.chromaMultiQpOffsetCr[multiIdx] = aps.chromaQpOffsetCr;
+            }
+            if (attrIdx == 1) {
+              aps.nearestMultiPredParam1[multiIdx] = aps.nearestPredParam1;
+              aps.nearestMultiPredParam2[multiIdx] = aps.nearestPredParam2;
+              aps.predDistWeightMultiGroupSizeLog2[multiIdx] = aps.predDistWeightGroupSizeLog2;
+            }
+          }
+          if (aps.transformMulti[attrIdx][multiIdx] == 1) {
+            aps.kMultiFracBits[attrIdx][multiIdx] = aps.kFracBits;
+            aps.attrMultiTransformQpDelta[attrIdx][multiIdx] = aps.attrTransQpDelta;
+            aps.transformMultiSegmentSize[attrIdx][multiIdx] = aps.transformSegmentSize;
+            aps.transMultiResLayer[attrIdx][multiIdx] = aps.transResLayer;
+          }
+          if (aps.transformMulti[attrIdx][multiIdx] == 2) {
+            aps.MultimaxNumofCoeffLog2Minus8[attrIdx][multiIdx] = aps.maxNumofCoeffLog2Minus8;
+            if (aps.MultimaxNumofCoeffLog2Minus8[attrIdx][multiIdx]) {
+              aps.maxMultiNumofCoeff[attrIdx][multiIdx] = 1
+                << (aps.MultimaxNumofCoeffLog2Minus8[attrIdx][multiIdx] + 8);
+            }
+            aps.QpMultiOffsetDC[attrIdx][multiIdx] = aps.QpOffsetDC;
+            aps.QpMultiOffsetAC[attrIdx][multiIdx] = aps.QpOffsetAC;
+            if (attrIdx == 0) {
+              aps.colorMaxMultiTransNum[multiIdx] = aps.colorMaxTransNum;
+              aps.chromaMultiQpOffsetDC[multiIdx] = aps.chromaQpOffsetDC;
+              aps.chromaMultiQpOffsetAC[multiIdx] = aps.chromaQpOffsetAC;
+              aps.colorMultiQPAdjustFlag[multiIdx] = aps.colorQPAdjustFlag;
+            }
+            if (attrIdx == 1) {
+              aps.reflMaxMultiTransNum[multiIdx] = aps.reflMaxTransNum;
+              aps.reflMultiGroupPredict[multiIdx] = aps.reflGroupPredict;
+            }
+          }
           aps.coeffMultiLengthControlLog2Minus8[attrIdx][multiIdx] =
             aps.coeffLengthControlLog2Minus8;
           if (aps.coeffMultiLengthControlLog2Minus8[attrIdx][multiIdx]) {

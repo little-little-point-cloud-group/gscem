@@ -306,7 +306,7 @@ if __name__ == "__main__":
                             continue
                         value = df.iloc[j][header] if header in df.columns else float('nan')
                         
-                    
+                        # 写入Excel（注意：行索引从1开始，列索引从start_col开始）
                         sheet.cell(row=current_start_row+row, column=start_col + i-1, value=value)
    
 

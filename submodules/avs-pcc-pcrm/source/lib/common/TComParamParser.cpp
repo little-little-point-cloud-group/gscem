@@ -89,6 +89,16 @@ void TComParamParser::parseConfigureFile(const string& configFileName, Attribute
     if (!findKey)
       m_invalidParams.push_back(keys[i]);
   }
+  if (m_reserveMultiAttrParams) {
+    std::cout << "\n==== Loaded Multi-Attribute Parameters ====\n";
+    for (uint32_t i = 0; i < m_numAttrParamSet; i++) {
+        std::cout << "maps_idx=" << i
+                  << "  refl_output_depth=" << aps.reflMultiOutputDepth[i]
+                  << "  refl_quant_param="  << aps.reflMultiQuantParam[i]
+                  << std::endl;
+    }
+    std::cout << "==========================================\n";
+}
 }
 
 void TComParamParser::initParameters() {

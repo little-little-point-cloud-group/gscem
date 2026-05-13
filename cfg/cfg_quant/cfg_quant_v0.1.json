@@ -37,7 +37,7 @@
         "cat1": {
             "fn_geom": "linear",
             "fn_dc": "linear",
-            "fn_ac": "linear",
+            "fn_ac": "logistic",
             "fn_opacity": "linear",
             "fn_scale": "linear",
             "fn_rotation": "linear"
@@ -45,7 +45,7 @@
         "cat2": {
             "fn_geom": "linear",
             "fn_dc": "linear",
-            "fn_ac": "linear",
+            "fn_ac": "logistic",
             "fn_opacity": "linear",
             "fn_scale": "linear",
             "fn_rotation": "linear"

@@ -1,0 +1,4 @@
+cpu: 0
+verbose: 0
+save: 0
+OMP_NUM_THREADS: 1
