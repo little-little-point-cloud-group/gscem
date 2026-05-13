@@ -7,3 +7,8 @@ cat2:
   profile_id              : 2
   level_id                : 8
   frame_rate_code         : 0
+
+cat3:
+  profile_id              : 2
+  level_id                : 8
+  frame_rate_code         : 0

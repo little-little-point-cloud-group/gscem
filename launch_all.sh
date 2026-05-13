@@ -1,1 +1,0 @@
-./scripts/launch.sh v0.1

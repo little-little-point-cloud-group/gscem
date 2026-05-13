@@ -142,14 +142,14 @@ if __name__ == "__main__":
     sequences_filename = "sequences_transform.yaml"
     gen_cfg("C1-losslessG-lossyA-ai", sequences_filename, folder_name)
 
-    folder_name = "cfg_transform"
-    sequences_filename = "sequences_transform_C2.yaml"
-    gen_cfg("C2-losslessG-losslessA-ai", sequences_filename, folder_name)
+    # folder_name = "cfg_transform"
+    # sequences_filename = "sequences_transform_C2.yaml"
+    # gen_cfg("C2-losslessG-losslessA-ai", sequences_filename, folder_name)
+
+    folder_name = "cfg_predtrans"
+    sequences_filename = "sequences_predtrans_limited.yaml"
+    gen_cfg("C1-losslessG-lossyA-ai", sequences_filename, folder_name)
 
     folder_name = "cfg_predict"
     sequences_filename = "sequences_predict.yaml"
-    gen_cfg("C2-losslessG-losslessA-ai", sequences_filename, folder_name)
-
-    folder_name = "cfg_predict"
-    sequences_filename = "sequences_predtrans_limited.yaml"
     gen_cfg("C1-losslessG-lossyA-ai", sequences_filename, folder_name)

@@ -5,7 +5,7 @@ C1-losslessG-lossyA-ai:
     level_id                : '{}'
     frame_rate_code         : '{}'
     attr_present_flag       : 1
-    color_transform_flag    : 0
+    color_transform_flag    : 1
     slice_flag              : 1
     slice_point_max_numlg2  : 20
     geom_quant_step         : '{}'
@@ -68,7 +68,7 @@ C1-losslessG-lossyA-ai:
     pred_dist_weight_group_size_log2: '{}'
     qp_offset               : '{}'
     multi_attr_group_id     : '{}'
-    metrics_enable          : 1
+    metrics_enable          : 0
     symmetry                : 1
     cal_color               : 1
     cal_reflectance         : 1
@@ -79,7 +79,7 @@ C1-losslessG-lossyA-ai:
 
   decoder:
     ascii_write_flag        : 1
-    color_transform_flag    : 0
+    color_transform_flag    : 1
 
   pcerror:
     symmetry                : 1
@@ -155,7 +155,7 @@ C2-losslessG-losslessA-ai:
     color_qp_adjust_scalar  : '{}'   
     k_frac_bit              : '{}'
     multi_attr_group_id     : '{}'
-    metrics_enable          : 1
+    metrics_enable          : 0
     symmetry                : 1
     cal_color               : 1
     cal_reflectance         : 1

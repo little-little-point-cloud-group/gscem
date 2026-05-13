@@ -137,7 +137,7 @@ run python run_parallel.py "$scripts_dir/1_enc.sh" 45
 run python run_parallel.py "$scripts_dir/2_dec.sh" 45
 run python run_parallel.py "$scripts_dir/3_deq.sh" 45
 run python run_parallel.py "$scripts_dir/4_cam.sh" 54
-run python run_parallel.py "$scripts_dir/5_metric.sh" 30
+run python run_parallel.py "$scripts_dir/5_metric.sh" 80
 
 run python collect_results.py \
     --test_id "$version" \

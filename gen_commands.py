@@ -7,7 +7,7 @@ import argparse
 from argparse import ArgumentParser
 from icecream import ic
 # ic.disable()
-from cfg.cfg_quant import load_config
+from cfg.get_cfg import load_yaml_config
 
 
 def enc_cmd(encoder_path, cfg_path, ref_path, bin_path, mdf_path, log_path):
@@ -16,7 +16,7 @@ def enc_cmd(encoder_path, cfg_path, ref_path, bin_path, mdf_path, log_path):
         "-c",
         f"{cfg_path}",
         "-m",
-        1,
+        0,
         "-i",
         f"{ref_path}",
         "-b",
@@ -50,86 +50,42 @@ def dec_cmd(decoder_path, cfg_path, bin_path, mdf_path, rec_path, log_path):
     return command
 
 
-def quant_cmd(input_path, meta_path, output_path, quant_para, color_space_conversion=False):
+def quant_cmd(scene, input_path, meta_path, output_path, quant_cfg_path):
     command = [
-        "python3 processing.py",
+        "python processing.py",
         "quantize",
+        "--scene",
+        f"{scene}",
         "--input_path",
         f"{input_path}",
-        "--meta_path",
-        f"{meta_path}",
         "--output_path",
         f"{output_path}",
-        "--bits_geom",
-        f"{quant_para['bits_geom']}",
-        "--fn_geom",
-        f"{quant_para['fn_geom']}",
-        "--bits_dc",
-        f"{quant_para['bits_dc']}",
-        "--fn_dc",
-        f"{quant_para['fn_dc']}",
-        "--bits_ac",
-        f"{quant_para['bits_ac']}",
-        "--fn_ac",
-        f"{quant_para['fn_ac']}",
-        "--bits_opacity",
-        f"{quant_para['bits_opacity']}",
-        "--fn_opacity",
-        f"{quant_para['fn_opacity']}",
-        "--bits_scale",
-        f"{quant_para['bits_scale']}",
-        "--fn_scale",
-        f"{quant_para['fn_scale']}",
-        "--bits_rotation",
-        f"{quant_para['bits_rotation']}",
-        "--fn_rotation",
-        f"{quant_para['fn_rotation']}"
+        "--meta_path",
+        f"{meta_path}",
+        "--quant_cfg_path",
+        f"{quant_cfg_path}"
         ]
-    if color_space_conversion:
-        command.append("--color_space_conversion")
     
     command = ' '.join(map(str, command))
         
     return command
 
 
-def deq_cmd(input_path, meta_path, output_path, quant_para, color_space_conversion=False):
+def deq_cmd(scene, input_path, meta_path, output_path, quant_cfg_path):
     command = [
-        "python3 processing.py",
+        "python processing.py",
         "dequantize",
+        "--scene",
+        f"{scene}",
         "--input_path",
         f"{input_path}",
-        "--meta_path",
-        f"{meta_path}",
         "--output_path",
         f"{output_path}",
-        "--bits_geom",
-        f"{quant_para['bits_geom']}",
-        "--fn_geom",
-        f"{quant_para['fn_geom']}",
-        "--bits_dc",
-        f"{quant_para['bits_dc']}",
-        "--fn_dc",
-        f"{quant_para['fn_dc']}",
-        "--bits_ac",
-        f"{quant_para['bits_ac']}",
-        "--fn_ac",
-        f"{quant_para['fn_ac']}",
-        "--bits_opacity",
-        f"{quant_para['bits_opacity']}",
-        "--fn_opacity",
-        f"{quant_para['fn_opacity']}",
-        "--bits_scale",
-        f"{quant_para['bits_scale']}",
-        "--fn_scale",
-        f"{quant_para['fn_scale']}",
-        "--bits_rotation",
-        f"{quant_para['bits_rotation']}",
-        "--fn_rotation",
-        f"{quant_para['fn_rotation']}"
+        "--meta_path",
+        f"{meta_path}",
+        "--quant_cfg_path",
+        f"{quant_cfg_path}"
         ]
-    if color_space_conversion:
-        command.append("--color_space_conversion")
     command = ' '.join(map(str, command))
         
     return command
@@ -148,37 +104,26 @@ def cam_cmd(cam_binary_path, ply_path, cam_path, image_path, output_path):
     return command
 
 
-def metric_cmd(
-    metric_binary_path,
-    ref_path,
-    rec_path,
-    output_path,
-    width=1920,
-    height=1080,
-    omp_threads=None,
-    save_images=True,
-):
-    prefix = []
-    if omp_threads:
-        prefix.append(f"OMP_NUM_THREADS={omp_threads}")
+def metric_cmd(metric_binary_path, ref_path, rec_path, frame_index, output_path, metrics_cfg, width=1920, height=1080):
     command = [
-        *prefix,
+        f"OMP_NUM_THREADS={metrics_cfg['OMP_NUM_THREADS']}",
         f"{metric_binary_path}",
         "-a",
         f"{ref_path}",
         "-b",
         f"{rec_path}",
+        f"--onlyViewpoint={frame_index}",
         "-f 1",
         "-i 0",
-        f"--cpu=1",
+        f"-s {metrics_cfg['save']}",
+        f"--cpu={metrics_cfg['cpu']}",
         "--useCameraPosition=1",
         f"--width={width}",
         f"--height={height}",
         f"-o {output_path}",
-        "-v 1"
+        f"-v {metrics_cfg['verbose']}",
+        f"--threads=1"
         ]
-    if save_images:
-        command.insert(-2, "-s 1")  # optional video dump; default disabled
     command = ' '.join(map(str, command))
         
     return command
@@ -194,31 +139,29 @@ if __name__ == "__main__":
     parser = ArgumentParser(description="generate all cmds to enc and dec")
     parser.add_argument("--encoder", default="./submodules/avs-pcc-pcrm/build/avs-pcc-encoder")
     parser.add_argument("--decoder", default="./submodules/avs-pcc-pcrm/build/avs-pcc-decoder")
-    parser.add_argument("--gstools", default="/media/hipeson/21bd72c3-b2ba-406a-a594-1a7e99218c8a/hipeson/mmc_pcc/gly/execution/cameraPosition")
-    parser.add_argument("--metric_bin_path", default="/media/hipeson/21bd72c3-b2ba-406a-a594-1a7e99218c8a/hipeson/mmc_pcc/gly/execution/mpeg-gsc-metrics")
-    parser.add_argument("--cfg_dir", default='./cfg')
-    parser.add_argument("--quant_cfg_path", default='./cfg/cfg_quant/cfg_quant_version.json')
-    # change the dir to src 3dgs data
-    parser.add_argument("--data_dir", default="/data1/openi/data")
-    parser.add_argument("--script_dir", default="./scripts")
-    parser.add_argument("--test_id", required=True)
-    parser.add_argument("--metric_threads", type=int, default=21,
-                        help="Set OMP_NUM_THREADS for mpeg-gsc-metrics (per-command).")
-    parser.add_argument(
-        "--save_metric_images",
-        action="store_true",
-        help="If set, pass -s 1 to mpeg-gsc-metrics to dump .rgb frames (disabled by default).",
-    )
+    parser.add_argument("--gstools", default="./submodules/mpeg-gsc-tools/gsTools/build/msvc/Release/bin/cameraPosition")
+    parser.add_argument("--metric_bin_path", default="./submodules/mpeg-gsc-metrics/build/Release/bin/mpeg-gsc-metrics")
+    parser.add_argument("--reset_dir", action='store_true')
+    # force to pass
+    parser.add_argument("--codec_cfg_dir", required=True)
+    parser.add_argument("--data_dir", required=True)
+    parser.add_argument("--scripts_dir", required=True)
+    parser.add_argument("--bitstreams_dir", required=True)
+    parser.add_argument("--quant_cfg_path", required=True)
+    parser.add_argument("--metrics_cfg_path", required=True)
 
     args, _ = parser.parse_known_args()
-    quant_cfg = load_config(args.quant_cfg_path)
-    PCRM_methods = quant_cfg['PCRM_methods']
+    quant_cfg = load_yaml_config(args.quant_cfg_path)
+    metrics_cfg = load_yaml_config(args.metrics_cfg_path)
     ratepoint_per_cond = quant_cfg['ratepoint_per_cond']
     
     args.src_dir = os.path.join(args.data_dir, 'src')
-    args.enc_dir = os.path.join(args.data_dir, args.test_id)
-    
-    reset_folder(args.enc_dir)
+    bitstreams_dir = args.bitstreams_dir
+    scripts_dir = args.scripts_dir
+
+    if args.reset_dir:
+        reset_folder(bitstreams_dir)
+        # reset_folder(scripts_dir)
     
     quant_commands = []
     enc_commands = []
@@ -228,17 +171,10 @@ if __name__ == "__main__":
     metric_commands = []
 
     scenes = quant_cfg['scenes']
-    quant_bits = quant_cfg['quant_bits']
-    quant_fn = quant_cfg['quant_fn']
     for scene in scenes.keys():
-        scene_para = scenes[scene]
-        ic(scene_para)
-        category = scene_para['category']
-        quant_para = quant_bits[category]
-        quant_para.update(quant_fn[category])
-        color_space_conversion = quant_cfg['color_space_conversion'].get(category, False)
+        category = scenes[scene]['category']
 
-        frame = scene_para['frame']
+        frame = scenes[scene]['frame']
         frame_name = re.split('\.', frame)[0]
 
         # src: inria recon file (w/ normal)
@@ -253,82 +189,86 @@ if __name__ == "__main__":
         if not os.path.exists(image_path):           
             image_path = os.path.join(args.src_dir, scene, 'images.txt')
         
-        src_cam_path = os.path.join(args.enc_dir, scene + f'_cam.ply')
+        src_cam_path = os.path.join(bitstreams_dir, scene + f'_cam.ply')
         cmd = cam_cmd(args.gstools, src_path, cam_path, image_path, src_cam_path)
         cam_commands.append(cmd)
 
         # quantization src
         quant_name = '_'.join([scene, frame_name, 'quant.ply'])
-        quant_path = os.path.join(args.enc_dir, quant_name)
+        quant_path = os.path.join(bitstreams_dir, quant_name)
         meta_name = '_'.join([scene, frame_name, 'meta.npz'])
-        meta_path = os.path.join(args.enc_dir, meta_name)
+        meta_path = os.path.join(bitstreams_dir, meta_name)
 
-        cmd = quant_cmd(src_path, meta_path, quant_path, quant_para, color_space_conversion)
+        cmd = quant_cmd(scene, src_path, meta_path, quant_path, args.quant_cfg_path)
         quant_commands.append(cmd)
         
-        for method in PCRM_methods:
-            for cond in ratepoint_per_cond.keys():
-                for rate in ratepoint_per_cond[cond]:
-                    idendifier = '_'.join([scene, frame_name, cond[:2], rate, method])
-                    
-                    enc_cfg_path = os.path.join(args.cfg_dir, f'cfg_{method}', cond, scene, rate, 'encoder.cfg')
-                    dec_cfg_path = os.path.join(args.cfg_dir, f'cfg_{method}', cond, scene, rate, 'decoder.cfg')
-                    
-                    bin_path = os.path.join(args.enc_dir, f'{idendifier}.bin')
-                    rec_path = os.path.join(args.enc_dir, f'{idendifier}.ply')
-                    mdf_path = os.path.join(args.enc_dir, f'{idendifier}.txt')
-                    
-                    enc_log_path = os.path.join(args.enc_dir, f'{idendifier}_enc.log')
-                    dec_log_path = os.path.join(args.enc_dir, f'{idendifier}_dec.log')
+        for cond in ratepoint_per_cond.keys():
+            for rate in ratepoint_per_cond[cond]:
+                identifier = '_'.join([scene, cond[:2], rate, 'frame'])
+                
+                enc_cfg_path = os.path.join(args.codec_cfg_dir, cond, scene, rate, 'encoder.cfg')
+                dec_cfg_path = os.path.join(args.codec_cfg_dir, cond, scene, rate, 'decoder.cfg')
+                
+                bin_path = os.path.join(bitstreams_dir, f'{identifier}.bin')
+                rec_path = os.path.join(*[bitstreams_dir, f'{identifier}.ply'])
+                mdf_path = os.path.join(bitstreams_dir, f'{identifier}.txt')
+                
+                enc_log_path = os.path.join(bitstreams_dir, f'{identifier}_enc.log')
+                dec_log_path = os.path.join(bitstreams_dir, f'{identifier}_dec.log')
 
-                    deq_path = os.path.join(args.enc_dir, f'{idendifier}_deq.ply')
-                    deq_cam_path = os.path.join(args.enc_dir, f'{idendifier}_cam.ply')
-                    metric_log_path = os.path.join(args.enc_dir, f'{idendifier}_metric.log')
-                    
-                    cmd = enc_cmd(args.encoder, enc_cfg_path, quant_path, bin_path, mdf_path, enc_log_path)
-                    enc_commands.append(cmd)
+                deq_path = os.path.join(bitstreams_dir, f'{identifier}_deq.ply')
+                deq_cam_path = os.path.join(bitstreams_dir, f'{identifier}_cam.ply')
+                metric_log_path = os.path.join(bitstreams_dir, f'{identifier}_metric.log')
+                
+                cmd = enc_cmd(args.encoder, enc_cfg_path, quant_path, bin_path, mdf_path, enc_log_path)
+                enc_commands.append(cmd)
 
-                    cmd = dec_cmd(args.decoder, dec_cfg_path, bin_path, mdf_path, rec_path, dec_log_path)
-                    dec_commands.append(cmd)
+                cmd = dec_cmd(args.decoder, dec_cfg_path, bin_path, mdf_path, rec_path, dec_log_path)
+                dec_commands.append(cmd)
 
-                    cmd = deq_cmd(rec_path, meta_path, deq_path, quant_para, color_space_conversion)
-                    deq_commands.append(cmd)
+                cmd = deq_cmd(scene, rec_path, meta_path, deq_path, args.quant_cfg_path)
+                deq_commands.append(cmd)
 
-                    cmd = cam_cmd(args.gstools, deq_path, cam_path, image_path, deq_cam_path)
-                    cam_commands.append(cmd)
+                cmd = cam_cmd(args.gstools, deq_path, cam_path, image_path, deq_cam_path)
+                cam_commands.append(cmd)
+                
+                rendering_info = scenes[scene]['rendering']
+                total_frames = rendering_info['num_viewpoints']
+                width = rendering_info['width']
+                height = rendering_info['height']
+                frame_indices = list(range(0, total_frames, rendering_info['viewport_sample_period']))
+                for frame_idx in frame_indices:
+                    metric_log_path = os.path.join(bitstreams_dir, f'{identifier}_{frame_idx}_metric.log')
 
-                    cmd = metric_cmd(args.metric_bin_path, src_cam_path, deq_cam_path, metric_log_path,
-                                     omp_threads=args.metric_threads,
-                                     save_images=args.save_metric_images)
+                    cmd = metric_cmd(args.metric_bin_path, src_cam_path, deq_cam_path, frame_idx, metric_log_path, metrics_cfg, width, height)
                     metric_commands.append(cmd)
     
-    ic(f"{args.script_dir}")
     random.shuffle(quant_commands)
-    with open(f"{args.script_dir}/0_pre.sh", "w", encoding="utf-8") as f:
+    with open(f"{scripts_dir}/0_pre.sh", "w", encoding="utf-8") as f:
         for item in quant_commands:
             f.write(f"{item}\n")
 
     random.shuffle(enc_commands)
-    with open(f"{args.script_dir}/1_enc.sh", "w", encoding="utf-8") as f:
+    with open(f"{scripts_dir}/1_enc.sh", "w", encoding="utf-8") as f:
         for item in enc_commands:
             f.write(f"{item}\n")
 
     random.shuffle(dec_commands)
-    with open(f"{args.script_dir}/2_dec.sh", "w", encoding="utf-8") as f:
+    with open(f"{scripts_dir}/2_dec.sh", "w", encoding="utf-8") as f:
         for item in dec_commands:
             f.write(f"{item}\n")
 
     random.shuffle(deq_commands)
-    with open(f"{args.script_dir}/3_deq.sh", "w", encoding="utf-8") as f:
+    with open(f"{scripts_dir}/3_deq.sh", "w", encoding="utf-8") as f:
         for item in deq_commands:
             f.write(f"{item}\n")
 
     random.shuffle(cam_commands)
-    with open(f"{args.script_dir}/4_cam.sh", "w", encoding="utf-8") as f:
+    with open(f"{scripts_dir}/4_cam.sh", "w", encoding="utf-8") as f:
         for item in cam_commands:
             f.write(f"{item}\n")
 
     random.shuffle(metric_commands)
-    with open(f"{args.script_dir}/5_metric.sh", "w", encoding="utf-8") as f:
+    with open(f"{scripts_dir}/5_metric.sh", "w", encoding="utf-8") as f:
         for item in metric_commands:
             f.write(f"{item}\n")

@@ -1,5 +1,6 @@
-pyyaml
-numpy
-plyfile
-icecream
-pandas
+pyyaml==6.0.3
+numpy==1.24.4
+plyfile==1.0.3
+icecream==2.1.8
+pandas==1.5.3
+openpyxl==3.1.5
